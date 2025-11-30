@@ -1,0 +1,112 @@
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Check, ArrowRight } from "lucide-react";
+
+const benefits = {
+  organization: [
+    "High perceived value, leading to better sales",
+    "Demonstrates commitment to community safety",
+    "Generous profit margins (up to 50%)",
+    "Simple to manage and distribute",
+  ],
+  community: [
+    "Essential tool for emergency preparedness",
+    "Encourages outdoor activities and camping",
+    "Durable, long-lasting product",
+    "Highly functional and practical",
+  ],
+};
+
+export function ProductSection() {
+  return (
+    <section className="section-padding bg-background overflow-hidden">
+      <div className="container-wide">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Product Visual */}
+          <div className="relative order-2 lg:order-1">
+            <div className="relative aspect-square max-w-lg mx-auto">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue/20 via-secondary/20 to-accent/20 rounded-3xl blur-3xl" />
+              
+              {/* Product Card */}
+              <div className="relative bg-card rounded-3xl border border-border shadow-2xl p-8 h-full flex flex-col justify-center">
+                <span className="inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-semibold mb-4 w-fit">
+                  Flagship Product
+                </span>
+                <h3 className="text-3xl font-bold text-foreground mb-4">The QuickStove</h3>
+                <p className="text-muted-foreground mb-6">
+                  A multi-functional, portable stove designed for emergency preparedness, camping, 
+                  and outdoor cooking. The perfect product that families actually want and need.
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="px-4 py-2 rounded-xl bg-primary-blue/10">
+                    <span className="text-sm text-muted-foreground">Profit Margin</span>
+                    <div className="text-2xl font-bold text-primary-blue">50%</div>
+                  </div>
+                  <div className="px-4 py-2 rounded-xl bg-secondary/10">
+                    <span className="text-sm text-muted-foreground">Satisfaction</span>
+                    <div className="text-2xl font-bold text-secondary">98%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="order-1 lg:order-2">
+            <span className="text-sm font-semibold text-primary-blue uppercase tracking-wider mb-4 block">
+              Our Product
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6">
+              Products That{" "}
+              <span className="text-gradient">Sell Themselves</span>
+            </h2>
+            <p className="text-lg text-muted-foreground mb-10">
+              Unlike traditional fundraisers with low-value items, we offer products that provide 
+              real value to your supporters and their families.
+            </p>
+
+            {/* Benefits Grid */}
+            <div className="grid sm:grid-cols-2 gap-8 mb-10">
+              <div>
+                <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary-blue" />
+                  For Your Organization
+                </h4>
+                <ul className="space-y-3">
+                  {benefits.organization.map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-3 text-sm text-muted-foreground">
+                      <Check className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-secondary" />
+                  For Your Community
+                </h4>
+                <ul className="space-y-3">
+                  {benefits.community.map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-3 text-sm text-muted-foreground">
+                      <Check className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <Button variant="default" size="lg" asChild>
+              <Link to="/resources">
+                View Product Catalog
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

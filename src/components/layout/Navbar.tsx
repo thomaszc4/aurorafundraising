@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import auroraLogo from "@/assets/aurora-logo-white.png";
 
 const navLinks = [
@@ -16,6 +17,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, isAdmin, isStudent, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -68,11 +70,34 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden lg:block">
-            <Button variant="hero" size="default" asChild>
-              <Link to="/contact">Start Fundraising</Link>
-            </Button>
+          {/* Auth Buttons */}
+          <div className="hidden lg:flex items-center gap-2">
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Button variant="heroOutline" size="default" asChild>
+                    <Link to="/admin">Admin Dashboard</Link>
+                  </Button>
+                )}
+                {isStudent && (
+                  <Button variant="heroOutline" size="default" asChild>
+                    <Link to="/dashboard">My Dashboard</Link>
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={signOut} title="Sign Out" className="text-primary-foreground hover:bg-primary-foreground/10">
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="heroOutline" size="default" asChild>
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+                <Button variant="hero" size="default" asChild>
+                  <Link to="/contact">Start Fundraising</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -106,9 +131,33 @@ export function Navbar() {
               {link.name}
             </Link>
           ))}
-          <Button variant="hero" size="lg" className="mt-4" asChild>
-            <Link to="/contact">Start Fundraising</Link>
-          </Button>
+          {user ? (
+            <>
+              {isAdmin && (
+                <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+                  <Link to="/admin">Admin Dashboard</Link>
+                </Button>
+              )}
+              {isStudent && (
+                <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+                  <Link to="/dashboard">My Dashboard</Link>
+                </Button>
+              )}
+              <Button variant="ghost" size="lg" className="mt-2" onClick={() => { signOut(); setIsMobileMenuOpen(false); }}>
+                <LogOut className="h-5 w-5 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+              <Button variant="hero" size="lg" className="mt-2" asChild>
+                <Link to="/contact">Start Fundraising</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

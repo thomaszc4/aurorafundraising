@@ -9,6 +9,8 @@ import { DollarSign, ShoppingCart } from 'lucide-react';
 import { ProductCard } from '@/components/fundraising/ProductCard';
 import { Cart } from '@/components/fundraising/Cart';
 import { SocialShareButtons } from '@/components/fundraising/SocialShareButtons';
+import { ProgressMilestones } from '@/components/fundraising/ProgressMilestones';
+import { RecentSupporters } from '@/components/fundraising/RecentSupporters';
 
 export default function PublicStudentPage() {
   const { slug } = useParams();
@@ -36,7 +38,7 @@ export default function PublicStudentPage() {
         .select('*, campaigns(*), profiles(*)')
         .eq('page_slug', slug)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (fundraiserData) {
         setFundraiser(fundraiserData);
@@ -92,7 +94,7 @@ export default function PublicStudentPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="container-wide py-12">
+        <div className="container-wide py-12 pt-28">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-muted rounded w-1/4"></div>
             <div className="h-32 bg-muted rounded-xl"></div>
@@ -105,7 +107,7 @@ export default function PublicStudentPage() {
   if (!fundraiser) {
     return (
       <Layout>
-        <div className="container-wide py-12">
+        <div className="container-wide py-12 pt-28">
           <Card>
             <CardHeader>
               <CardTitle>Fundraiser Not Found</CardTitle>
@@ -123,7 +125,7 @@ export default function PublicStudentPage() {
 
   return (
     <Layout>
-      <div className="container-wide py-12">
+      <div className="container-wide py-12 pt-28">
         {/* Hero Section */}
         <div className="bg-hero rounded-3xl p-8 mb-8">
           <div className="max-w-3xl">
@@ -145,32 +147,49 @@ export default function PublicStudentPage() {
             />
           </div>
           
-          <div className="grid md:grid-cols-3 gap-4 mt-8">
-            <Card className="bg-card/80 backdrop-blur">
+          <div className="grid md:grid-cols-2 gap-6 mt-8">
+            <Card className="bg-card/95 backdrop-blur">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="h-5 w-5 text-primary-blue" />
                   <span className="text-sm font-medium">Total Raised</span>
                 </div>
-                <p className="text-2xl font-bold">${Number(fundraiser.total_raised).toFixed(2)}</p>
-                <p className="text-sm text-muted-foreground">of ${Number(fundraiser.personal_goal).toFixed(2)} goal</p>
-                <Progress value={progress} className="mt-2" />
+                <p className="text-3xl font-bold">${Number(fundraiser.total_raised).toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground mb-4">of ${Number(fundraiser.personal_goal).toFixed(2)} goal</p>
+                <Progress value={progress} className="h-2" />
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-card/95 backdrop-blur">
+              <CardContent className="pt-6">
+                <ProgressMilestones 
+                  currentAmount={Number(fundraiser.total_raised)} 
+                  goalAmount={Number(fundraiser.personal_goal)} 
+                />
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Products Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground mb-6">Products Available</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
-            ))}
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Products Section */}
+          <div className="lg:col-span-2">
+            <h2 className="text-3xl font-bold text-foreground mb-6">Products Available</h2>
+            <div className="grid sm:grid-cols-2 gap-6">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={addToCart}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <RecentSupporters fundraiserId={fundraiser.id} />
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Trash2, GripVertical, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Image as ImageIcon, Upload, Link } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ProductImage {
   id: string;
@@ -26,6 +44,73 @@ interface ProductImagesManagerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function SortableImageItem({ 
+  image, 
+  index, 
+  onDelete 
+}: { 
+  image: ProductImage; 
+  index: number;
+  onDelete: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: image.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border"
+    >
+      <button
+        className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </button>
+      
+      <div className="h-16 w-16 rounded-md overflow-hidden bg-background flex-shrink-0">
+        <img 
+          src={image.image_url} 
+          alt={`Product image ${index + 1}`}
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/placeholder.svg';
+          }}
+        />
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">Image {index + 1}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {image.image_url}
+        </p>
+      </div>
+      
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => onDelete(image.id)}
+      >
+        <Trash2 className="h-4 w-4 text-destructive" />
+      </Button>
+    </div>
+  );
+}
+
 export function ProductImagesManager({ 
   productId, 
   productName, 
@@ -36,6 +121,15 @@ export function ProductImagesManager({
   const [loading, setLoading] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [adding, setAdding] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (open && productId) {
@@ -62,7 +156,7 @@ export function ProductImagesManager({
     }
   };
 
-  const handleAddImage = async () => {
+  const handleAddImageUrl = async () => {
     if (!newImageUrl.trim()) {
       toast.error('Please enter an image URL');
       return;
@@ -95,6 +189,89 @@ export function ProductImagesManager({
     }
   };
 
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const uploadedCount = { success: 0, failed: 0 };
+
+    try {
+      let currentMaxOrder = images.length > 0 
+        ? Math.max(...images.map(img => img.display_order)) 
+        : -1;
+
+      for (const file of Array.from(files)) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast.error(`${file.name} is not an image`);
+          uploadedCount.failed++;
+          continue;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} is too large (max 5MB)`);
+          uploadedCount.failed++;
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${productId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Failed to upload ${file.name}`);
+          uploadedCount.failed++;
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+        // Add to product_images table
+        currentMaxOrder++;
+        const { error: insertError } = await supabase
+          .from('product_images')
+          .insert({
+            product_id: productId,
+            image_url: publicUrl,
+            display_order: currentMaxOrder,
+          });
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          uploadedCount.failed++;
+          continue;
+        }
+
+        uploadedCount.success++;
+      }
+
+      if (uploadedCount.success > 0) {
+        toast.success(`${uploadedCount.success} image(s) uploaded successfully`);
+        fetchImages();
+      }
+      if (uploadedCount.failed > 0) {
+        toast.error(`${uploadedCount.failed} image(s) failed to upload`);
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast.error('Failed to upload images');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleDeleteImage = async (imageId: string) => {
     if (!confirm('Are you sure you want to delete this image?')) return;
 
@@ -114,32 +291,31 @@ export function ProductImagesManager({
     }
   };
 
-  const handleMoveImage = async (imageId: string, direction: 'up' | 'down') => {
-    const currentIndex = images.findIndex(img => img.id === imageId);
-    if (currentIndex === -1) return;
-    
-    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= images.length) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const currentImage = images[currentIndex];
-    const swapImage = images[newIndex];
+    if (over && active.id !== over.id) {
+      const oldIndex = images.findIndex((img) => img.id === active.id);
+      const newIndex = images.findIndex((img) => img.id === over.id);
 
-    try {
-      await Promise.all([
-        supabase
-          .from('product_images')
-          .update({ display_order: swapImage.display_order })
-          .eq('id', currentImage.id),
-        supabase
-          .from('product_images')
-          .update({ display_order: currentImage.display_order })
-          .eq('id', swapImage.id),
-      ]);
+      const newImages = arrayMove(images, oldIndex, newIndex);
+      setImages(newImages);
 
-      fetchImages();
-    } catch (error) {
-      console.error('Error reordering images:', error);
-      toast.error('Failed to reorder images');
+      // Update display_order in database
+      try {
+        const updates = newImages.map((img, index) => 
+          supabase
+            .from('product_images')
+            .update({ display_order: index })
+            .eq('id', img.id)
+        );
+
+        await Promise.all(updates);
+      } catch (error) {
+        console.error('Error updating order:', error);
+        toast.error('Failed to update image order');
+        fetchImages(); // Revert to server state
+      }
     }
   };
 
@@ -155,25 +331,75 @@ export function ProductImagesManager({
 
         <div className="space-y-6">
           {/* Add new image */}
-          <div className="space-y-2">
-            <Label>Add New Image</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="https://example.com/image.jpg"
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddImage()}
-              />
-              <Button onClick={handleAddImage} disabled={adding}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
-            </div>
-          </div>
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Upload Files
+              </TabsTrigger>
+              <TabsTrigger value="url" className="flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Add URL
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload" className="space-y-2 mt-4">
+              <Label>Upload Images</Label>
+              <div 
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.add('border-primary');
+                }}
+                onDragLeave={(e) => {
+                  e.currentTarget.classList.remove('border-primary');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('border-primary');
+                  handleFileUpload(e.dataTransfer.files);
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                />
+                <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm font-medium">
+                  {uploading ? 'Uploading...' : 'Click or drag images here'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PNG, JPG, GIF up to 5MB each. Select multiple files for bulk upload.
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="url" className="space-y-2 mt-4">
+              <Label>Add Image URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://example.com/image.jpg"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddImageUrl()}
+                />
+                <Button onClick={handleAddImageUrl} disabled={adding}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* Image list */}
           <div className="space-y-2">
             <Label>Current Images ({images.length})</Label>
+            <p className="text-xs text-muted-foreground">Drag to reorder images</p>
             
             {loading ? (
               <div className="space-y-2">
@@ -184,64 +410,30 @@ export function ProductImagesManager({
             ) : images.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
                 <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No images yet. Add your first image above.</p>
+                <p>No images yet. Upload or add images above.</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {images.map((image, index) => (
-                  <div 
-                    key={image.id} 
-                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        disabled={index === 0}
-                        onClick={() => handleMoveImage(image.id, 'up')}
-                      >
-                        <GripVertical className="h-4 w-4 rotate-90" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        disabled={index === images.length - 1}
-                        onClick={() => handleMoveImage(image.id, 'down')}
-                      >
-                        <GripVertical className="h-4 w-4 rotate-90" />
-                      </Button>
-                    </div>
-                    
-                    <div className="h-16 w-16 rounded-md overflow-hidden bg-background flex-shrink-0">
-                      <img 
-                        src={image.image_url} 
-                        alt={`Product image ${index + 1}`}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={images.map(img => img.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {images.map((image, index) => (
+                      <SortableImageItem
+                        key={image.id}
+                        image={image}
+                        index={index}
+                        onDelete={handleDeleteImage}
                       />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">Image {index + 1}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {image.image_url}
-                      </p>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteImage(image.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         </div>

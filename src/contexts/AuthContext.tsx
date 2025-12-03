@@ -6,12 +6,13 @@ import { useNavigate } from 'react-router-dom';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  userRole: string | null;
+  userRoles: string[];
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isStudent: boolean;
   isOrgAdmin: boolean;
 }
@@ -21,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -35,10 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           // Fetch user role after a short delay to ensure profile is created
           setTimeout(async () => {
-            await fetchUserRole(session.user.id);
+            await fetchUserRoles(session.user.id);
           }, 100);
         } else {
-          setUserRole(null);
+          setUserRoles([]);
         }
       }
     );
@@ -48,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        fetchUserRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -56,23 +57,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRoles = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .single();
+        .eq('user_id', userId);
 
       if (error) {
-        console.error('Error fetching user role:', error);
-        setUserRole(null);
+        console.error('Error fetching user roles:', error);
+        setUserRoles([]);
       } else {
-        setUserRole(data?.role || null);
+        setUserRoles(data?.map(r => r.role) || []);
       }
     } catch (error) {
-      console.error('Error in fetchUserRole:', error);
-      setUserRole(null);
+      console.error('Error in fetchUserRoles:', error);
+      setUserRoles([]);
     }
   };
 
@@ -104,21 +104,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUserRole(null);
+    setUserRoles([]);
     navigate('/auth');
   };
+
+  const isSuperAdmin = userRoles.includes('super_admin');
+  const isAdmin = userRoles.includes('admin') || isSuperAdmin;
+  const isStudent = userRoles.includes('student');
+  const isOrgAdmin = userRoles.includes('organization_admin');
 
   const value = {
     user,
     session,
-    userRole,
+    userRoles,
     loading,
     signUp,
     signIn,
     signOut,
-    isAdmin: userRole === 'admin',
-    isStudent: userRole === 'student',
-    isOrgAdmin: userRole === 'organization_admin',
+    isAdmin,
+    isSuperAdmin,
+    isStudent,
+    isOrgAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

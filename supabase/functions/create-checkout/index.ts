@@ -21,7 +21,7 @@ const customerInfoSchema = z.object({
 });
 
 const checkoutRequestSchema = z.object({
-  fundraiserId: z.string().uuid("Invalid fundraiser ID format"),
+  fundraiserId: z.string().uuid("Invalid fundraiser ID format").nullable().optional(),
   cart: z.array(cartItemSchema).min(1, "Cart cannot be empty").max(50, "Maximum 50 items per order"),
   customerInfo: customerInfoSchema,
 });
@@ -76,9 +76,10 @@ serve(async (req) => {
     );
   }
 
+  // Use service role key to bypass RLS for server-side order creation
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {

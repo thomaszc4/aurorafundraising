@@ -5,18 +5,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, Package, ShoppingCart } from 'lucide-react';
+import { DollarSign, ShoppingCart } from 'lucide-react';
 import { ProductCard } from '@/components/fundraising/ProductCard';
 import { Cart } from '@/components/fundraising/Cart';
+import { SocialShareButtons } from '@/components/fundraising/SocialShareButtons';
 
 export default function PublicStudentPage() {
   const { slug } = useParams();
+  const location = window.location;
   const [fundraiser, setFundraiser] = useState<any>(null);
   const [campaign, setCampaign] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false);
+
+  const currentUrl = `${location.origin}${location.pathname}`;
 
   useEffect(() => {
     if (slug) {
@@ -134,6 +138,11 @@ export default function PublicStudentPage() {
                 {fundraiser.custom_message}
               </p>
             )}
+            <SocialShareButtons
+              url={currentUrl}
+              title={`Support ${fundraiser.profiles?.full_name || 'this student'} in their fundraiser!`}
+              description={`Help ${fundraiser.profiles?.full_name || 'this student'} reach their goal of $${Number(fundraiser.personal_goal).toFixed(2)} for ${campaign?.name || 'their fundraiser'}.`}
+            />
           </div>
           
           <div className="grid md:grid-cols-3 gap-4 mt-8">

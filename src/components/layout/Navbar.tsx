@@ -52,8 +52,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <img alt="Aurora Fundraising" className="h-20 w-auto" src="/lovable-uploads/9452e228-a5f0-4f97-ac95-d1fc5d6acf18.png" />
-            
+            <img alt="Aurora Fundraising" className="h-28 w-auto" src="/lovable-uploads/9452e228-a5f0-4f97-ac95-d1fc5d6acf18.png" />
           </Link>
 
           {/* Desktop Navigation */}

@@ -182,6 +182,7 @@ export default function PublicStudentPage() {
                   key={product.id}
                   product={product}
                   onAddToCart={addToCart}
+                  fundraiserSlug={slug}
                 />
               ))}
             </div>

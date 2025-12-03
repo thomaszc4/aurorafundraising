@@ -21,6 +21,7 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminStudents from "./pages/admin/Students";
 import StudentDashboard from "./pages/student/Dashboard";
 import PublicStudentPage from "./pages/student/PublicPage";
+import ProductDetail from "./pages/fundraise/ProductDetail";
 import CheckoutSuccess from "./pages/checkout/Success";
 import CheckoutCancel from "./pages/checkout/Cancel";
 import NotFound from "./pages/NotFound";
@@ -48,6 +49,8 @@ const App = () => (
             {/* Public student fundraising pages */}
             <Route path="/student/:slug" element={<PublicStudentPage />} />
             <Route path="/fundraise/:slug" element={<PublicStudentPage />} />
+            <Route path="/fundraise/:slug/product/:productId" element={<ProductDetail />} />
+            <Route path="/product/:productId" element={<ProductDetail />} />
             
             {/* Checkout pages */}
             <Route path="/checkout/success" element={<CheckoutSuccess />} />

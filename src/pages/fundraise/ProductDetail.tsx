@@ -4,7 +4,7 @@ import { Layout } from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { toast } from 'sonner';
 
@@ -13,10 +13,18 @@ interface ProductDetailProps {
   cart?: any[];
 }
 
+interface ProductImage {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
+
 export default function ProductDetail({ onAddToCart, cart }: ProductDetailProps) {
   const { slug, productId } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState<any>(null);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -28,19 +36,57 @@ export default function ProductDetail({ onAddToCart, cart }: ProductDetailProps)
 
   const fetchProduct = async () => {
     try {
-      const { data } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', productId)
-        .eq('is_active', true)
-        .maybeSingle();
+      // Fetch product and images in parallel
+      const [productResult, imagesResult] = await Promise.all([
+        supabase
+          .from('products')
+          .select('*')
+          .eq('id', productId)
+          .eq('is_active', true)
+          .maybeSingle(),
+        supabase
+          .from('product_images')
+          .select('*')
+          .eq('product_id', productId)
+          .order('display_order', { ascending: true })
+      ]);
 
-      setProduct(data);
+      setProduct(productResult.data);
+      setProductImages(imagesResult.data || []);
     } catch (error) {
       console.error('Error fetching product:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get all images including main image_url
+  const getAllImages = () => {
+    const images: string[] = [];
+    
+    // Add main product image first if it exists
+    if (product?.image_url) {
+      images.push(product.image_url);
+    }
+    
+    // Add additional images
+    productImages.forEach(img => {
+      if (!images.includes(img.image_url)) {
+        images.push(img.image_url);
+      }
+    });
+    
+    return images;
+  };
+
+  const allImages = product ? getAllImages() : [];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
   const handleAddToCart = () => {
@@ -61,7 +107,7 @@ export default function ProductDetail({ onAddToCart, cart }: ProductDetailProps)
   if (loading) {
     return (
       <Layout>
-        <div className="container-wide py-12 pt-28">
+        <div className="container-wide py-12">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-muted rounded w-1/4"></div>
             <div className="h-96 bg-muted rounded-xl"></div>
@@ -74,7 +120,7 @@ export default function ProductDetail({ onAddToCart, cart }: ProductDetailProps)
   if (!product) {
     return (
       <Layout>
-        <div className="container-wide py-12 pt-28">
+        <div className="container-wide py-12">
           <Card>
             <CardContent className="pt-6">
               <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
@@ -94,7 +140,7 @@ export default function ProductDetail({ onAddToCart, cart }: ProductDetailProps)
 
   return (
     <Layout>
-      <div className="container-wide py-12 pt-28">
+      <div className="container-wide py-12">
         <Button 
           variant="ghost" 
           onClick={handleBack}
@@ -105,22 +151,69 @@ export default function ProductDetail({ onAddToCart, cart }: ProductDetailProps)
         </Button>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Product Image */}
-          <Card className="overflow-hidden">
-            <AspectRatio ratio={1}>
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-8xl text-muted-foreground/20">📦</div>
-                )}
+          {/* Product Images */}
+          <div className="space-y-4">
+            <Card className="overflow-hidden relative">
+              <AspectRatio ratio={1}>
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  {allImages.length > 0 ? (
+                    <img
+                      src={allImages[currentImageIndex]}
+                      alt={`${product.name} - Image ${currentImageIndex + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-8xl text-muted-foreground/20">📦</div>
+                  )}
+                </div>
+              </AspectRatio>
+              
+              {/* Navigation Arrows */}
+              {allImages.length > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full opacity-80 hover:opacity-100"
+                    onClick={prevImage}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full opacity-80 hover:opacity-100"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+            </Card>
+
+            {/* Thumbnail Strip */}
+            {allImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {allImages.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      index === currentImageIndex 
+                        ? 'border-primary ring-2 ring-primary/20' 
+                        : 'border-transparent hover:border-muted-foreground/30'
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
               </div>
-            </AspectRatio>
-          </Card>
+            )}
+          </div>
 
           {/* Product Info */}
           <div className="space-y-6">

@@ -49,10 +49,10 @@ export function Navbar() {
   }, [location]);
   return <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || needsSolidNavbar ? "bg-primary/95 backdrop-blur-lg shadow-lg" : "bg-transparent"}`}>
       <nav className="container-wide">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <img alt="Aurora Fundraising" className="h-28 w-auto" src="/lovable-uploads/9452e228-a5f0-4f97-ac95-d1fc5d6acf18.png" />
+            <img alt="Aurora Fundraising" className="h-10 w-auto" src="/lovable-uploads/9452e228-a5f0-4f97-ac95-d1fc5d6acf18.png" />
           </Link>
 
           {/* Desktop Navigation */}

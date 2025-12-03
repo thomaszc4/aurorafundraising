@@ -22,7 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { Edit, Image, Plus, Trash2 } from 'lucide-react';
+import { ProductImagesManager } from '@/components/admin/ProductImagesManager';
 import { toast } from 'sonner';
 
 interface Product {
@@ -52,6 +53,7 @@ export default function AdminProducts() {
     is_active: true,
     image_url: '',
   });
+  const [imagesProduct, setImagesProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -317,6 +319,9 @@ export default function AdminProducts() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => setImagesProduct(product)} title="Manage Images">
+                          <Image className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -331,6 +336,16 @@ export default function AdminProducts() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Product Images Manager Dialog */}
+        {imagesProduct && (
+          <ProductImagesManager
+            productId={imagesProduct.id}
+            productName={imagesProduct.name}
+            open={!!imagesProduct}
+            onOpenChange={(open) => !open && setImagesProduct(null)}
+          />
+        )}
       </div>
     </Layout>
   );

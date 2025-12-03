@@ -15,6 +15,10 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/Products";
+import AdminCampaigns from "./pages/admin/Campaigns";
+import AdminOrders from "./pages/admin/Orders";
+import AdminStudents from "./pages/admin/Students";
 import StudentDashboard from "./pages/student/Dashboard";
 import PublicStudentPage from "./pages/student/PublicPage";
 import CheckoutSuccess from "./pages/checkout/Success";
@@ -50,10 +54,42 @@ const App = () => (
             
             {/* Protected Admin Routes */}
             <Route
-              path="/admin/*"
+              path="/admin"
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/products"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminProducts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/campaigns"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminCampaigns />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/students"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminStudents />
                 </ProtectedRoute>
               }
             />

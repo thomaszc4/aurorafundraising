@@ -1,15 +1,79 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation schemas
+const cartItemSchema = z.object({
+  productId: z.string().uuid("Invalid product ID format"),
+  quantity: z.number().int().min(1, "Quantity must be at least 1").max(100, "Maximum 100 items per product"),
+});
+
+const customerInfoSchema = z.object({
+  email: z.string().email("Invalid email format").max(255, "Email too long"),
+  name: z.string().max(100, "Name too long").optional().nullable(),
+  phone: z.string().max(20, "Phone number too long").optional().nullable(),
+});
+
+const checkoutRequestSchema = z.object({
+  fundraiserId: z.string().uuid("Invalid fundraiser ID format"),
+  cart: z.array(cartItemSchema).min(1, "Cart cannot be empty").max(50, "Maximum 50 items per order"),
+  customerInfo: customerInfoSchema,
+});
+
+// Simple in-memory rate limiting (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute per IP
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfter = Math.ceil((record.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  record.count++;
+  return { allowed: true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Get client IP for rate limiting
+  const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                   req.headers.get("x-real-ip") || 
+                   "unknown";
+
+  // Check rate limit
+  const rateLimit = checkRateLimit(clientIP);
+  if (!rateLimit.allowed) {
+    console.log(`Rate limit exceeded for IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ error: "Too many requests. Please try again later." }),
+      {
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimit.retryAfter)
+        },
+        status: 429,
+      }
+    );
   }
 
   const supabaseClient = createClient(
@@ -18,27 +82,30 @@ serve(async (req) => {
   );
 
   try {
-    const { fundraiserId, cart, customerInfo } = await req.json();
+    const rawBody = await req.json();
 
-    if (!fundraiserId || !cart || !Array.isArray(cart) || cart.length === 0 || !customerInfo) {
-      throw new Error("Missing required fields");
+    // Validate input with zod
+    const validationResult = checkoutRequestSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      console.log(`Validation failed: ${errors}`);
+      return new Response(
+        JSON.stringify({ error: `Validation failed: ${errors}` }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
 
-    // Validate customer info
-    if (!customerInfo.email || typeof customerInfo.email !== 'string') {
-      throw new Error("Valid email is required");
-    }
+    const { fundraiserId, cart, customerInfo } = validationResult.data;
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
     // Extract product IDs from cart
-    const productIds = cart.map((item: any) => item.productId).filter(Boolean);
-    
-    if (productIds.length === 0) {
-      throw new Error("No valid products in cart");
-    }
+    const productIds = cart.map((item) => item.productId);
 
     // Fetch actual product prices from database (SERVER-SIDE VALIDATION)
     const { data: products, error: productsError } = await supabaseClient
@@ -66,16 +133,14 @@ serve(async (req) => {
     }
 
     // Calculate totals using DATABASE prices (not client-supplied prices)
-    const totalAmount = cart.reduce((sum: number, item: any) => {
+    const totalAmount = cart.reduce((sum: number, item) => {
       const product = productMap.get(item.productId);
-      const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-      return sum + (Number(product!.price) * quantity);
+      return sum + (Number(product!.price) * item.quantity);
     }, 0);
     
-    const profitAmount = cart.reduce((sum: number, item: any) => {
+    const profitAmount = cart.reduce((sum: number, item) => {
       const product = productMap.get(item.productId);
-      const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-      return sum + ((Number(product!.price) - Number(product!.cost || 0)) * quantity);
+      return sum + ((Number(product!.price) - Number(product!.cost || 0)) * item.quantity);
     }, 0);
 
     // Create order record
@@ -99,16 +164,15 @@ serve(async (req) => {
     }
 
     // Create order items using DATABASE prices
-    const orderItems = cart.map((item: any) => {
+    const orderItems = cart.map((item) => {
       const product = productMap.get(item.productId);
-      const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
       return {
         order_id: order.id,
         product_id: item.productId,
-        quantity: quantity,
+        quantity: item.quantity,
         unit_price: Number(product!.price),
         unit_cost: Number(product!.cost || 0),
-        subtotal: Number(product!.price) * quantity,
+        subtotal: Number(product!.price) * item.quantity,
       };
     });
 
@@ -122,14 +186,13 @@ serve(async (req) => {
     }
 
     // Create Stripe line items using DATABASE prices
-    const lineItems = cart.map((item: any) => {
+    const lineItems = cart.map((item) => {
       const product = productMap.get(item.productId);
-      const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
       
       if (product!.stripe_price_id) {
         return {
           price: product!.stripe_price_id,
-          quantity: quantity,
+          quantity: item.quantity,
         };
       } else {
         return {
@@ -140,7 +203,7 @@ serve(async (req) => {
             },
             unit_amount: Math.round(Number(product!.price) * 100),
           },
-          quantity: quantity,
+          quantity: item.quantity,
         };
       }
     });
@@ -164,7 +227,7 @@ serve(async (req) => {
       .update({ stripe_session_id: session.id })
       .eq('id', order.id);
 
-    console.log(`Checkout session created: ${session.id} for order: ${order.id}`);
+    console.log(`Checkout session created: ${session.id} for order: ${order.id} from IP: ${clientIP}`);
 
     return new Response(
       JSON.stringify({ url: session.url }),

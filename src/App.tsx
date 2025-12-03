@@ -47,6 +47,7 @@ const App = () => (
             
             {/* Public student fundraising pages */}
             <Route path="/student/:slug" element={<PublicStudentPage />} />
+            <Route path="/fundraise/:slug" element={<PublicStudentPage />} />
             
             {/* Checkout pages */}
             <Route path="/checkout/success" element={<CheckoutSuccess />} />

@@ -31,8 +31,11 @@ export function Navbar() {
     signOut
   } = useAuth();
   
-  // Check if we're on a fundraiser page that needs solid navbar
-  const isFundraiserPage = location.pathname.startsWith('/fundraise/');
+  // Check if we're on a page that needs solid navbar
+  const needsSolidNavbar = location.pathname.startsWith('/fundraise/') || 
+                           location.pathname.startsWith('/student/') ||
+                           location.pathname.startsWith('/dashboard') ||
+                           location.pathname.startsWith('/admin');
   
   useEffect(() => {
     const handleScroll = () => {
@@ -44,7 +47,7 @@ export function Navbar() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
-  return <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isFundraiserPage ? "bg-primary/95 backdrop-blur-lg shadow-lg" : "bg-transparent"}`}>
+  return <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || needsSolidNavbar ? "bg-primary/95 backdrop-blur-lg shadow-lg" : "bg-transparent"}`}>
       <nav className="container-wide">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}

@@ -110,6 +110,101 @@ serve(async (req) => {
 
       console.log(`Order ${orderId} updated successfully:`, updateData);
 
+      // Send email notifications
+      if (updateData && updateData.length > 0) {
+        const order = updateData[0];
+        
+        // Get order items
+        const { data: orderItems } = await supabaseClient
+          .from("order_items")
+          .select("quantity, subtotal, product_id")
+          .eq("order_id", orderId);
+
+        // Get product names
+        const productIds = orderItems?.map(i => i.product_id) || [];
+        const { data: products } = await supabaseClient
+          .from("products")
+          .select("id, name")
+          .in("id", productIds);
+
+        const itemsWithNames = orderItems?.map(item => {
+          const product = products?.find(p => p.id === item.product_id);
+          return {
+            name: product?.name || 'Unknown Product',
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+          };
+        }) || [];
+
+        // Get student info for notification
+        let studentEmail = null;
+        let studentName = null;
+        if (order.student_fundraiser_id) {
+          const { data: fundraiser } = await supabaseClient
+            .from("student_fundraisers")
+            .select("student_id")
+            .eq("id", order.student_fundraiser_id)
+            .single();
+          
+          if (fundraiser?.student_id) {
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("email, full_name")
+              .eq("id", fundraiser.student_id)
+              .single();
+            
+            studentEmail = profile?.email;
+            studentName = profile?.full_name || 'Student';
+          }
+        }
+
+        // Send confirmation to customer
+        try {
+          const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.supabase.co') || '';
+          await fetch(`${baseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "order_confirmation",
+              to: order.customer_email,
+              data: {
+                customerName: order.customer_name || 'Supporter',
+                studentName: studentName || 'the fundraiser',
+                orderId: orderId,
+                totalAmount: order.total_amount,
+                items: itemsWithNames,
+              },
+            }),
+          });
+          console.log("Customer confirmation email sent");
+        } catch (emailError) {
+          console.error("Failed to send customer email:", emailError);
+        }
+
+        // Send notification to student
+        if (studentEmail) {
+          try {
+            const baseUrl = Deno.env.get("SUPABASE_URL") || '';
+            await fetch(`${baseUrl}/functions/v1/send-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "order_notification",
+                to: studentEmail,
+                data: {
+                  customerName: order.customer_name || 'A supporter',
+                  totalAmount: order.total_amount,
+                  profitAmount: order.profit_amount,
+                },
+              }),
+            });
+            console.log("Student notification email sent");
+          } catch (emailError) {
+            console.error("Failed to send student email:", emailError);
+          }
+        }
+      }
+
       // The trigger will automatically update student_fundraiser.total_raised
     }
 

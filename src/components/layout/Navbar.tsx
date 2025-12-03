@@ -28,6 +28,7 @@ export function Navbar() {
     user,
     isAdmin,
     isStudent,
+    isSuperAdmin,
     signOut
   } = useAuth();
   
@@ -59,6 +60,9 @@ export function Navbar() {
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center gap-2">
             {user ? <>
+                {isSuperAdmin && <Button variant="heroOutline" size="default" asChild>
+                    <Link to="/admin/super">Super Admin</Link>
+                  </Button>}
                 {isAdmin && <Button variant="heroOutline" size="default" asChild>
                     <Link to="/admin">Admin Dashboard</Link>
                   </Button>}
@@ -92,6 +96,9 @@ export function Navbar() {
               {link.name}
             </Link>)}
           {user ? <>
+              {isSuperAdmin && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+                  <Link to="/admin/super">Super Admin</Link>
+                </Button>}
               {isAdmin && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
                   <Link to="/admin">Admin Dashboard</Link>
                 </Button>}

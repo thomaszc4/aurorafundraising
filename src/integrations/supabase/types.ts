@@ -14,44 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
+      athon_pledges: {
+        Row: {
+          created_at: string
+          id: string
+          is_flat_donation: boolean | null
+          paid: boolean | null
+          pledge_amount: number
+          stripe_payment_intent_id: string | null
+          student_fundraiser_id: string
+          supporter_email: string
+          supporter_name: string
+          total_amount: number | null
+          units_completed: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_flat_donation?: boolean | null
+          paid?: boolean | null
+          pledge_amount: number
+          stripe_payment_intent_id?: string | null
+          student_fundraiser_id: string
+          supporter_email: string
+          supporter_name: string
+          total_amount?: number | null
+          units_completed?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_flat_donation?: boolean | null
+          paid?: boolean | null
+          pledge_amount?: number
+          stripe_payment_intent_id?: string | null
+          student_fundraiser_id?: string
+          supporter_email?: string
+          supporter_name?: string
+          total_amount?: number | null
+          units_completed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athon_pledges_student_fundraiser_id_fkey"
+            columns: ["student_fundraiser_id"]
+            isOneToOne: false
+            referencedRelation: "student_fundraisers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_products: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_products_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
+          athon_donation_type:
+            | Database["public"]["Enums"]["athon_donation_type"]
+            | null
+          athon_unit_name: string | null
           created_at: string
           description: string | null
           end_date: string | null
+          fundraiser_type: Database["public"]["Enums"]["fundraiser_type"]
           goal_amount: number | null
           id: string
           name: string
           organization_admin_id: string | null
           organization_name: string
+          selected_product_ids: string[] | null
           start_date: string | null
-          status: Database["public"]["Enums"]["campaign_status"]
+          status: Database["public"]["Enums"]["campaign_status"] | null
           updated_at: string
         }
         Insert: {
+          athon_donation_type?:
+            | Database["public"]["Enums"]["athon_donation_type"]
+            | null
+          athon_unit_name?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
+          fundraiser_type?: Database["public"]["Enums"]["fundraiser_type"]
           goal_amount?: number | null
           id?: string
           name: string
           organization_admin_id?: string | null
           organization_name: string
+          selected_product_ids?: string[] | null
           start_date?: string | null
-          status?: Database["public"]["Enums"]["campaign_status"]
+          status?: Database["public"]["Enums"]["campaign_status"] | null
           updated_at?: string
         }
         Update: {
+          athon_donation_type?:
+            | Database["public"]["Enums"]["athon_donation_type"]
+            | null
+          athon_unit_name?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
+          fundraiser_type?: Database["public"]["Enums"]["fundraiser_type"]
           goal_amount?: number | null
           id?: string
           name?: string
           organization_admin_id?: string | null
           organization_name?: string
+          selected_product_ids?: string[] | null
           start_date?: string | null
-          status?: Database["public"]["Enums"]["campaign_status"]
+          status?: Database["public"]["Enums"]["campaign_status"] | null
           updated_at?: string
         }
         Relationships: [
@@ -199,6 +303,7 @@ export type Database = {
       }
       products: {
         Row: {
+          average_raised_per_student: number | null
           cost: number | null
           created_at: string
           description: string | null
@@ -213,6 +318,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          average_raised_per_student?: number | null
           cost?: number | null
           created_at?: string
           description?: string | null
@@ -227,6 +333,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          average_raised_per_student?: number | null
           cost?: number | null
           created_at?: string
           description?: string | null
@@ -326,6 +433,50 @@ export type Database = {
           },
         ]
       }
+      student_invitations: {
+        Row: {
+          account_created: boolean | null
+          campaign_id: string
+          created_at: string
+          id: string
+          invitation_sent: boolean | null
+          invitation_sent_at: string | null
+          student_email: string
+          student_name: string
+          user_id: string | null
+        }
+        Insert: {
+          account_created?: boolean | null
+          campaign_id: string
+          created_at?: string
+          id?: string
+          invitation_sent?: boolean | null
+          invitation_sent_at?: string | null
+          student_email: string
+          student_name: string
+          user_id?: string | null
+        }
+        Update: {
+          account_created?: boolean | null
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          invitation_sent?: boolean | null
+          invitation_sent_at?: string | null
+          student_email?: string
+          student_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_invitations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -370,7 +521,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "student" | "organization_admin" | "super_admin"
+      athon_donation_type: "pledge_per_unit" | "flat_donation"
       campaign_status: "draft" | "active" | "paused" | "completed"
+      fundraiser_type:
+        | "product"
+        | "walkathon"
+        | "readathon"
+        | "jogathon"
+        | "other_athon"
       order_status:
         | "pending"
         | "processing"
@@ -505,7 +663,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "student", "organization_admin", "super_admin"],
+      athon_donation_type: ["pledge_per_unit", "flat_donation"],
       campaign_status: ["draft", "active", "paused", "completed"],
+      fundraiser_type: [
+        "product",
+        "walkathon",
+        "readathon",
+        "jogathon",
+        "other_athon",
+      ],
       order_status: [
         "pending",
         "processing",

@@ -6,29 +6,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, Clock, Send, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 const Contact = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
+    await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSubmitting(false);
     setIsSubmitted(true);
     toast({
       title: "Message Sent!",
-      description: "We'll get back to you within 24-48 hours.",
+      description: "We'll get back to you within 24-48 hours."
     });
   };
-
-  return (
-    <Layout>
+  return <Layout>
       {/* Hero Section */}
       <section className="pt-32 pb-20 bg-hero relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
@@ -60,8 +57,7 @@ const Contact = () => {
             <div>
               <h2 className="text-2xl font-bold text-foreground mb-6">Send Us a Message</h2>
               
-              {isSubmitted ? (
-                <div className="p-12 rounded-3xl bg-secondary/10 border border-secondary/20 text-center">
+              {isSubmitted ? <div className="p-12 rounded-3xl bg-secondary/10 border border-secondary/20 text-center">
                   <CheckCircle className="w-16 h-16 text-secondary mx-auto mb-4" />
                   <h3 className="text-2xl font-bold text-foreground mb-2">Thank You!</h3>
                   <p className="text-muted-foreground mb-6">
@@ -71,98 +67,50 @@ const Contact = () => {
                   <Button variant="outline" onClick={() => setIsSubmitted(false)}>
                     Send Another Message
                   </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                </div> : <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name *</Label>
-                      <Input 
-                        id="firstName" 
-                        required 
-                        placeholder="John"
-                        className="h-12 rounded-xl"
-                      />
+                      <Input id="firstName" required placeholder="John" className="h-12 rounded-xl" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name *</Label>
-                      <Input 
-                        id="lastName" 
-                        required 
-                        placeholder="Doe"
-                        className="h-12 rounded-xl"
-                      />
+                      <Input id="lastName" required placeholder="Doe" className="h-12 rounded-xl" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email Address *</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      required 
-                      placeholder="john@example.com"
-                      className="h-12 rounded-xl"
-                    />
+                    <Input id="email" type="email" required placeholder="john@example.com" className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input 
-                      id="phone" 
-                      type="tel" 
-                      placeholder="(123) 456-7890"
-                      className="h-12 rounded-xl"
-                    />
+                    <Input id="phone" type="tel" placeholder="(123) 456-7890" className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="organization">Organization Name *</Label>
-                    <Input 
-                      id="organization" 
-                      required 
-                      placeholder="Lincoln Elementary PTA"
-                      className="h-12 rounded-xl"
-                    />
+                    <Input id="organization" required placeholder="Lincoln Elementary PTA" className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="goal">Fundraising Goal</Label>
-                    <Input 
-                      id="goal" 
-                      placeholder="e.g., $5,000"
-                      className="h-12 rounded-xl"
-                    />
+                    <Input id="goal" placeholder="e.g., $5,000" className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="message">Tell Us About Your Fundraiser *</Label>
-                    <Textarea 
-                      id="message" 
-                      required 
-                      rows={4}
-                      placeholder="Share your goals, timeline, and any questions you have..."
-                      className="rounded-xl resize-none"
-                    />
+                    <Textarea id="message" required rows={4} placeholder="Share your goals, timeline, and any questions you have..." className="rounded-xl resize-none" />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    size="lg" 
-                    className="w-full"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      "Sending..."
-                    ) : (
-                      <>
+                  <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Sending..." : <>
                         <Send className="w-5 h-5" />
                         Send Message
-                      </>
-                    )}
+                      </>}
                   </Button>
-                </form>
-              )}
+                </form>}
             </div>
 
             {/* Contact Info */}
@@ -177,7 +125,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Email Us</h3>
                     <a href="mailto:info@aurorafundraising.com" className="text-primary-blue hover:underline">
-                      info@aurorafundraising.com
+                      impactfulfundraising@gmail.com
                     </a>
                   </div>
                 </div>
@@ -188,8 +136,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Call Us</h3>
-                    <a href="tel:+1234567890" className="text-primary-blue hover:underline">
-                      (123) 456-7890
+                    <a className="text-primary-blue hover:underline" href="tel:+19073108288">
+                      (907) 310-8288
                     </a>
                   </div>
                 </div>
@@ -220,8 +168,6 @@ const Contact = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Contact;

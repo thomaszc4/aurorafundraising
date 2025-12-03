@@ -5,9 +5,10 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
   requireStudent?: boolean;
+  requireSuperAdmin?: boolean;
 }
 
-export const ProtectedRoute = ({ children, requireAdmin, requireStudent }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, requireAdmin, requireStudent, requireSuperAdmin }: ProtectedRouteProps) => {
   const { user, loading, isAdmin, isStudent, isSuperAdmin } = useAuth();
 
   if (loading) {
@@ -20,6 +21,10 @@ export const ProtectedRoute = ({ children, requireAdmin, requireStudent }: Prote
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   if (requireAdmin && !isAdmin && !isSuperAdmin) {

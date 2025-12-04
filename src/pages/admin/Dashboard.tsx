@@ -267,41 +267,41 @@ export default function AdminDashboard() {
 
         {/* Quick Actions */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin/students')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/students')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Students
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">View and manage student fundraisers for this campaign</p>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">View and manage student fundraisers for this campaign</p>
               <Button variant="outline" className="w-full">Manage Students</Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin/orders')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/orders')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 Orders
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">Track and manage all orders for this fundraiser</p>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Track and manage all orders for this fundraiser</p>
               <Button variant="outline" className="w-full">View Orders</Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin/campaigns')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/campaigns')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 Campaign Settings
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">Edit campaign details, dates, and goals</p>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Edit campaign details, dates, and goals</p>
               <Button variant="outline" className="w-full">Edit Campaign</Button>
             </CardContent>
           </Card>

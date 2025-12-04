@@ -20,18 +20,40 @@ interface EmailRequest {
 
 // Function to wrap links with tracking
 function wrapLinksWithTracking(html: string, trackingId: string, baseUrl: string): string {
-  // Match href attributes with URLs
+  // Match href attributes with URLs (but not mailto: or internal preference/unsubscribe links)
   const linkRegex = /href="(https?:\/\/[^"]+)"/gi;
   
   return html.replace(linkRegex, (match, url) => {
-    // Don't track unsubscribe or preference links (they already go to our app)
-    if (url.includes('/preferences') || url.includes('/unsubscribe')) {
+    // Don't track unsubscribe, preferences, or internal app links
+    if (url.includes('/preferences') || url.includes('/unsubscribe') || url.includes('mailto:')) {
       return match;
     }
     const encodedUrl = encodeURIComponent(url);
     const trackingUrl = `${baseUrl}/functions/v1/track-email?id=${trackingId}&type=click&url=${encodedUrl}`;
     return `href="${trackingUrl}"`;
   });
+}
+
+// Generate email footer with unsubscribe and preference links
+function generateEmailFooter(donorId: string | undefined, appUrl: string): string {
+  if (!donorId) return '';
+  
+  const preferencesUrl = `${appUrl}/preferences/${donorId}`;
+  const unsubscribeUrl = `${appUrl}/unsubscribe/${donorId}`;
+  
+  return `
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0 16px 0;" />
+    <div style="text-align: center; font-size: 12px; color: #6b7280;">
+      <p style="margin: 0 0 8px 0;">
+        <a href="${preferencesUrl}" style="color: #2563eb; text-decoration: underline;">Update preferences</a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>
+      </p>
+      <p style="margin: 0; color: #9ca3af;">
+        You're receiving this because you supported our fundraiser.
+      </p>
+    </div>
+  `;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -46,6 +68,9 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Default app URL - can be overridden in data
+    const appUrl = data.appUrl || 'https://aurora-fundraising.lovable.app';
 
     let subject = '';
     let html = '';
@@ -72,11 +97,6 @@ const handler = async (req: Request): Promise<Response> => {
     // Build tracking pixel URL
     const trackingPixelUrl = emailTrackingId 
       ? `${supabaseUrl}/functions/v1/track-email?id=${emailTrackingId}&type=open`
-      : null;
-
-    // Build preference center URL
-    const preferenceCenterUrl = donorId 
-      ? `${data.appUrl || 'https://aurora-fundraising.lovable.app'}/preferences/${donorId}`
       : null;
 
     switch (type) {
@@ -113,13 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
             </ul>
             <p>You'll receive another email when your order ships.</p>
             <p>Thank you for your support!</p>
-            ${preferenceCenterUrl ? `
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #6b7280;">
-                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a> | 
-                Manage how you appear on our supporter wall and communication settings
-              </p>
-            ` : ''}
+            ${generateEmailFooter(donorId, appUrl)}
           </div>
         `;
         break;
@@ -142,13 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             ${data.content}
-            ${preferenceCenterUrl ? `
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #6b7280;">
-                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a> | 
-                Manage your communication and recognition settings
-              </p>
-            ` : ''}
+            ${generateEmailFooter(donorId, appUrl)}
           </div>
         `;
         break;
@@ -166,12 +174,7 @@ const handler = async (req: Request): Promise<Response> => {
             </a>
             <p>This survey only takes 2-3 minutes to complete.</p>
             <p>Thank you for your continued support!</p>
-            ${preferenceCenterUrl ? `
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #6b7280;">
-                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a>
-              </p>
-            ` : ''}
+            ${generateEmailFooter(donorId, appUrl)}
           </div>
         `;
         break;
@@ -190,12 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
             ` : ''}
             ${data.story ? `<p>${data.story}</p>` : ''}
             <p>Thank you for making this possible!</p>
-            ${preferenceCenterUrl ? `
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #6b7280;">
-                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a>
-              </p>
-            ` : ''}
+            ${generateEmailFooter(donorId, appUrl)}
           </div>
         `;
         break;

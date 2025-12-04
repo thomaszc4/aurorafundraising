@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText, Trophy, ClipboardList as Survey, FlaskConical } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText, Trophy, ClipboardList as Survey, FlaskConical, Mail } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -16,6 +16,7 @@ import { DonorJourneyManager } from '@/components/admin/DonorJourneyManager';
 import { ImpactUpdatesManager } from '@/components/admin/ImpactUpdatesManager';
 import { DonorSurveyManager } from '@/components/admin/DonorSurveyManager';
 import { EmailABTesting } from '@/components/admin/EmailABTesting';
+import { EmailAnalyticsDashboard } from '@/components/admin/EmailAnalyticsDashboard';
 import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
 import { Tables } from '@/integrations/supabase/types';
 
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
   const [showDonorSurvey, setShowDonorSurvey] = useState(false);
   const [showABTesting, setShowABTesting] = useState(false);
   const [showDonorLeaderboard, setShowDonorLeaderboard] = useState(false);
+  const [showEmailAnalytics, setShowEmailAnalytics] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -274,6 +276,18 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground">Celebrating our generous supporters</p>
           </div>
           <DonorLeaderboard campaignId={selectedCampaign.id} limit={20} variant="wall" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Email Analytics Dashboard
+  if (showEmailAnalytics && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowEmailAnalytics(false)} className="mb-4">← Back to Dashboard</Button>
+          <EmailAnalyticsDashboard campaignId={selectedCampaign.id} />
         </div>
       </Layout>
     );
@@ -566,10 +580,23 @@ export default function AdminDashboard() {
               <Button variant="outline" className="w-full border-violet-500/50 text-violet-600 hover:bg-violet-500/10">Run Tests</Button>
             </CardContent>
           </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-cyan-500/50 bg-cyan-500/5" onClick={() => setShowEmailAnalytics(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-cyan-600">
+                <Mail className="h-5 w-5" />
+                Email Analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Track open rates, clicks, and engagement</p>
+              <Button variant="outline" className="w-full border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10">View Analytics</Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Secondary Actions */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/orders')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

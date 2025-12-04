@@ -504,15 +504,7 @@ export function CreateCampaignWizard({
             {/* Fundraiser Type Selection within Category */}
             {selectedCategory && !selectedFundraiserType && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCategory(null)}
-                    className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
-                    Back to categories
-                  </button>
+                <div className="flex items-center justify-end">
                   <Badge variant="outline" className="gap-1">
                     {(() => {
                       const Icon = selectedCategory.icon;
@@ -572,16 +564,6 @@ export function CreateCampaignWizard({
             {/* Selected Fundraiser Type Configuration */}
             {selectedFundraiserType && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedFundraiserType(null)}
-                    className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
-                    Choose different type
-                  </button>
-                </div>
 
                 {/* Selected Type Card */}
                 <div className="rounded-2xl border-2 border-primary p-6 bg-primary/5">
@@ -851,6 +833,15 @@ export function CreateCampaignWizard({
           onClick={() => {
             if (step === 1) {
               onCancel();
+            } else if (step === 2) {
+              // Handle back within step 2 substates
+              if (selectedFundraiserType) {
+                setSelectedFundraiserType(null);
+              } else if (selectedCategory) {
+                setSelectedCategory(null);
+              } else {
+                setStep(1);
+              }
             } else {
               setStep(step - 1);
             }

@@ -469,6 +469,9 @@ export type Database = {
           interests: string[] | null
           is_thanked: boolean | null
           last_donation_at: string | null
+          marketing_consent: boolean | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -491,6 +494,9 @@ export type Database = {
           interests?: string[] | null
           is_thanked?: boolean | null
           last_donation_at?: string | null
+          marketing_consent?: boolean | null
+          marketing_consent_at?: string | null
+          marketing_consent_ip?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -513,6 +519,9 @@ export type Database = {
           interests?: string[] | null
           is_thanked?: boolean | null
           last_donation_at?: string | null
+          marketing_consent?: boolean | null
+          marketing_consent_at?: string | null
+          marketing_consent_ip?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -972,6 +981,73 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      scheduled_emails: {
+        Row: {
+          campaign_id: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          recipient_segment: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          recipient_segment?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          recipient_segment?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_emails_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_fundraisers: {
         Row: {

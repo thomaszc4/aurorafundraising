@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText, Trophy, ClipboardList as Survey, FlaskConical, Mail } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText, Trophy, ClipboardList as Survey, FlaskConical, Mail, Clock, Palette, Database } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -17,6 +17,9 @@ import { ImpactUpdatesManager } from '@/components/admin/ImpactUpdatesManager';
 import { DonorSurveyManager } from '@/components/admin/DonorSurveyManager';
 import { EmailABTesting } from '@/components/admin/EmailABTesting';
 import { EmailAnalyticsDashboard } from '@/components/admin/EmailAnalyticsDashboard';
+import { EmailScheduler } from '@/components/admin/EmailScheduler';
+import { EmailTemplateBuilder } from '@/components/admin/EmailTemplateBuilder';
+import { DonorDatabase } from '@/components/admin/DonorDatabase';
 import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
 import { Tables } from '@/integrations/supabase/types';
 
@@ -46,6 +49,9 @@ export default function AdminDashboard() {
   const [showABTesting, setShowABTesting] = useState(false);
   const [showDonorLeaderboard, setShowDonorLeaderboard] = useState(false);
   const [showEmailAnalytics, setShowEmailAnalytics] = useState(false);
+  const [showEmailScheduler, setShowEmailScheduler] = useState(false);
+  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
+  const [showDonorDatabase, setShowDonorDatabase] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -288,6 +294,42 @@ export default function AdminDashboard() {
         <div className="container-wide py-12">
           <Button variant="ghost" onClick={() => setShowEmailAnalytics(false)} className="mb-4">← Back to Dashboard</Button>
           <EmailAnalyticsDashboard campaignId={selectedCampaign.id} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Email Scheduler
+  if (showEmailScheduler && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowEmailScheduler(false)} className="mb-4">← Back to Dashboard</Button>
+          <EmailScheduler campaignId={selectedCampaign.id} onClose={() => setShowEmailScheduler(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Template Builder
+  if (showTemplateBuilder && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowTemplateBuilder(false)} className="mb-4">← Back to Dashboard</Button>
+          <EmailTemplateBuilder campaignId={selectedCampaign.id} onClose={() => setShowTemplateBuilder(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Donor Database
+  if (showDonorDatabase) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowDonorDatabase(false)} className="mb-4">← Back to Dashboard</Button>
+          <DonorDatabase onClose={() => setShowDonorDatabase(false)} />
         </div>
       </Layout>
     );
@@ -591,6 +633,45 @@ export default function AdminDashboard() {
             <CardContent className="flex flex-col flex-1">
               <p className="text-muted-foreground mb-4 flex-1">Track open rates, clicks, and engagement</p>
               <Button variant="outline" className="w-full border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10">View Analytics</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-indigo-500/50 bg-indigo-500/5" onClick={() => setShowEmailScheduler(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-indigo-600">
+                <Clock className="h-5 w-5" />
+                Email Scheduler
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Schedule campaigns for optimal send times</p>
+              <Button variant="outline" className="w-full border-indigo-500/50 text-indigo-600 hover:bg-indigo-500/10">Schedule Emails</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-fuchsia-500/50 bg-fuchsia-500/5" onClick={() => setShowTemplateBuilder(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-fuchsia-600">
+                <Palette className="h-5 w-5" />
+                Template Builder
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Design custom email templates</p>
+              <Button variant="outline" className="w-full border-fuchsia-500/50 text-fuchsia-600 hover:bg-fuchsia-500/10">Build Templates</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-emerald-500/50 bg-emerald-500/5" onClick={() => setShowDonorDatabase(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-emerald-600">
+                <Database className="h-5 w-5" />
+                Donor Database
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Access all donors across past & current fundraisers</p>
+              <Button variant="outline" className="w-full border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10">View Database</Button>
             </CardContent>
           </Card>
         </div>

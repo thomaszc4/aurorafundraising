@@ -673,7 +673,7 @@ export const FUNDRAISER_CATEGORIES: FundraiserCategory[] = [
       {
         id: 'raffle',
         label: 'Raffle/50-50',
-        icon: Dice,
+        icon: Dice1,
         description: 'Sell tickets for a chance to win prizes or split pot. Easy to organize with high engagement.',
         avgRaised: 100,
         color: 'from-purple-500 to-violet-600',

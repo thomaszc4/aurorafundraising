@@ -25,6 +25,7 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
   });
   const [displayOnWall, setDisplayOnWall] = useState(true);
   const [displayName, setDisplayName] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState(false);
 
   const cartTotal = cart.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0);
 
@@ -52,6 +53,7 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
           donorPreferences: {
             displayOnWall,
             displayName: displayOnWall ? (displayName || customerInfo.name) : null,
+            marketingConsent,
           },
         },
       });
@@ -200,6 +202,32 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Marketing Communications Opt-in */}
+          <div className="space-y-3 p-4 border rounded-lg">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="marketingConsent"
+                checked={marketingConsent}
+                onCheckedChange={(checked) => setMarketingConsent(checked === true)}
+              />
+              <div className="space-y-1">
+                <Label htmlFor="marketingConsent" className="cursor-pointer font-medium">
+                  Stay connected with our organization
+                </Label>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  By checking this box, I expressly consent to receive promotional emails, newsletters, 
+                  fundraising updates, event announcements, and other marketing communications from this 
+                  organization at the email address provided above. I understand that: (i) my consent is 
+                  voluntary and not a condition of my donation or purchase; (ii) I may withdraw my consent 
+                  at any time by clicking the "unsubscribe" link in any email or by contacting the organization 
+                  directly; (iii) message and data rates may apply; (iv) my information will be handled in 
+                  accordance with the organization's privacy policy. I acknowledge that I am at least 18 years 
+                  of age or have parental/guardian consent.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Total and Checkout */}

@@ -20,10 +20,17 @@ const customerInfoSchema = z.object({
   phone: z.string().max(20, "Phone number too long").optional().nullable(),
 });
 
+const donorPreferencesSchema = z.object({
+  displayOnWall: z.boolean().optional(),
+  displayName: z.string().max(100, "Display name too long").optional().nullable(),
+  marketingConsent: z.boolean().optional(),
+});
+
 const checkoutRequestSchema = z.object({
   fundraiserId: z.string().uuid("Invalid fundraiser ID format").nullable().optional(),
   cart: z.array(cartItemSchema).min(1, "Cart cannot be empty").max(50, "Maximum 50 items per order"),
   customerInfo: customerInfoSchema,
+  donorPreferences: donorPreferencesSchema.optional(),
 });
 
 // Simple in-memory rate limiting (resets on function cold start)
@@ -99,7 +106,7 @@ serve(async (req) => {
       );
     }
 
-    const { fundraiserId, cart, customerInfo } = validationResult.data;
+    const { fundraiserId, cart, customerInfo, donorPreferences } = validationResult.data;
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -227,6 +234,63 @@ serve(async (req) => {
       .from('orders')
       .update({ stripe_session_id: session.id })
       .eq('id', order.id);
+
+    // Get campaign ID from fundraiser for donor record
+    let campaignId: string | null = null;
+    if (fundraiserId) {
+      const { data: fundraiser } = await supabaseClient
+        .from('student_fundraisers')
+        .select('campaign_id')
+        .eq('id', fundraiserId)
+        .single();
+      campaignId = fundraiser?.campaign_id || null;
+    }
+
+    // Create or update donor record with preferences
+    if (campaignId) {
+      const { data: existingDonor } = await supabaseClient
+        .from('donors')
+        .select('id, donation_count, total_donated')
+        .eq('email', customerInfo.email)
+        .eq('campaign_id', campaignId)
+        .single();
+
+      if (existingDonor) {
+        // Update existing donor
+        await supabaseClient
+          .from('donors')
+          .update({
+            name: customerInfo.name || existingDonor.id,
+            phone: customerInfo.phone || null,
+            display_on_wall: donorPreferences?.displayOnWall ?? true,
+            display_name: donorPreferences?.displayName || customerInfo.name,
+            marketing_consent: donorPreferences?.marketingConsent ?? false,
+            marketing_consent_at: donorPreferences?.marketingConsent ? new Date().toISOString() : null,
+            marketing_consent_ip: donorPreferences?.marketingConsent ? clientIP : null,
+          })
+          .eq('id', existingDonor.id);
+      } else {
+        // Create new donor
+        await supabaseClient
+          .from('donors')
+          .insert({
+            campaign_id: campaignId,
+            name: customerInfo.name || customerInfo.email,
+            email: customerInfo.email,
+            phone: customerInfo.phone || null,
+            display_on_wall: donorPreferences?.displayOnWall ?? true,
+            display_name: donorPreferences?.displayName || customerInfo.name,
+            marketing_consent: donorPreferences?.marketingConsent ?? false,
+            marketing_consent_at: donorPreferences?.marketingConsent ? new Date().toISOString() : null,
+            marketing_consent_ip: donorPreferences?.marketingConsent ? clientIP : null,
+            segment: 'first_time',
+            total_donated: totalAmount,
+            donation_count: 1,
+            first_donation_at: new Date().toISOString(),
+            last_donation_at: new Date().toISOString(),
+          });
+      }
+    }
 
     console.log(`Checkout session created: ${session.id} for order: ${order.id} from IP: ${clientIP}`);
 

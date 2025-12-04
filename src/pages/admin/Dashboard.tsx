@@ -5,12 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
 import { DonorManagement } from '@/components/admin/DonorManagement';
 import { ProfileEditor } from '@/components/admin/ProfileEditor';
+import { RetentionAnalytics } from '@/components/admin/RetentionAnalytics';
+import { DonorJourneyManager } from '@/components/admin/DonorJourneyManager';
+import { ImpactUpdatesManager } from '@/components/admin/ImpactUpdatesManager';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -32,6 +35,9 @@ export default function AdminDashboard() {
   const [showComparison, setShowComparison] = useState(false);
   const [showDonorManagement, setShowDonorManagement] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [showRetentionAnalytics, setShowRetentionAnalytics] = useState(false);
+  const [showDonorJourney, setShowDonorJourney] = useState(false);
+  const [showImpactUpdates, setShowImpactUpdates] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -194,6 +200,39 @@ export default function AdminDashboard() {
     );
   }
 
+  // Show Retention Analytics
+  if (showRetentionAnalytics && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <RetentionAnalytics campaignId={selectedCampaign.id} onClose={() => setShowRetentionAnalytics(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Donor Journey Manager
+  if (showDonorJourney && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <DonorJourneyManager campaignId={selectedCampaign.id} onClose={() => setShowDonorJourney(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Impact Updates Manager
+  if (showImpactUpdates && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <ImpactUpdatesManager campaignId={selectedCampaign.id} onClose={() => setShowImpactUpdates(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
   // No fundraisers - show create CTA
   if (campaigns.length === 0) {
     return (
@@ -332,7 +371,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-primary/50 bg-primary/5" onClick={() => setShowProjectManager(true)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
@@ -341,7 +380,7 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Step-by-step guide to run your fundraiser successfully</p>
+              <p className="text-muted-foreground mb-4 flex-1">Step-by-step guide to run your fundraiser</p>
               <Button className="w-full">Open Manager</Button>
             </CardContent>
           </Card>
@@ -354,8 +393,50 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Track donors, send thanks, and build relationships</p>
+              <p className="text-muted-foreground mb-4 flex-1">Track donors, send thanks, build relationships</p>
               <Button variant="outline" className="w-full border-rose-500/50 text-rose-600 hover:bg-rose-500/10">Manage Donors</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-green-500/50 bg-green-500/5" onClick={() => setShowRetentionAnalytics(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-600">
+                <BarChart3 className="h-5 w-5" />
+                Retention Analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Quarterly metrics and retention tracking</p>
+              <Button variant="outline" className="w-full border-green-500/50 text-green-600 hover:bg-green-500/10">View Analytics</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-purple-500/50 bg-purple-500/5" onClick={() => setShowDonorJourney(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-600">
+                <Zap className="h-5 w-5" />
+                Donor Journeys
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Automated email workflows for donors</p>
+              <Button variant="outline" className="w-full border-purple-500/50 text-purple-600 hover:bg-purple-500/10">Manage Journeys</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Secondary Row */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-orange-500/50 bg-orange-500/5" onClick={() => setShowImpactUpdates(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-600">
+                <FileText className="h-5 w-5" />
+                Impact Updates
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Share stories, stats, and photos with donors</p>
+              <Button variant="outline" className="w-full border-orange-500/50 text-orange-600 hover:bg-orange-500/10">Create Update</Button>
             </CardContent>
           </Card>
 
@@ -380,14 +461,11 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Update your personal information and preferences</p>
+              <p className="text-muted-foreground mb-4 flex-1">Update your personal information</p>
               <Button variant="outline" className="w-full border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10">Edit Profile</Button>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Secondary Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/students')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -397,10 +475,13 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
               <p className="text-muted-foreground mb-4 flex-1">View and manage student fundraisers</p>
-              <Button variant="outline" className="w-full">Manage Students</Button>
+              <Button variant="outline" className="w-full">Manage</Button>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Secondary Actions */}
+        <div className="grid gap-6 md:grid-cols-2">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/orders')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -418,7 +499,7 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Settings
+                Campaign Settings
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">

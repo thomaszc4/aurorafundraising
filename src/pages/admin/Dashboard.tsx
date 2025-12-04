@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText, Trophy, ClipboardList as Survey, FlaskConical } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -14,6 +14,9 @@ import { ProfileEditor } from '@/components/admin/ProfileEditor';
 import { RetentionAnalytics } from '@/components/admin/RetentionAnalytics';
 import { DonorJourneyManager } from '@/components/admin/DonorJourneyManager';
 import { ImpactUpdatesManager } from '@/components/admin/ImpactUpdatesManager';
+import { DonorSurveyManager } from '@/components/admin/DonorSurveyManager';
+import { EmailABTesting } from '@/components/admin/EmailABTesting';
+import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -38,6 +41,9 @@ export default function AdminDashboard() {
   const [showRetentionAnalytics, setShowRetentionAnalytics] = useState(false);
   const [showDonorJourney, setShowDonorJourney] = useState(false);
   const [showImpactUpdates, setShowImpactUpdates] = useState(false);
+  const [showDonorSurvey, setShowDonorSurvey] = useState(false);
+  const [showABTesting, setShowABTesting] = useState(false);
+  const [showDonorLeaderboard, setShowDonorLeaderboard] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -228,6 +234,46 @@ export default function AdminDashboard() {
       <Layout>
         <div className="container-wide py-12">
           <ImpactUpdatesManager campaignId={selectedCampaign.id} onClose={() => setShowImpactUpdates(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Donor Survey Manager
+  if (showDonorSurvey && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowDonorSurvey(false)} className="mb-4">← Back to Dashboard</Button>
+          <DonorSurveyManager campaignId={selectedCampaign.id} onClose={() => setShowDonorSurvey(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Email A/B Testing
+  if (showABTesting && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowABTesting(false)} className="mb-4">← Back to Dashboard</Button>
+          <EmailABTesting campaignId={selectedCampaign.id} onClose={() => setShowABTesting(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Donor Leaderboard
+  if (showDonorLeaderboard && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <Button variant="ghost" onClick={() => setShowDonorLeaderboard(false)} className="mb-4">← Back to Dashboard</Button>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Donor Recognition Wall</h2>
+            <p className="text-muted-foreground">Celebrating our generous supporters</p>
+          </div>
+          <DonorLeaderboard campaignId={selectedCampaign.id} limit={20} variant="wall" />
         </div>
       </Layout>
     );
@@ -476,6 +522,48 @@ export default function AdminDashboard() {
             <CardContent className="flex flex-col flex-1">
               <p className="text-muted-foreground mb-4 flex-1">View and manage student fundraisers</p>
               <Button variant="outline" className="w-full">Manage</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Engagement & Testing Row */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-pink-500/50 bg-pink-500/5" onClick={() => setShowDonorLeaderboard(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-pink-600">
+                <Trophy className="h-5 w-5" />
+                Recognition Wall
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Public leaderboard celebrating top donors</p>
+              <Button variant="outline" className="w-full border-pink-500/50 text-pink-600 hover:bg-pink-500/10">View Wall</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-blue-500/50 bg-blue-500/5" onClick={() => setShowDonorSurvey(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-600">
+                <Survey className="h-5 w-5" />
+                Donor Surveys
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Collect feedback and communication preferences</p>
+              <Button variant="outline" className="w-full border-blue-500/50 text-blue-600 hover:bg-blue-500/10">Manage Surveys</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-violet-500/50 bg-violet-500/5" onClick={() => setShowABTesting(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-violet-600">
+                <FlaskConical className="h-5 w-5" />
+                Email A/B Testing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Optimize email open rates and engagement</p>
+              <Button variant="outline" className="w-full border-violet-500/50 text-violet-600 hover:bg-violet-500/10">Run Tests</Button>
             </CardContent>
           </Card>
         </div>

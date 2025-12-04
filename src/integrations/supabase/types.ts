@@ -342,6 +342,57 @@ export type Database = {
           },
         ]
       }
+      donor_surveys: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          donor_id: string
+          feedback: string | null
+          id: string
+          improvement_suggestions: string | null
+          preferred_update_frequency: string | null
+          satisfaction_rating: number | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          donor_id: string
+          feedback?: string | null
+          id?: string
+          improvement_suggestions?: string | null
+          preferred_update_frequency?: string | null
+          satisfaction_rating?: number | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          donor_id?: string
+          feedback?: string | null
+          id?: string
+          improvement_suggestions?: string | null
+          preferred_update_frequency?: string | null
+          satisfaction_rating?: number | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donor_surveys_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donor_surveys_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donor_tasks: {
         Row: {
           campaign_id: string
@@ -409,6 +460,8 @@ export type Database = {
           communication_preference: string | null
           connection_to_org: string | null
           created_at: string | null
+          display_name: string | null
+          display_on_wall: boolean | null
           donation_count: number | null
           email: string
           first_donation_at: string | null
@@ -429,6 +482,8 @@ export type Database = {
           communication_preference?: string | null
           connection_to_org?: string | null
           created_at?: string | null
+          display_name?: string | null
+          display_on_wall?: boolean | null
           donation_count?: number | null
           email: string
           first_donation_at?: string | null
@@ -449,6 +504,8 @@ export type Database = {
           communication_preference?: string | null
           connection_to_org?: string | null
           created_at?: string | null
+          display_name?: string | null
+          display_on_wall?: boolean | null
           donation_count?: number | null
           email?: string
           first_donation_at?: string | null
@@ -470,6 +527,73 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_ab_tests: {
+        Row: {
+          campaign_id: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          name: string
+          started_at: string | null
+          status: string | null
+          variant_a_subject: string
+          variant_a_template_id: string | null
+          variant_b_subject: string
+          variant_b_template_id: string | null
+          winner: string | null
+        }
+        Insert: {
+          campaign_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          started_at?: string | null
+          status?: string | null
+          variant_a_subject: string
+          variant_a_template_id?: string | null
+          variant_b_subject: string
+          variant_b_template_id?: string | null
+          winner?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          started_at?: string | null
+          status?: string | null
+          variant_a_subject?: string
+          variant_a_template_id?: string | null
+          variant_b_subject?: string
+          variant_b_template_id?: string | null
+          winner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_ab_tests_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_ab_tests_variant_a_template_id_fkey"
+            columns: ["variant_a_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_ab_tests_variant_b_template_id_fkey"
+            columns: ["variant_b_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -514,6 +638,67 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_tracking: {
+        Row: {
+          ab_test_id: string | null
+          click_count: number | null
+          clicked_at: string | null
+          communication_id: string | null
+          donor_id: string
+          id: string
+          open_count: number | null
+          opened_at: string | null
+          sent_at: string | null
+          variant: string | null
+        }
+        Insert: {
+          ab_test_id?: string | null
+          click_count?: number | null
+          clicked_at?: string | null
+          communication_id?: string | null
+          donor_id: string
+          id?: string
+          open_count?: number | null
+          opened_at?: string | null
+          sent_at?: string | null
+          variant?: string | null
+        }
+        Update: {
+          ab_test_id?: string | null
+          click_count?: number | null
+          clicked_at?: string | null
+          communication_id?: string | null
+          donor_id?: string
+          id?: string
+          open_count?: number | null
+          opened_at?: string | null
+          sent_at?: string | null
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_tracking_ab_test_id_fkey"
+            columns: ["ab_test_id"]
+            isOneToOne: false
+            referencedRelation: "email_ab_tests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_tracking_communication_id_fkey"
+            columns: ["communication_id"]
+            isOneToOne: false
+            referencedRelation: "donor_communications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_tracking_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
             referencedColumns: ["id"]
           },
         ]

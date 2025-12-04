@@ -25,8 +25,13 @@ const handler = async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
     const trackingId = url.searchParams.get("id");
     const type = url.searchParams.get("type") || "open"; // open or click
+    const redirectUrl = url.searchParams.get("url"); // For click tracking redirect
 
     if (!trackingId) {
+      // No tracking ID - just return pixel or redirect
+      if (type === "click" && redirectUrl) {
+        return Response.redirect(decodeURIComponent(redirectUrl), 302);
+      }
       return new Response(TRACKING_PIXEL, {
         headers: {
           "Content-Type": "image/gif",
@@ -65,6 +70,15 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("id", trackingId);
 
       if (error) console.error("Error updating open tracking:", error);
+
+      // Return tracking pixel
+      return new Response(TRACKING_PIXEL, {
+        headers: {
+          "Content-Type": "image/gif",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          ...corsHeaders,
+        },
+      });
     } else if (type === "click") {
       // Get current record to increment count
       const { data: current } = await supabase
@@ -88,13 +102,28 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("id", trackingId);
 
       if (error) console.error("Error updating click tracking:", error);
+
+      // Redirect to original URL if provided
+      if (redirectUrl) {
+        const decodedUrl = decodeURIComponent(redirectUrl);
+        console.log(`Redirecting to: ${decodedUrl}`);
+        return Response.redirect(decodedUrl, 302);
+      }
+
+      // Return pixel if no redirect URL
+      return new Response(TRACKING_PIXEL, {
+        headers: {
+          "Content-Type": "image/gif",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          ...corsHeaders,
+        },
+      });
     }
 
-    // Return tracking pixel
+    // Default return
     return new Response(TRACKING_PIXEL, {
       headers: {
         "Content-Type": "image/gif",
-        "Cache-Control": "no-store, no-cache, must-revalidate",
         ...corsHeaders,
       },
     });

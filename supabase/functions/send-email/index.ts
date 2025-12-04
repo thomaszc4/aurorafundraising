@@ -18,6 +18,22 @@ interface EmailRequest {
   donorId?: string;
 }
 
+// Function to wrap links with tracking
+function wrapLinksWithTracking(html: string, trackingId: string, baseUrl: string): string {
+  // Match href attributes with URLs
+  const linkRegex = /href="(https?:\/\/[^"]+)"/gi;
+  
+  return html.replace(linkRegex, (match, url) => {
+    // Don't track unsubscribe or preference links (they already go to our app)
+    if (url.includes('/preferences') || url.includes('/unsubscribe')) {
+      return match;
+    }
+    const encodedUrl = encodeURIComponent(url);
+    const trackingUrl = `${baseUrl}/functions/v1/track-email?id=${trackingId}&type=click&url=${encodedUrl}`;
+    return `href="${trackingUrl}"`;
+  });
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -58,6 +74,11 @@ const handler = async (req: Request): Promise<Response> => {
       ? `${supabaseUrl}/functions/v1/track-email?id=${emailTrackingId}&type=open`
       : null;
 
+    // Build preference center URL
+    const preferenceCenterUrl = donorId 
+      ? `${data.appUrl || 'https://aurora-fundraising.lovable.app'}/preferences/${donorId}`
+      : null;
+
     switch (type) {
       case 'student_invitation':
         subject = `You're invited to join ${data.campaignName} fundraiser!`;
@@ -92,6 +113,13 @@ const handler = async (req: Request): Promise<Response> => {
             </ul>
             <p>You'll receive another email when your order ships.</p>
             <p>Thank you for your support!</p>
+            ${preferenceCenterUrl ? `
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #6b7280;">
+                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a> | 
+                Manage how you appear on our supporter wall and communication settings
+              </p>
+            ` : ''}
           </div>
         `;
         break;
@@ -114,6 +142,13 @@ const handler = async (req: Request): Promise<Response> => {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             ${data.content}
+            ${preferenceCenterUrl ? `
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #6b7280;">
+                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a> | 
+                Manage your communication and recognition settings
+              </p>
+            ` : ''}
           </div>
         `;
         break;
@@ -131,6 +166,12 @@ const handler = async (req: Request): Promise<Response> => {
             </a>
             <p>This survey only takes 2-3 minutes to complete.</p>
             <p>Thank you for your continued support!</p>
+            ${preferenceCenterUrl ? `
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #6b7280;">
+                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a>
+              </p>
+            ` : ''}
           </div>
         `;
         break;
@@ -149,12 +190,23 @@ const handler = async (req: Request): Promise<Response> => {
             ` : ''}
             ${data.story ? `<p>${data.story}</p>` : ''}
             <p>Thank you for making this possible!</p>
+            ${preferenceCenterUrl ? `
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #6b7280;">
+                <a href="${preferenceCenterUrl}" style="color: #2563eb;">Update your preferences</a>
+              </p>
+            ` : ''}
           </div>
         `;
         break;
 
       default:
         throw new Error(`Unknown email type: ${type}`);
+    }
+
+    // Wrap links with click tracking if we have a tracking ID
+    if (emailTrackingId) {
+      html = wrapLinksWithTracking(html, emailTrackingId, supabaseUrl);
     }
 
     // Add tracking pixel to all emails if we have a tracking ID

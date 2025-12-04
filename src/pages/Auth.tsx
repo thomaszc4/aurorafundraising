@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,27 @@ import { toast } from 'sonner';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, isAdmin, isSuperAdmin, isStudent, loading, userRoles } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (!loading && user && userRoles.length > 0) {
+      redirectToDashboard();
+    }
+  }, [user, loading, userRoles, isSuperAdmin, isAdmin, isStudent]);
+
+  const redirectToDashboard = () => {
+    if (isSuperAdmin) {
+      navigate('/admin/super');
+    } else if (isAdmin) {
+      navigate('/admin');
+    } else if (isStudent) {
+      navigate('/dashboard');
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,12 +44,11 @@ export default function Auth() {
     
     if (error) {
       toast.error(error.message);
+      setIsLoading(false);
     } else {
       toast.success('Welcome back!');
-      navigate('/');
+      // Redirect will happen via useEffect when roles are loaded
     }
-    
-    setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -53,6 +71,15 @@ export default function Auth() {
     
     setIsLoading(false);
   };
+
+  // Show loading while checking auth state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-hero">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-hero p-4">

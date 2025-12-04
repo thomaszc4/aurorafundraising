@@ -317,7 +317,7 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Lincoln Elementary School"
+                  placeholder="Lincoln High School"
                 />
               </div>
               <div className="space-y-2">

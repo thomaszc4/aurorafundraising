@@ -19,10 +19,12 @@ import {
   TrendingUp,
   Calendar,
   ShoppingCart,
-  Shield
+  Shield,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserRoleManager } from '@/components/admin/UserRoleManager';
+import { FundraiserTypeManager } from '@/components/admin/FundraiserTypeManager';
 
 interface CampaignStats {
   id: string;
@@ -293,6 +295,10 @@ export default function SuperAdminDashboard() {
           <TabsList>
             <TabsTrigger value="campaigns">All Campaigns</TabsTrigger>
             <TabsTrigger value="products">Product Performance</TabsTrigger>
+            <TabsTrigger value="fundraiser-types" className="flex items-center gap-1">
+              <Settings className="h-4 w-4" />
+              Fundraiser Types
+            </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-1">
               <Shield className="h-4 w-4" />
               User Roles
@@ -383,6 +389,10 @@ export default function SuperAdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="fundraiser-types">
+            <FundraiserTypeManager />
           </TabsContent>
 
           <TabsContent value="users">

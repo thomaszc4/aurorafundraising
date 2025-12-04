@@ -27,6 +27,7 @@ import CheckoutSuccess from "./pages/checkout/Success";
 import CheckoutCancel from "./pages/checkout/Cancel";
 import PublicSurvey from "./pages/survey/PublicSurvey";
 import DonorPreferences from "./pages/preferences/DonorPreferences";
+import Unsubscribe from "./pages/unsubscribe/Unsubscribe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,9 @@ const App = () => (
             
             {/* Donor preference center */}
             <Route path="/preferences/:donorId" element={<DonorPreferences />} />
+            
+            {/* Unsubscribe page */}
+            <Route path="/unsubscribe/:donorId" element={<Unsubscribe />} />
             
             {/* Public student fundraising pages */}
             <Route path="/student/:slug" element={<PublicStudentPage />} />

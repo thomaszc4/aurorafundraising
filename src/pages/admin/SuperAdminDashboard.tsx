@@ -18,9 +18,11 @@ import {
   Package, 
   TrendingUp,
   Calendar,
-  ShoppingCart
+  ShoppingCart,
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { UserRoleManager } from '@/components/admin/UserRoleManager';
 
 interface CampaignStats {
   id: string;
@@ -291,6 +293,10 @@ export default function SuperAdminDashboard() {
           <TabsList>
             <TabsTrigger value="campaigns">All Campaigns</TabsTrigger>
             <TabsTrigger value="products">Product Performance</TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-1">
+              <Shield className="h-4 w-4" />
+              User Roles
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="campaigns">
@@ -377,6 +383,10 @@ export default function SuperAdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserRoleManager />
           </TabsContent>
         </Tabs>
       </div>

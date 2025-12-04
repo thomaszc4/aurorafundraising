@@ -100,6 +100,59 @@ export type Database = {
           },
         ]
       }
+      campaign_tasks: {
+        Row: {
+          campaign_id: string
+          completed_at: string | null
+          created_at: string
+          days_before_event: number | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_completed: boolean | null
+          is_custom: boolean | null
+          phase: string
+          task: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          completed_at?: string | null
+          created_at?: string
+          days_before_event?: number | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_completed?: boolean | null
+          is_custom?: boolean | null
+          phase: string
+          task: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          completed_at?: string | null
+          created_at?: string
+          days_before_event?: number | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_completed?: boolean | null
+          is_custom?: boolean | null
+          phase?: string
+          task?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           athon_donation_type:
@@ -473,6 +526,61 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_reminders: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          reminder_date: string
+          sent: boolean | null
+          sent_at: string | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          reminder_date: string
+          sent?: boolean | null
+          sent_at?: string | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          reminder_date?: string
+          sent?: boolean | null
+          sent_at?: string | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_reminders_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_reminders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

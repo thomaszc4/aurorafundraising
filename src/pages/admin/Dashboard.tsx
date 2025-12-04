@@ -5,9 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
+import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -26,6 +27,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -149,6 +151,17 @@ export default function AdminDashboard() {
             startDate={selectedCampaign.start_date ? new Date(selectedCampaign.start_date) : undefined}
             onClose={() => setShowProjectManager(false)}
           />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Comparison Tool
+  if (showComparison) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <FundraiserComparison onClose={() => setShowComparison(false)} />
         </div>
       </Layout>
     );
@@ -292,7 +305,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-primary/50 bg-primary/5" onClick={() => setShowProjectManager(true)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
@@ -306,6 +319,19 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-amber-500/50 bg-amber-500/5" onClick={() => setShowComparison(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-amber-600">
+                <Scale className="h-5 w-5" />
+                Compare Types
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Compare fundraiser types side-by-side</p>
+              <Button variant="outline" className="w-full border-amber-500/50 text-amber-600 hover:bg-amber-500/10">Compare</Button>
+            </CardContent>
+          </Card>
+
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/students')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -314,7 +340,7 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">View and manage student fundraisers for this campaign</p>
+              <p className="text-muted-foreground mb-4 flex-1">View and manage student fundraisers</p>
               <Button variant="outline" className="w-full">Manage Students</Button>
             </CardContent>
           </Card>
@@ -327,7 +353,7 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Track and manage all orders for this fundraiser</p>
+              <p className="text-muted-foreground mb-4 flex-1">Track and manage all orders</p>
               <Button variant="outline" className="w-full">View Orders</Button>
             </CardContent>
           </Card>
@@ -336,11 +362,11 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Campaign Settings
+                Settings
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Edit campaign details, dates, and goals</p>
+              <p className="text-muted-foreground mb-4 flex-1">Edit campaign details and goals</p>
               <Button variant="outline" className="w-full">Edit Campaign</Button>
             </CardContent>
           </Card>

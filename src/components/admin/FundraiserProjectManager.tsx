@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { 
   ChevronRight, ChevronDown, Clock, CheckCircle2, 
-  Sparkles, BookOpen, ArrowLeft, Plus, Pencil, Bell, BellOff
+  Sparkles, BookOpen, ArrowLeft, Plus, Pencil, Bell, BellOff,
+  Download, GripVertical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFundraiserTypeById, FundraiserType } from '@/data/fundraiserTypes';
@@ -17,6 +18,10 @@ import { TaskEditor, CustomTask } from './TaskEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { exportProjectManagerToPdf } from '@/utils/exportPdf';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface FundraiserProjectManagerProps {
   campaignId: string;
@@ -41,7 +46,53 @@ interface DbTask {
   display_order: number;
 }
 
-export function FundraiserProjectManager({ 
+interface SortableTaskItemProps {
+  task: DbTask;
+  isComplete: boolean;
+  dueLabel: string | null;
+  dueColor: string;
+  onToggle: () => void;
+  onEdit: () => void;
+}
+
+function SortableTaskItem({ task, isComplete, dueLabel, dueColor, onToggle, onEdit }: SortableTaskItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-start gap-3 p-3 rounded-lg transition-colors border-l-2 border-primary",
+        isComplete ? "bg-emerald-50 dark:bg-emerald-950/20" : "bg-primary/5 hover:bg-primary/10"
+      )}
+    >
+      <button {...attributes} {...listeners} className="cursor-grab mt-1 text-muted-foreground hover:text-foreground">
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <Checkbox checked={isComplete} onCheckedChange={onToggle} className="mt-0.5" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={cn("font-medium", isComplete ? "line-through text-muted-foreground" : "text-foreground")}>{task.task}</span>
+          <Badge variant="outline" className="text-xs">Custom</Badge>
+          {dueLabel && <span className={cn("text-xs flex items-center gap-1", dueColor)}><Clock className="h-3 w-3" />{dueLabel}</span>}
+        </div>
+        <p className={cn("text-sm mt-1", isComplete ? "text-muted-foreground/60" : "text-muted-foreground")}>{task.description}</p>
+      </div>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
+        <Pencil className="h-4 w-4" />
+      </Button>
+      {isComplete && <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />}
+    </div>
+  );
+}
+
+export function FundraiserProjectManager({
   campaignId, 
   fundraiserTypeId,
   startDate,
@@ -294,6 +345,64 @@ export function FundraiserProjectManager({
     return phases;
   };
 
+  const handleExportPdf = async () => {
+    if (!fundraiserType) return;
+    
+    const phases = fundraiserType.projectManagerSteps.map((phase, phaseIndex) => {
+      const phaseCustomTasks = customTasks.filter(t => t.phase === phase.phase);
+      const tasks = [
+        ...phase.tasks.map((task, taskIndex) => ({
+          task: task.task,
+          description: task.description,
+          dueDate: getDueDateLabel(task.daysBeforeEvent) || undefined,
+          isCompleted: !!completedTasks[`${phaseIndex}-${taskIndex}`],
+          isCustom: false
+        })),
+        ...phaseCustomTasks.map(task => ({
+          task: task.task,
+          description: task.description || undefined,
+          dueDate: getDueDateLabel(task.days_before_event || undefined) || undefined,
+          isCompleted: !!completedTasks[`custom-${task.id}`],
+          isCustom: true
+        }))
+      ];
+      return { phase: phase.phase, tasks };
+    });
+
+    await exportProjectManagerToPdf({
+      title: fundraiserType.label,
+      organizationName: 'Project Manager Checklist',
+      phases,
+      totalProgress: getTotalProgress()
+    });
+    
+    toast.success('PDF exported successfully');
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = customTasks.findIndex(t => t.id === active.id);
+    const newIndex = customTasks.findIndex(t => t.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    const newTasks = arrayMove(customTasks, oldIndex, newIndex);
+    setCustomTasks(newTasks);
+
+    // Update display_order in database
+    const updates = newTasks.map((task, index) => 
+      supabase.from('campaign_tasks').update({ display_order: index }).eq('id', task.id)
+    );
+    await Promise.all(updates);
+  };
+
   if (!fundraiserType) {
     return (
       <Card>
@@ -370,7 +479,11 @@ export function FundraiserProjectManager({
         </TabsList>
 
         <TabsContent value="tasks" className="mt-6">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
+            <Button variant="outline" onClick={handleExportPdf} className="gap-2">
+              <Download className="h-4 w-4" />
+              Export PDF
+            </Button>
             <Button onClick={() => { setEditingTask(undefined); setShowTaskEditor(true); }} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Custom Task
@@ -438,37 +551,24 @@ export function FundraiserProjectManager({
                           );
                         })}
                         
-                        {phaseCustomTasks.map(task => {
-                          const taskId = `custom-${task.id}`;
-                          const isComplete = completedTasks[taskId];
-                          const dueLabel = getDueDateLabel(task.days_before_event || undefined);
-                          const dueColor = getDueDateColor(task.days_before_event || undefined);
-
-                          return (
-                            <div key={task.id} className={cn(
-                              "flex items-start gap-3 p-3 rounded-lg transition-colors border-l-2 border-primary",
-                              isComplete ? "bg-emerald-50 dark:bg-emerald-950/20" : "bg-primary/5 hover:bg-primary/10"
-                            )}>
-                              <Checkbox checked={isComplete} onCheckedChange={() => toggleTask(taskId, true)} className="mt-0.5" />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={cn("font-medium", isComplete ? "line-through text-muted-foreground" : "text-foreground")}>{task.task}</span>
-                                  <Badge variant="outline" className="text-xs">Custom</Badge>
-                                  {dueLabel && <span className={cn("text-xs flex items-center gap-1", dueColor)}><Clock className="h-3 w-3" />{dueLabel}</span>}
-                                </div>
-                                <p className={cn("text-sm mt-1", isComplete ? "text-muted-foreground/60" : "text-muted-foreground")}>{task.description}</p>
-                              </div>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingTask({ id: task.id, phase: task.phase, task: task.task, description: task.description || '', daysBeforeEvent: task.days_before_event || undefined, isCustom: true });
-                                setShowTaskEditor(true);
-                              }}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              {isComplete && <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />}
-                            </div>
-                          );
-                        })}
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                          <SortableContext items={phaseCustomTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                            {phaseCustomTasks.map(task => (
+                              <SortableTaskItem
+                                key={task.id}
+                                task={task}
+                                isComplete={!!completedTasks[`custom-${task.id}`]}
+                                dueLabel={getDueDateLabel(task.days_before_event || undefined)}
+                                dueColor={getDueDateColor(task.days_before_event || undefined)}
+                                onToggle={() => toggleTask(`custom-${task.id}`, true)}
+                                onEdit={() => {
+                                  setEditingTask({ id: task.id, phase: task.phase, task: task.task, description: task.description || '', daysBeforeEvent: task.days_before_event || undefined, isCustom: true });
+                                  setShowTaskEditor(true);
+                                }}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
                       </div>
                     </CardContent>
                   )}

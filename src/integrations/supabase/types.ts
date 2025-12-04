@@ -168,6 +168,7 @@ export type Database = {
           name: string
           organization_admin_id: string | null
           organization_name: string
+          organization_type: string | null
           selected_product_ids: string[] | null
           start_date: string | null
           status: Database["public"]["Enums"]["campaign_status"] | null
@@ -187,6 +188,7 @@ export type Database = {
           name: string
           organization_admin_id?: string | null
           organization_name: string
+          organization_type?: string | null
           selected_product_ids?: string[] | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["campaign_status"] | null
@@ -206,6 +208,7 @@ export type Database = {
           name?: string
           organization_admin_id?: string | null
           organization_name?: string
+          organization_type?: string | null
           selected_product_ids?: string[] | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["campaign_status"] | null
@@ -217,6 +220,347 @@ export type Database = {
             columns: ["organization_admin_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donor_communications: {
+        Row: {
+          campaign_id: string
+          communication_type: string
+          content: string | null
+          created_at: string | null
+          donor_id: string
+          id: string
+          sent_at: string | null
+          sent_by: string | null
+          subject: string | null
+          template_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          communication_type: string
+          content?: string | null
+          created_at?: string | null
+          donor_id: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          subject?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          communication_type?: string
+          content?: string | null
+          created_at?: string | null
+          donor_id?: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          subject?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donor_communications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donor_communications_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donor_communications_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donor_communications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donor_metrics: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          id: string
+          lapsed_donors: number | null
+          monthly_donors: number | null
+          new_donors: number | null
+          period_end: string
+          period_start: string
+          repeat_donors: number | null
+          retention_rate: number | null
+          total_donors: number | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          lapsed_donors?: number | null
+          monthly_donors?: number | null
+          new_donors?: number | null
+          period_end: string
+          period_start: string
+          repeat_donors?: number | null
+          retention_rate?: number | null
+          total_donors?: number | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          lapsed_donors?: number | null
+          monthly_donors?: number | null
+          new_donors?: number | null
+          period_end?: string
+          period_start?: string
+          repeat_donors?: number | null
+          retention_rate?: number | null
+          total_donors?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donor_metrics_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donor_tasks: {
+        Row: {
+          campaign_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          donor_id: string
+          due_date: string
+          id: string
+          is_completed: boolean | null
+          notes: string | null
+          task_type: string
+        }
+        Insert: {
+          campaign_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          donor_id: string
+          due_date: string
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          task_type: string
+        }
+        Update: {
+          campaign_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          donor_id?: string
+          due_date?: string
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          task_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donor_tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donor_tasks_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donor_tasks_donor_id_fkey"
+            columns: ["donor_id"]
+            isOneToOne: false
+            referencedRelation: "donors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donors: {
+        Row: {
+          campaign_id: string
+          communication_preference: string | null
+          connection_to_org: string | null
+          created_at: string | null
+          donation_count: number | null
+          email: string
+          first_donation_at: string | null
+          id: string
+          interests: string[] | null
+          is_thanked: boolean | null
+          last_donation_at: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          segment: Database["public"]["Enums"]["donor_segment"] | null
+          thanked_at: string | null
+          total_donated: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          communication_preference?: string | null
+          connection_to_org?: string | null
+          created_at?: string | null
+          donation_count?: number | null
+          email: string
+          first_donation_at?: string | null
+          id?: string
+          interests?: string[] | null
+          is_thanked?: boolean | null
+          last_donation_at?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          segment?: Database["public"]["Enums"]["donor_segment"] | null
+          thanked_at?: string | null
+          total_donated?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          communication_preference?: string | null
+          connection_to_org?: string | null
+          created_at?: string | null
+          donation_count?: number | null
+          email?: string
+          first_donation_at?: string | null
+          id?: string
+          interests?: string[] | null
+          is_thanked?: boolean | null
+          last_donation_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          segment?: Database["public"]["Enums"]["donor_segment"] | null
+          thanked_at?: string | null
+          total_donated?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donors_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          body: string
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          subject: string
+          template_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          body: string
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          subject: string
+          template_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          body?: string
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impact_updates: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          sent_at: string | null
+          stat_description: string | null
+          stat_value: string | null
+          story: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          sent_at?: string | null
+          stat_description?: string | null
+          stat_value?: string | null
+          story?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          sent_at?: string | null
+          stat_description?: string | null
+          stat_value?: string | null
+          story?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impact_updates_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -405,28 +749,40 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          children_names: string[] | null
+          communication_preference: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
+          interests: string[] | null
           phone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          children_names?: string[] | null
+          communication_preference?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id: string
+          interests?: string[] | null
           phone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          children_names?: string[] | null
+          communication_preference?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          interests?: string[] | null
           phone?: string | null
           updated_at?: string
         }
@@ -631,6 +987,12 @@ export type Database = {
       app_role: "admin" | "student" | "organization_admin" | "super_admin"
       athon_donation_type: "pledge_per_unit" | "flat_donation"
       campaign_status: "draft" | "active" | "paused" | "completed"
+      donor_segment:
+        | "first_time"
+        | "recurring"
+        | "lapsed"
+        | "major"
+        | "business"
       fundraiser_type:
         | "product"
         | "walkathon"
@@ -773,6 +1135,7 @@ export const Constants = {
       app_role: ["admin", "student", "organization_admin", "super_admin"],
       athon_donation_type: ["pledge_per_unit", "flat_donation"],
       campaign_status: ["draft", "active", "paused", "completed"],
+      donor_segment: ["first_time", "recurring", "lapsed", "major", "business"],
       fundraiser_type: [
         "product",
         "walkathon",

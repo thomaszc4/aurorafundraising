@@ -6,17 +6,17 @@ const steps = [
   {
     number: "01",
     title: "Schedule a Consultation",
-    description: "Connect with our team to discuss your fundraising goals and timeline.",
+    description: "Connect with our team to discuss your fundraising goals, timeline, and organization type.",
   },
   {
     number: "02",
-    title: "Receive Your Materials",
-    description: "We'll send you everything you need—product samples, order forms, and marketing materials.",
+    title: "Set Up Your Campaign",
+    description: "We'll configure your dashboard with products, student pages, and donor tracking tools.",
   },
   {
     number: "03",
-    title: "Sell & Succeed",
-    description: "Your team sells products, we handle fulfillment, and you keep the profits.",
+    title: "Launch & Track Progress",
+    description: "Students share their pages, you monitor sales in real-time, and donors receive automated thank-yous.",
   },
 ];
 
@@ -35,12 +35,12 @@ export function HowItWorksSection() {
               <span className="text-gradient-teal">Success</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-10">
-              We've streamlined the fundraising process so you can focus on what matters most—
-              your organization and your community.
+              Our platform streamlines every aspect of fundraising—from product sales 
+              to donor engagement—so you can focus on what matters most.
             </p>
 
             <div className="space-y-8">
-              {steps.map((step, index) => (
+              {steps.map((step) => (
                 <div key={step.number} className="flex gap-6">
                   <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-primary-blue/10 flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary-blue">{step.number}</span>
@@ -72,12 +72,24 @@ export function HowItWorksSection() {
                   <div className="absolute -bottom-4 -left-12 w-24 h-24 rounded-full bg-accent/30 animate-float animation-delay-300" />
                 </div>
               </div>
+              
+              {/* Platform Preview Cards */}
+              <div className="absolute top-8 left-8 p-4 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
+                <p className="text-primary-foreground text-sm font-medium">Campaign Dashboard</p>
+                <p className="text-primary-foreground/60 text-xs">Real-time analytics</p>
+              </div>
+              
+              <div className="absolute top-8 right-8 p-4 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
+                <p className="text-primary-foreground text-sm font-medium">$12,450</p>
+                <p className="text-primary-foreground/60 text-xs">Total raised</p>
+              </div>
+              
               <div className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
                 <p className="text-primary-foreground text-lg font-medium text-center">
-                  "The easiest fundraiser we've ever run."
+                  "Setup was incredibly easy. Our campaign was live within a day!"
                 </p>
                 <p className="text-primary-foreground/60 text-sm text-center mt-2">
-                  — Local School PTA
+                  — Lincoln Elementary PTA
                 </p>
               </div>
             </div>

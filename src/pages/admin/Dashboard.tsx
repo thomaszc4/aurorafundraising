@@ -20,6 +20,7 @@ import { EmailAnalyticsDashboard } from '@/components/admin/EmailAnalyticsDashbo
 import { EmailScheduler } from '@/components/admin/EmailScheduler';
 import { EmailTemplateBuilder } from '@/components/admin/EmailTemplateBuilder';
 import { DonorDatabase } from '@/components/admin/DonorDatabase';
+import { BulkEmailSender } from '@/components/admin/BulkEmailSender';
 import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
 import { Tables } from '@/integrations/supabase/types';
 

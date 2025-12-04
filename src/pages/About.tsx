@@ -1,28 +1,28 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Target, Heart, Users, Award } from "lucide-react";
+import { ArrowRight, Target, Heart, Users, Award, ShieldCheck, BarChart3 } from "lucide-react";
 
 const values = [
   {
     icon: Target,
-    title: "Community Impact",
-    description: "Every fundraiser we support creates lasting value for organizations and the families they serve.",
+    title: "Complete Platform",
+    description: "From product sales to donor management, everything you need in one place.",
   },
   {
     icon: Heart,
-    title: "Integrity First",
-    description: "We believe in honest partnerships, transparent pricing, and products that deliver real value.",
+    title: "Community First",
+    description: "Products that provide real value and profits that stay in your community.",
   },
   {
     icon: Users,
-    title: "Partnership Approach",
-    description: "We're not just a vendor—we're your partner in achieving your fundraising goals.",
+    title: "Student Success",
+    description: "Individual tracking, leaderboards, and recognition to motivate participants.",
   },
   {
-    icon: Award,
-    title: "Quality Products",
-    description: "We only offer products we'd be proud to sell to our own families and communities.",
+    icon: ShieldCheck,
+    title: "Privacy Protected",
+    description: "COPPA compliant with proper consent workflows for student participants.",
   },
 ];
 
@@ -31,6 +31,21 @@ const stats = [
   { number: "$2M+", label: "Funds Raised" },
   { number: "50%", label: "Average Profit Margin" },
   { number: "98%", label: "Satisfaction Rate" },
+];
+
+const capabilities = [
+  "Product-based fundraising campaigns",
+  "Individual student fundraiser pages",
+  "Real-time leaderboards and progress tracking",
+  "Walkathon/readathon/jogathon support",
+  "Donor CRM with segmentation",
+  "Email campaigns with personalization",
+  "Email scheduling and automation",
+  "Email analytics (opens, clicks)",
+  "Donor recognition wall",
+  "Marketing consent management",
+  "A/B testing for emails",
+  "COPPA compliant workflows",
 ];
 
 const About = () => {
@@ -49,11 +64,11 @@ const About = () => {
               About Us
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary-foreground mb-6">
-              Empowering Communities Through <span className="text-gradient-teal">Better Fundraising</span>
+              The Complete <span className="text-gradient-teal">Fundraising Platform</span>
             </h1>
             <p className="text-xl text-primary-foreground/70">
-              Aurora Fundraising was founded on a simple belief: fundraising should benefit 
-              everyone—the organization, the volunteers, and the supporters.
+              Aurora Fundraising empowers schools and organizations with a complete 
+              platform for product-based fundraising, donor engagement, and campaign management.
             </p>
           </div>
         </div>
@@ -68,18 +83,18 @@ const About = () => {
                 Our <span className="text-gradient">Mission</span>
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
-                At Aurora Fundraising, our mission is to empower and benefit communities by 
-                supplying fundraising organizations with products that offer value to both 
-                the organization and the broader community.
+                We built Aurora Fundraising to solve the problems we saw with traditional 
+                fundraisers: low profit margins, complex logistics, and products no one 
+                actually wanted.
               </p>
               <p className="text-lg text-muted-foreground mb-6">
-                We believe a successful fundraiser should do more than just raise money; it 
-                should provide a positive impact and a quality product that people genuinely 
-                want and need.
+                Our platform combines high-quality products with powerful technology—individual 
+                student pages, real-time tracking, donor CRM, email automation, and analytics—so 
+                you can run professional campaigns that actually raise money.
               </p>
-              <p className="text-lg text-muted-foreground">
-                By partnering with Aurora, you're not just raising funds—you're investing in 
-                your community's resilience and well-being.
+              <p className="text-lg text-foreground font-medium">
+                We believe fundraising should benefit everyone: your organization, your 
+                participants, and your supporters.
               </p>
             </div>
 
@@ -99,30 +114,27 @@ const About = () => {
         </div>
       </section>
 
-      {/* The Problem Section */}
+      {/* Platform Capabilities */}
       <section className="section-padding bg-muted/50">
-        <div className="container-tight">
-          <div className="text-center mb-16">
+        <div className="container-wide">
+          <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              The Problem with <span className="text-gradient-teal">Traditional Fundraisers</span>
+              What Our Platform <span className="text-gradient-teal">Can Do</span>
             </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              A comprehensive suite of tools designed for modern fundraising.
+            </p>
           </div>
 
           <div className="bg-card rounded-3xl border border-border p-8 md:p-12">
-            <p className="text-lg text-muted-foreground mb-6">
-              Many traditional fundraisers rely on low-value items that offer minimal benefit 
-              to the end-user and often result in waste. Cookie dough that expires, wrapping 
-              paper that sits unused, trinkets that end up in drawers—these fundraisers leave 
-              supporters feeling like they've just made a donation with nothing to show for it.
-            </p>
-            <p className="text-lg text-muted-foreground mb-6">
-              We aim to revolutionize this process by offering high-quality, practical, and 
-              community-focused products that provide long-term utility.
-            </p>
-            <p className="text-lg text-foreground font-medium">
-              That's why we created Aurora Fundraising—to prove that you can raise more money 
-              while providing real value to your supporters.
-            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {capabilities.map((capability, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <BarChart3 className="w-5 h-5 text-secondary flex-shrink-0" />
+                  <span className="text-foreground">{capability}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -164,12 +176,12 @@ const About = () => {
             Partner with Aurora
           </h2>
           <p className="text-xl text-primary-foreground/70 mb-8 max-w-2xl mx-auto">
-            Join us in making fundraising impactful again. Let's work together to support your 
-            organization and community.
+            Ready to see what our platform can do for your organization? 
+            Schedule a free demo today.
           </p>
           <Button variant="hero" size="xl" asChild>
             <Link to="/contact">
-              Start Your Campaign
+              Schedule Your Demo
               <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>

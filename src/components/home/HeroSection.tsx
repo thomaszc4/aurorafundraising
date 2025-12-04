@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, ShoppingBag, Users, LineChart, Mail } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -21,22 +21,42 @@ export function HeroSection() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4 text-secondary" />
             <span className="text-sm font-medium text-primary-foreground/90">
-              The Smarter Way to Fundraise
+              Complete Fundraising Platform
             </span>
           </div>
 
           {/* Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground leading-tight mb-6 animate-slide-up">
-            Fundraising Made{" "}
-            <span className="text-gradient-teal">Effortless</span>
+            Product-Based Fundraising{" "}
+            <span className="text-gradient-teal">Made Simple</span>
           </h1>
 
           {/* Subheading */}
           <p className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-100">
-            Partner with Aurora Fundraising and transform your fundraising efforts. 
-            We provide high-quality products that sell themselves—making your campaign 
-            simple, profitable, and impactful for your community.
+            The all-in-one platform for schools and organizations. Launch campaigns, 
+            track student progress, manage donors, send personalized communications, 
+            and keep up to 50% profit on every sale.
           </p>
+
+          {/* Feature Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-10 animate-slide-up animation-delay-150">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
+              <ShoppingBag className="w-4 h-4 text-secondary" />
+              <span className="text-sm text-primary-foreground/80">Product Sales</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
+              <Users className="w-4 h-4 text-secondary" />
+              <span className="text-sm text-primary-foreground/80">Student Tracking</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
+              <LineChart className="w-4 h-4 text-secondary" />
+              <span className="text-sm text-primary-foreground/80">Real-Time Analytics</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
+              <Mail className="w-4 h-4 text-secondary" />
+              <span className="text-sm text-primary-foreground/80">Donor Engagement</span>
+            </div>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up animation-delay-200">
@@ -47,7 +67,7 @@ export function HeroSection() {
               </Link>
             </Button>
             <Button variant="heroOutline" size="lg" asChild>
-              <Link to="/fundraising">Learn How It Works</Link>
+              <Link to="/fundraising">See How It Works</Link>
             </Button>
           </div>
 

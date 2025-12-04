@@ -57,9 +57,22 @@ const Privacy = () => {
                   <li>Provide and maintain our fundraising services</li>
                   <li>Process orders and deliver products</li>
                   <li>Communicate with you about your fundraiser or inquiries</li>
-                  <li>Send promotional communications (with your consent)</li>
+                  <li>Send promotional communications (only with your explicit consent)</li>
                   <li>Improve our website and services</li>
                   <li>Comply with legal obligations</li>
+                </ul>
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-4">Marketing Communications</h2>
+                <p className="text-muted-foreground mb-4">
+                  We will only send you marketing communications if you have explicitly opted in to receive them. 
+                  You may withdraw your consent at any time by:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Clicking the "unsubscribe" link in any marketing email</li>
+                  <li>Updating your preferences through our preference center</li>
+                  <li>Contacting us directly at impactfulfundraising@gmail.com</li>
                 </ul>
               </div>
 
@@ -103,15 +116,53 @@ const Privacy = () => {
                   <li>The right to correct inaccurate information</li>
                   <li>The right to delete your information</li>
                   <li>The right to opt out of marketing communications</li>
+                  <li>The right to data portability</li>
                 </ul>
               </div>
 
+              {/* COPPA Compliance Section */}
+              <div className="p-6 bg-muted/50 rounded-xl border border-border">
+                <h2 className="text-2xl font-bold text-foreground mb-4">Children's Privacy (COPPA Compliance)</h2>
+                <p className="text-muted-foreground mb-4">
+                  Aurora Fundraising is committed to complying with the Children's Online Privacy Protection Act 
+                  (COPPA) and protecting the privacy of children under 13 years of age.
+                </p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Our Commitment:</h3>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                  <li>We do not knowingly collect personal information from children under 13 without verifiable parental consent</li>
+                  <li>Our services are directed to schools, organizations, and adult coordinators—not to children directly</li>
+                  <li>Student participation in fundraisers is facilitated through adult coordinators (teachers, parents, organization administrators)</li>
+                  <li>Any student accounts or profiles are created and managed by verified adult coordinators with parental/guardian consent</li>
+                  <li>We do not require children to disclose more personal information than is reasonably necessary to participate in fundraising activities</li>
+                </ul>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Parental Rights:</h3>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                  <li>Parents/guardians may review information collected about their child by contacting us</li>
+                  <li>Parents/guardians may request deletion of their child's information</li>
+                  <li>Parents/guardians may refuse further collection or use of their child's information</li>
+                </ul>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Information Collected About Student Participants:</h3>
+                <p className="text-muted-foreground mb-2">
+                  When schools or organizations create student fundraiser pages, the following information may be collected 
+                  under the direction and consent of the school/organization administrator:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                  <li>Student's name (or nickname/initials as determined by the administrator)</li>
+                  <li>Fundraising goal and progress</li>
+                  <li>Optional: profile photo or avatar (uploaded by adult coordinator)</li>
+                </ul>
+                <p className="text-muted-foreground font-medium">
+                  We do NOT collect from children: email addresses, home addresses, phone numbers, Social Security numbers, 
+                  or any other sensitive personal information without verifiable parental consent.
+                </p>
+              </div>
+
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">Children's Privacy</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-4">Data Retention</h2>
                 <p className="text-muted-foreground">
-                  Our services are not directed to children under 13. We do not knowingly collect 
-                  personal information from children under 13. If we become aware that we have 
-                  collected such information, we will take steps to delete it.
+                  We retain personal information only for as long as necessary to fulfill the purposes for which 
+                  it was collected, including to satisfy legal, accounting, or reporting requirements. When 
+                  personal information is no longer needed, we securely delete or anonymize it.
                 </p>
               </div>
 
@@ -120,19 +171,19 @@ const Privacy = () => {
                 <p className="text-muted-foreground">
                   We may update this Privacy Policy from time to time. We will notify you of any 
                   changes by posting the new policy on this page and updating the "Last updated" 
-                  date.
+                  date. For material changes, we will provide more prominent notice.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Contact Us</h2>
                 <p className="text-muted-foreground">
-                  If you have questions about this Privacy Policy or our practices, please contact 
-                  us at{" "}
-                  <a href="mailto:info@aurorafundraising.com" className="text-primary-blue hover:underline">
-                    info@aurorafundraising.com
+                  If you have questions about this Privacy Policy, our practices, or wish to exercise your 
+                  privacy rights (including COPPA-related requests), please contact us at:{" "}
+                  <a href="mailto:impactfulfundraising@gmail.com" className="text-primary-blue hover:underline">
+                    impactfulfundraising@gmail.com
                   </a>
-                  .
+                  {" "}or call us at (907) 310-8288.
                 </p>
               </div>
             </div>

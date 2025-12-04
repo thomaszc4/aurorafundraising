@@ -5,8 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
+import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -24,6 +25,7 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [showProjectManager, setShowProjectManager] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -130,6 +132,22 @@ export default function AdminDashboard() {
           <CreateCampaignWizard
             onComplete={handleCampaignCreated}
             onCancel={() => setShowCreateWizard(false)}
+          />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Project Manager
+  if (showProjectManager && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <FundraiserProjectManager
+            campaignId={selectedCampaign.id}
+            fundraiserTypeId={selectedCampaign.fundraiser_type || 'product'}
+            startDate={selectedCampaign.start_date ? new Date(selectedCampaign.start_date) : undefined}
+            onClose={() => setShowProjectManager(false)}
           />
         </div>
       </Layout>
@@ -274,7 +292,20 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-primary/50 bg-primary/5" onClick={() => setShowProjectManager(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <ClipboardList className="h-5 w-5" />
+                Project Manager
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Step-by-step guide to run your fundraiser successfully</p>
+              <Button className="w-full">Open Manager</Button>
+            </CardContent>
+          </Card>
+
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/students')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

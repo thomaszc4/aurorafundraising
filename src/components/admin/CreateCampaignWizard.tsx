@@ -341,14 +341,20 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
             </div>
             <div className="space-y-2">
               <Label htmlFor="goal">Fundraising Goal *</Label>
-              <Input
-                id="goal"
-                type="number"
-                value={goalAmount}
-                onChange={(e) => setGoalAmount(e.target.value)}
-                placeholder="10000"
-                min="1"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="goal"
+                  type="text"
+                  value={goalAmount ? Number(goalAmount).toLocaleString() : ''}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    setGoalAmount(value);
+                  }}
+                  placeholder="10,000"
+                  className="pl-7"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

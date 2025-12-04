@@ -357,7 +357,13 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
                   id="start"
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    // Clear end date if it's before the new start date
+                    if (endDate && e.target.value > endDate) {
+                      setEndDate('');
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -367,6 +373,7 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate || undefined}
                 />
               </div>
             </div>

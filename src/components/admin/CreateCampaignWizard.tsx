@@ -312,21 +312,21 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Campaign Name *</Label>
+                <Label htmlFor="name">Organization Name *</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Spring Fundraiser 2024"
+                  placeholder="Lincoln Elementary School"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="org">Organization Name *</Label>
+                <Label htmlFor="org">Program Type *</Label>
                 <Input
                   id="org"
                   value={organizationName}
                   onChange={(e) => setOrganizationName(e.target.value)}
-                  placeholder="Lincoln Elementary School"
+                  placeholder="Marching Band"
                 />
               </div>
             </div>

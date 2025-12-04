@@ -381,7 +381,7 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full h-10 justify-start text-left font-normal border-input bg-background hover:bg-background",
                         !startDate && "text-muted-foreground"
                       )}
                     >
@@ -413,7 +413,7 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full h-10 justify-start text-left font-normal border-input bg-background hover:bg-background",
                         !endDate && "text-muted-foreground"
                       )}
                     >

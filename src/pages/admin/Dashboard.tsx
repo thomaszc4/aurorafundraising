@@ -154,6 +154,20 @@ export default function AdminDashboard() {
     );
   }
 
+  // Show wizard as main content when creating new fundraiser
+  if (showCreateWizard) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <CreateCampaignWizard
+            onComplete={handleCampaignCreated}
+            onCancel={() => setShowCreateWizard(false)}
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container-wide py-12">
@@ -306,13 +320,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {showCreateWizard && (
-          <CreateCampaignWizard
-            onComplete={handleCampaignCreated}
-            onCancel={() => setShowCreateWizard(false)}
-          />
-        )}
       </div>
     </Layout>
   );

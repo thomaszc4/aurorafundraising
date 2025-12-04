@@ -15,15 +15,36 @@ const faqs = [
     questions: [
       {
         question: "How do I start a fundraiser with Aurora?",
-        answer: "Getting started is easy! Simply contact us through our contact form or give us a call. We'll schedule a free consultation to discuss your organization's goals, timeline, and needs. From there, we'll customize a fundraising plan and send you everything you need to launch your campaign.",
+        answer: "Getting started is easy! Contact us through our contact form or give us a call. We'll schedule a free consultation to discuss your organization's goals, timeline, and needs. From there, we'll set up your campaign dashboard with products, student pages, and all the tools you need.",
       },
       {
         question: "Is there a minimum order or group size required?",
-        answer: "We work with organizations of all sizes. While there's no strict minimum, we recommend having at least 10-15 active participants to maximize your fundraising potential. During your consultation, we'll help you determine the best approach for your group's size.",
+        answer: "We work with organizations of all sizes. While there's no strict minimum, we recommend having at least 10-15 active participants to maximize your fundraising potential. Our platform scales to support campaigns of any size.",
       },
       {
         question: "How long does a typical fundraiser last?",
-        answer: "Most successful campaigns run for 2-4 weeks. This gives your team enough time to reach supporters without losing momentum. We'll help you choose the optimal timeline based on your goals and any events or deadlines you're working around.",
+        answer: "Most successful campaigns run for 2-4 weeks. This gives your team enough time to reach supporters without losing momentum. Our platform's real-time tracking and leaderboards help maintain engagement throughout the campaign.",
+      },
+    ],
+  },
+  {
+    category: "Platform Features",
+    questions: [
+      {
+        question: "What features does the platform include?",
+        answer: "Our platform includes: individual student fundraiser pages, real-time leaderboards, donor CRM with segmentation, email campaigns with merge tags, email scheduling and automation, open/click tracking analytics, donor recognition wall, A/B testing, walkathon/readathon support, and COPPA-compliant workflows.",
+      },
+      {
+        question: "Can students have their own fundraiser pages?",
+        answer: "Yes! Each participant gets a personalized fundraiser page with a unique link they can share with family and friends. Pages show individual progress toward goals and are managed through the admin dashboard.",
+      },
+      {
+        question: "How does donor management work?",
+        answer: "Our built-in CRM tracks every donor, automatically segments them (first-time, recurring, major, lapsed), and lets you send personalized communications. You can view donor history, manage marketing consent, and build lasting relationships.",
+      },
+      {
+        question: "Can I send bulk emails to donors?",
+        answer: "Absolutely! Our email system supports bulk sending with merge tags for personalization (name, donation amount, etc.), email scheduling for optimal send times, and analytics to track opens and clicks. We only email donors who have opted in to marketing.",
       },
     ],
   },
@@ -39,25 +60,25 @@ const faqs = [
         answer: "Organizations typically earn 40-50% profit on every sale. The exact margin depends on order volume, but even small groups can expect generous returns. We'll provide detailed pricing during your consultation.",
       },
       {
-        question: "How are products priced?",
-        answer: "Our products are competitively priced to provide excellent value to supporters while ensuring strong profit margins for your organization. Supporters appreciate that they're getting a quality, useful product—not overpriced items they don't need.",
+        question: "Do you support walkathons and pledge-based fundraisers?",
+        answer: "Yes! Our platform supports -athon style fundraisers (walkathon, readathon, jogathon) with per-unit pledges and flat donations. Track participant progress, collect pledges, and automate follow-ups all in one place.",
       },
     ],
   },
   {
-    category: "Orders & Delivery",
+    category: "Privacy & Compliance",
     questions: [
       {
-        question: "How do we collect and submit orders?",
-        answer: "We provide both paper order forms and digital ordering options. Your team collects orders and payments, then submits the consolidated order to us. We make the process simple with clear instructions and support along the way.",
+        question: "Is the platform COPPA compliant?",
+        answer: "Yes. We take children's privacy seriously. Student accounts are created and managed by adult coordinators with parental consent. We don't collect personal information from children without proper consent, and we minimize data collection to what's necessary for participation.",
       },
       {
-        question: "How long does delivery take?",
-        answer: "Once you submit your final order, products typically arrive within 2-3 weeks. We handle all packaging and logistics, delivering directly to your organization for easy distribution.",
+        question: "How do you handle marketing consent?",
+        answer: "We only send marketing emails to donors who explicitly opt in during checkout. Every email includes an unsubscribe link, and donors can manage their preferences through our preference center. We track consent with timestamps and IP addresses for compliance.",
       },
       {
-        question: "What payment methods do you accept?",
-        answer: "We accept checks and electronic payments. For supporter payments, your team can collect cash, checks, or use digital payment options. We'll discuss the best approach during your consultation.",
+        question: "Is donor data secure?",
+        answer: "We implement industry-standard security measures to protect all data. Donor information is only accessible to authorized campaign administrators, and we never sell or share personal information with third parties.",
       },
     ],
   },
@@ -66,15 +87,15 @@ const faqs = [
     questions: [
       {
         question: "What support do you provide during the campaign?",
-        answer: "Our team is with you every step of the way. You'll have a dedicated contact for questions, access to our resource library, and ongoing support throughout your campaign. We're invested in your success.",
+        answer: "Our team is with you every step of the way. You'll have access to our resources library, dedicated support for questions, and ongoing assistance throughout your campaign. We're invested in your success.",
       },
       {
         question: "Do you provide marketing materials?",
-        answer: "Yes! We provide product samples, order forms, flyers, posters, social media graphics, and demonstration videos. Everything you need to promote your fundraiser is included in your starter kit.",
+        answer: "Yes! We provide product samples, order forms, flyers, posters, social media graphics, and demonstration videos. Our platform also lets you send branded email campaigns to supporters.",
       },
       {
-        question: "Can I request a product sample before committing?",
-        answer: "Absolutely! We encourage organizations to see our products firsthand. During your consultation, we can arrange for samples so you can experience the quality before launching your campaign.",
+        question: "Can I see a demo before committing?",
+        answer: "Absolutely! We encourage organizations to see our platform in action. During your consultation, we'll walk you through the dashboard, show you sample student pages, and demonstrate the email and analytics features.",
       },
     ],
   },
@@ -99,8 +120,8 @@ const FAQ = () => {
               Frequently Asked <span className="text-gradient-teal">Questions</span>
             </h1>
             <p className="text-xl text-primary-foreground/70">
-              Find answers to common questions about Aurora Fundraising, our products, 
-              and the fundraising process.
+              Find answers about our platform, products, donor management, 
+              and fundraising process.
             </p>
           </div>
         </div>
@@ -140,8 +161,8 @@ const FAQ = () => {
             Still Have Questions?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Our team is happy to answer any additional questions and help you get started 
-            with your fundraiser.
+            Our team is happy to answer any additional questions and give you a 
+            personalized demo of our platform.
           </p>
           <Button variant="default" size="xl" asChild>
             <Link to="/contact">

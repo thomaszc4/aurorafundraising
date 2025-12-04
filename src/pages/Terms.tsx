@@ -30,17 +30,79 @@ const Terms = () => {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">Use of Services</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-4">Eligibility and Age Requirements</h2>
                 <p className="text-muted-foreground mb-4">
-                  Our fundraising services are designed for schools, non-profit organizations, 
-                  community groups, and other legitimate fundraising entities. By using our services, 
-                  you represent that:
+                  Our fundraising platform services are designed for:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>You are at least 18 years old or have parental consent</li>
+                  <li>Schools, non-profit organizations, community groups, and other legitimate fundraising entities</li>
+                  <li>Adults (18 years or older) who are authorized to act on behalf of their organization</li>
+                  <li>Parents/guardians who provide consent for their children's participation in fundraising activities</li>
+                </ul>
+                <p className="text-muted-foreground mt-4">
+                  Student participants under 18 may only use our platform under the supervision and with 
+                  the consent of a parent, guardian, or authorized school/organization administrator.
+                </p>
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-4">Use of Services</h2>
+                <p className="text-muted-foreground mb-4">
+                  By using our services, you represent that:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>You are at least 18 years old or have verifiable parental/guardian consent</li>
                   <li>You have the authority to enter into this agreement on behalf of your organization</li>
                   <li>Your use of our services is for legitimate fundraising purposes</li>
                   <li>All information you provide is accurate and complete</li>
+                  <li>You will comply with all applicable laws including COPPA when involving minors</li>
+                </ul>
+              </div>
+
+              {/* COPPA Section */}
+              <div className="p-6 bg-muted/50 rounded-xl border border-border">
+                <h2 className="text-2xl font-bold text-foreground mb-4">Children's Online Privacy Protection Act (COPPA) Compliance</h2>
+                <p className="text-muted-foreground mb-4">
+                  Aurora Fundraising is committed to complying with COPPA and protecting children's privacy online.
+                </p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">For Organization Administrators and Teachers:</h3>
+                <p className="text-muted-foreground mb-4">
+                  When creating student fundraiser pages or accounts, you represent and warrant that you:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                  <li>Are acting as an authorized agent of the school or organization</li>
+                  <li>Have obtained all necessary parental consents before collecting or submitting information about children under 13</li>
+                  <li>Will limit the collection of children's information to what is reasonably necessary for participation</li>
+                  <li>Will protect the confidentiality, security, and integrity of children's information</li>
+                  <li>Will not disclose children's information to unauthorized third parties</li>
+                  <li>Understand that you may only consent to the collection of a student's information for educational purposes related to the fundraiser</li>
+                </ul>
+                <h3 className="text-lg font-semibold text-foreground mb-2">For Parents and Guardians:</h3>
+                <p className="text-muted-foreground mb-4">
+                  You have the right to:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Review information collected about your child</li>
+                  <li>Request deletion of your child's information</li>
+                  <li>Refuse further collection or use of your child's information</li>
+                  <li>Consent to collection without consenting to disclosure to third parties</li>
+                </ul>
+                <p className="text-muted-foreground mt-4">
+                  To exercise these rights, contact us at impactfulfundraising@gmail.com or (907) 310-8288.
+                </p>
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-4">Marketing Communications</h2>
+                <p className="text-muted-foreground mb-4">
+                  We only send marketing communications to individuals who have explicitly opted in. 
+                  By opting in to marketing communications, you acknowledge that:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Your consent is voluntary and not a condition of any purchase or donation</li>
+                  <li>You may withdraw consent at any time via the unsubscribe link or by contacting us</li>
+                  <li>You are at least 18 years old or have parental/guardian consent</li>
+                  <li>Message frequency may vary; standard message and data rates may apply</li>
                 </ul>
               </div>
 
@@ -138,10 +200,10 @@ const Terms = () => {
                 <h2 className="text-2xl font-bold text-foreground mb-4">Contact Information</h2>
                 <p className="text-muted-foreground">
                   For questions about these Terms and Conditions, please contact us at{" "}
-                  <a href="mailto:info@aurorafundraising.com" className="text-primary-blue hover:underline">
-                    info@aurorafundraising.com
+                  <a href="mailto:impactfulfundraising@gmail.com" className="text-primary-blue hover:underline">
+                    impactfulfundraising@gmail.com
                   </a>
-                  .
+                  {" "}or call us at (907) 310-8288.
                 </p>
               </div>
             </div>

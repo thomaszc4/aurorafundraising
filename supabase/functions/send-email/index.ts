@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -8,9 +9,13 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  type: 'student_invitation' | 'order_confirmation' | 'order_notification';
+  type: 'student_invitation' | 'order_confirmation' | 'order_notification' | 'donor_communication' | 'survey_invitation' | 'impact_update';
   to: string;
   data: Record<string, any>;
+  trackingId?: string;
+  abTestId?: string;
+  variant?: 'a' | 'b';
+  donorId?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -19,11 +24,39 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, to, data }: EmailRequest = await req.json();
+    const { type, to, data, trackingId, abTestId, variant, donorId }: EmailRequest = await req.json();
     console.log(`Sending ${type} email to ${to}`);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     let subject = '';
     let html = '';
+    let emailTrackingId = trackingId;
+
+    // Create tracking record if we have donor info
+    if (donorId && !emailTrackingId) {
+      const { data: trackingData, error: trackingError } = await supabase
+        .from('email_tracking')
+        .insert({
+          donor_id: donorId,
+          ab_test_id: abTestId || null,
+          variant: variant || null,
+          sent_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (!trackingError && trackingData) {
+        emailTrackingId = trackingData.id;
+      }
+    }
+
+    // Build tracking pixel URL
+    const trackingPixelUrl = emailTrackingId 
+      ? `${supabaseUrl}/functions/v1/track-email?id=${emailTrackingId}&type=open`
+      : null;
 
     switch (type) {
       case 'student_invitation':
@@ -76,8 +109,57 @@ const handler = async (req: Request): Promise<Response> => {
         `;
         break;
 
+      case 'donor_communication':
+        subject = data.subject || 'Message from our fundraising team';
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            ${data.content}
+          </div>
+        `;
+        break;
+
+      case 'survey_invitation':
+        subject = `We'd love your feedback - ${data.campaignName}`;
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #2563eb;">Your Opinion Matters!</h1>
+            <p>Hi ${data.donorName},</p>
+            <p>Thank you for supporting ${data.campaignName}! We'd love to hear about your experience.</p>
+            <p>Your feedback helps us improve and serve our community better.</p>
+            <a href="${data.surveyUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+              Share Your Feedback
+            </a>
+            <p>This survey only takes 2-3 minutes to complete.</p>
+            <p>Thank you for your continued support!</p>
+          </div>
+        `;
+        break;
+
+      case 'impact_update':
+        subject = data.title || 'See the impact of your donation';
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #2563eb;">${data.title}</h1>
+            ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Impact" style="width: 100%; border-radius: 8px; margin: 16px 0;" />` : ''}
+            ${data.statValue ? `
+              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; margin: 16px 0;">
+                <p style="font-size: 36px; font-weight: bold; color: #2563eb; margin: 0;">${data.statValue}</p>
+                <p style="color: #6b7280; margin: 8px 0 0 0;">${data.statDescription || ''}</p>
+              </div>
+            ` : ''}
+            ${data.story ? `<p>${data.story}</p>` : ''}
+            <p>Thank you for making this possible!</p>
+          </div>
+        `;
+        break;
+
       default:
         throw new Error(`Unknown email type: ${type}`);
+    }
+
+    // Add tracking pixel to all emails if we have a tracking ID
+    if (trackingPixelUrl) {
+      html += `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
     }
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -97,7 +179,7 @@ const handler = async (req: Request): Promise<Response> => {
     const result = await emailResponse.json();
     console.log("Email sent successfully:", result);
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({ ...result, trackingId: emailTrackingId }), {
       status: emailResponse.ok ? 200 : 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

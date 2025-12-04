@@ -25,6 +25,7 @@ import PublicStudentPage from "./pages/student/PublicPage";
 import ProductDetail from "./pages/fundraise/ProductDetail";
 import CheckoutSuccess from "./pages/checkout/Success";
 import CheckoutCancel from "./pages/checkout/Cancel";
+import PublicSurvey from "./pages/survey/PublicSurvey";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,9 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Public survey page */}
+            <Route path="/survey/:campaignId" element={<PublicSurvey />} />
             
             {/* Public student fundraising pages */}
             <Route path="/student/:slug" element={<PublicStudentPage />} />

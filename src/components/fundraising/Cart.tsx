@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,6 +23,8 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
     email: '',
     phone: '',
   });
+  const [displayOnWall, setDisplayOnWall] = useState(true);
+  const [displayName, setDisplayName] = useState('');
 
   const cartTotal = cart.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0);
 
@@ -46,6 +49,10 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
             cost: item.product.cost,
           })),
           customerInfo,
+          donorPreferences: {
+            displayOnWall,
+            displayName: displayOnWall ? (displayName || customerInfo.name) : null,
+          },
         },
       });
 
@@ -160,6 +167,39 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
                 onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
               />
             </div>
+          </div>
+
+          {/* Recognition Wall Opt-in */}
+          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="displayOnWall"
+                checked={displayOnWall}
+                onCheckedChange={(checked) => setDisplayOnWall(checked === true)}
+              />
+              <div className="space-y-1">
+                <Label htmlFor="displayOnWall" className="cursor-pointer font-medium">
+                  Display my name on the Supporter Wall
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Celebrate your support by appearing on our public recognition wall
+                </p>
+              </div>
+            </div>
+            {displayOnWall && (
+              <div className="space-y-2 pl-6">
+                <Label htmlFor="displayName">Display Name (optional)</Label>
+                <Input
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={customerInfo.name || "How you'd like to be recognized"}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave blank to use your name, or enter a custom display name
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Total and Checkout */}

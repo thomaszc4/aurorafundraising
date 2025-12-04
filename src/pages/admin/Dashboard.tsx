@@ -5,10 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
+import { DonorManagement } from '@/components/admin/DonorManagement';
+import { ProfileEditor } from '@/components/admin/ProfileEditor';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -28,6 +30,8 @@ export default function AdminDashboard() {
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const [showDonorManagement, setShowDonorManagement] = useState(false);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -162,6 +166,29 @@ export default function AdminDashboard() {
       <Layout>
         <div className="container-wide py-12">
           <FundraiserComparison onClose={() => setShowComparison(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Donor Management
+  if (showDonorManagement && selectedCampaign) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <DonorManagement campaignId={selectedCampaign.id} onClose={() => setShowDonorManagement(false)} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show Profile Editor
+  if (showProfileEditor) {
+    return (
+      <Layout>
+        <div className="container-wide py-12 max-w-2xl mx-auto">
+          <Button variant="ghost" onClick={() => setShowProfileEditor(false)} className="mb-4">← Back to Dashboard</Button>
+          <ProfileEditor />
         </div>
       </Layout>
     );
@@ -305,7 +332,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-primary/50 bg-primary/5" onClick={() => setShowProjectManager(true)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
@@ -316,6 +343,19 @@ export default function AdminDashboard() {
             <CardContent className="flex flex-col flex-1">
               <p className="text-muted-foreground mb-4 flex-1">Step-by-step guide to run your fundraiser successfully</p>
               <Button className="w-full">Open Manager</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-rose-500/50 bg-rose-500/5" onClick={() => setShowDonorManagement(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-rose-600">
+                <Heart className="h-5 w-5" />
+                Donor CRM
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Track donors, send thanks, and build relationships</p>
+              <Button variant="outline" className="w-full border-rose-500/50 text-rose-600 hover:bg-rose-500/10">Manage Donors</Button>
             </CardContent>
           </Card>
 
@@ -332,6 +372,22 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-cyan-500/50 bg-cyan-500/5" onClick={() => setShowProfileEditor(true)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-cyan-600">
+                <User className="h-5 w-5" />
+                My Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-muted-foreground mb-4 flex-1">Update your personal information and preferences</p>
+              <Button variant="outline" className="w-full border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10">Edit Profile</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Secondary Actions */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/students')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

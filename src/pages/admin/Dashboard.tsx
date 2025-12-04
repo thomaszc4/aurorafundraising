@@ -122,6 +122,20 @@ export default function AdminDashboard() {
     );
   }
 
+  // Show wizard as main content when creating new fundraiser
+  if (showCreateWizard) {
+    return (
+      <Layout>
+        <div className="container-wide py-12">
+          <CreateCampaignWizard
+            onComplete={handleCampaignCreated}
+            onCancel={() => setShowCreateWizard(false)}
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   // No fundraisers - show create CTA
   if (campaigns.length === 0) {
     return (
@@ -142,31 +156,11 @@ export default function AdminDashboard() {
               Create a Fundraiser
             </Button>
           </div>
-
-          {showCreateWizard && (
-            <CreateCampaignWizard
-              onComplete={handleCampaignCreated}
-              onCancel={() => setShowCreateWizard(false)}
-            />
-          )}
         </div>
       </Layout>
     );
   }
 
-  // Show wizard as main content when creating new fundraiser
-  if (showCreateWizard) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <CreateCampaignWizard
-            onComplete={handleCampaignCreated}
-            onCancel={() => setShowCreateWizard(false)}
-          />
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>

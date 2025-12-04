@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -16,9 +18,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Upload, Plus, Trash2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Upload, Plus, Trash2, ArrowLeft, ArrowRight, Check, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -60,8 +64,12 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
   const [organizationName, setOrganizationName] = useState(editingCampaign?.organization_name || '');
   const [description, setDescription] = useState(editingCampaign?.description || '');
   const [goalAmount, setGoalAmount] = useState(editingCampaign?.goal_amount?.toString() || '');
-  const [startDate, setStartDate] = useState(editingCampaign?.start_date?.split('T')[0] || '');
-  const [endDate, setEndDate] = useState(editingCampaign?.end_date?.split('T')[0] || '');
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    editingCampaign?.start_date ? new Date(editingCampaign.start_date) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    editingCampaign?.end_date ? new Date(editingCampaign.end_date) : undefined
+  );
 
   // Step 2: Fundraiser Type
   const [fundraiserType, setFundraiserType] = useState<FundraiserType>(
@@ -196,9 +204,9 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
         name,
         organization_name: organizationName,
         description: description || null,
-        goal_amount: parseFloat(goalAmount),
-        start_date: startDate || null,
-        end_date: endDate || null,
+        goal_amount: Math.ceil(parseFloat(goalAmount)),
+        start_date: startDate ? startDate.toISOString() : null,
+        end_date: endDate ? endDate.toISOString() : null,
         fundraiser_type: fundraiserType,
         athon_donation_type: fundraiserType !== 'product' ? athonDonationType : null,
         athon_unit_name: fundraiserType !== 'product' ? athonUnitName : null,
@@ -348,8 +356,17 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
                   type="text"
                   value={goalAmount ? Number(goalAmount).toLocaleString() : ''}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, '');
-                    setGoalAmount(value);
+                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    // Only allow one decimal point
+                    const parts = value.split('.');
+                    const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : value;
+                    setGoalAmount(sanitized);
+                  }}
+                  onBlur={() => {
+                    // Round up on blur
+                    if (goalAmount) {
+                      setGoalAmount(Math.ceil(parseFloat(goalAmount)).toString());
+                    }
                   }}
                   placeholder="10,000"
                   className="pl-7"
@@ -358,29 +375,63 @@ export function CreateCampaignWizard({ onComplete, onCancel, editingCampaign }: 
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start">Start Date *</Label>
-                <Input
-                  id="start"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    // Clear end date if it's before the new start date
-                    if (endDate && e.target.value > endDate) {
-                      setEndDate('');
-                    }
-                  }}
-                />
+                <Label>Start Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={(date) => {
+                        setStartDate(date);
+                        // Clear end date if it's before the new start date
+                        if (endDate && date && date > endDate) {
+                          setEndDate(undefined);
+                        }
+                      }}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="end">End Date *</Label>
-                <Input
-                  id="end"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate || undefined}
-                />
+                <Label>End Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      disabled={(date) => startDate ? date < startDate : false}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </CardContent>

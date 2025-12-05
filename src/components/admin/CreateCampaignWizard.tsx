@@ -29,6 +29,7 @@ import {
   FundraiserCategory as FundraiserCategoryType
 } from '@/data/fundraiserTypes';
 import { parseStudentFile, downloadSampleCSV, ParseResult } from '@/utils/csvParser';
+import { SocialPostGenerator } from './SocialPostGenerator';
 
 interface Product {
   id: string;
@@ -530,9 +531,20 @@ export function CreateCampaignWizard({
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
-                  </PopoverContent>
+              </PopoverContent>
                 </Popover>
               </div>
+            </div>
+
+            {/* AI Social Post Generator */}
+            <div className="pt-4 border-t">
+              <SocialPostGenerator
+                organizationName={name}
+                organizationType={organizationName}
+                fundraiserType={fundraiserTypeValue}
+                goalAmount={goalAmount ? parseFloat(goalAmount) : undefined}
+                description={description}
+              />
             </div>
           </CardContent>
         </Card>

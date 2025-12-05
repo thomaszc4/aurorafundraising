@@ -20,6 +20,7 @@ import AdminProducts from "./pages/admin/Products";
 import AdminCampaigns from "./pages/admin/Campaigns";
 import AdminOrders from "./pages/admin/Orders";
 import AdminParticipants from "./pages/admin/Participants";
+import CampaignSettings from "./pages/admin/CampaignSettings";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import StudentDashboard from "./pages/student/Dashboard";
 import PublicStudentPage from "./pages/student/PublicPage";
@@ -117,6 +118,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminParticipants />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <CampaignSettings />
                 </ProtectedRoute>
               }
             />

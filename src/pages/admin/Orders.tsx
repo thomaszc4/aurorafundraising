@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -25,8 +26,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Eye, Package } from 'lucide-react';
+import { Eye, Package, List, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { OrdersByStudent } from '@/components/admin/OrdersByStudent';
 import type { Database } from '@/integrations/supabase/types';
 
 type OrderStatus = Database['public']['Enums']['order_status'];
@@ -49,6 +51,9 @@ interface Order {
   total_amount: number;
   profit_amount: number | null;
   status: OrderStatus;
+  delivery_status: string | null;
+  delivery_method: string | null;
+  shipping_address: string | null;
   created_at: string;
   student_fundraiser_id: string | null;
   order_items: OrderItem[];
@@ -106,6 +111,22 @@ export default function AdminOrders() {
     }
   };
 
+  const updateDeliveryStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ delivery_status: newStatus })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      toast.success('Delivery status updated');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating delivery status:', error);
+      toast.error('Failed to update delivery status');
+    }
+  };
+
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
       case 'completed':
@@ -114,6 +135,19 @@ export default function AdminOrders() {
         return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
       case 'cancelled':
         return 'bg-destructive/20 text-destructive border-destructive/30';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getDeliveryStatusColor = (status: string | null) => {
+    switch (status) {
+      case 'delivered':
+        return 'bg-accent-teal/20 text-accent-teal border-accent-teal/30';
+      case 'shipped':
+        return 'bg-primary-blue/20 text-primary-blue border-primary-blue/30';
+      case 'ready_for_pickup':
+        return 'bg-amber-500/20 text-amber-600 border-amber-500/30';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -139,90 +173,109 @@ export default function AdminOrders() {
   return (
     <Layout>
       <div className="container-wide py-12">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Orders</h1>
-            <p className="text-muted-foreground">Track and manage all customer orders</p>
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Orders</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Orders</h1>
+          <p className="text-muted-foreground">Track and manage all customer orders</p>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order Date</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Profit</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      No orders found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        {new Date(order.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{order.customer_name || 'N/A'}</p>
-                          <p className="text-sm text-muted-foreground">{order.customer_email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {order.student_fundraisers?.profiles?.full_name || 'N/A'}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        ${Number(order.total_amount).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        {order.profit_amount 
-                          ? `$${Number(order.profit_amount).toFixed(2)}`
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => setSelectedOrder(order)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+        <Tabs defaultValue="all" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="all">
+              <List className="h-4 w-4 mr-2" />
+              All Orders
+            </TabsTrigger>
+            <TabsTrigger value="by-student">
+              <Users className="h-4 w-4 mr-2" />
+              By Participant
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all">
+            <div className="flex justify-end mb-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Orders</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order Date</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Payment</TableHead>
+                      <TableHead>Delivery</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOrders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No orders found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredOrders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell>
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{order.customer_name || 'N/A'}</p>
+                              <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {order.student_fundraisers?.profiles?.full_name || 'N/A'}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            ${Number(order.total_amount).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={getStatusColor(order.status)}>
+                              {order.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={getDeliveryStatusColor(order.delivery_status)}>
+                              {order.delivery_status || 'pending'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setSelectedOrder(order)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="by-student">
+            <OrdersByStudent />
+          </TabsContent>
+        </Tabs>
 
         {/* Order Details Dialog */}
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
@@ -242,10 +295,11 @@ export default function AdminOrders() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Order Date</p>
-                    <p className="font-medium">
-                      {new Date(selectedOrder.created_at).toLocaleString()}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Delivery</p>
+                    <p className="font-medium capitalize">{selectedOrder.delivery_method || 'Pickup'}</p>
+                    {selectedOrder.shipping_address && (
+                      <p className="text-sm text-muted-foreground">{selectedOrder.shipping_address}</p>
+                    )}
                   </div>
                 </div>
 
@@ -265,13 +319,9 @@ export default function AdminOrders() {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="text-xl font-bold">${Number(selectedOrder.total_amount).toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Update Status</p>
+                    <p className="text-sm text-muted-foreground mb-1">Payment Status</p>
                     <Select
                       value={selectedOrder.status}
                       onValueChange={(value: OrderStatus) => {
@@ -279,16 +329,51 @@ export default function AdminOrders() {
                         setSelectedOrder({ ...selectedOrder, status: value });
                       }}
                     >
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="refunded">Refunded</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Delivery Status</p>
+                    <Select
+                      value={selectedOrder.delivery_status || 'pending'}
+                      onValueChange={(value) => {
+                        updateDeliveryStatus(selectedOrder.id, value);
+                        setSelectedOrder({ ...selectedOrder, delivery_status: value });
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total</p>
+                    <p className="text-xl font-bold">${Number(selectedOrder.total_amount).toFixed(2)}</p>
+                  </div>
+                  {selectedOrder.profit_amount && (
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Profit</p>
+                      <p className="text-xl font-bold text-accent-teal">${Number(selectedOrder.profit_amount).toFixed(2)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

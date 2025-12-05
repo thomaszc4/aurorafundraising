@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ADD COLUMN program_size integer;

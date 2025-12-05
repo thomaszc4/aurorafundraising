@@ -592,6 +592,46 @@ export const FUNDRAISER_CATEGORIES: FundraiserCategory[] = [
         ]
       },
       {
+        id: 'quickstove',
+        label: 'QuickStove',
+        icon: ChefHat,
+        description: 'Sell QuickStove portable camping stoves through Aurora. High-profit product with proven $150 average per student.',
+        avgRaised: 150,
+        color: 'from-orange-500 to-red-600',
+        difficulty: 'easy',
+        timeToOrganize: '2-4 weeks',
+        successGuide: [
+          { title: 'Set Up Aurora Account', description: 'Create your campaign on Aurora and add QuickStove products to your catalog.' },
+          { title: 'Add Students', description: 'Invite students to join the campaign. Each gets their own personalized fundraising page.' },
+          { title: 'Students Share Pages', description: 'Students share their personal fundraising links with family, friends, and neighbors.' },
+          { title: 'Track Orders', description: 'Monitor sales in real-time through the Aurora dashboard. See which students are top performers.' },
+          { title: 'Deliver Products', description: 'Coordinate product delivery. Aurora handles fulfillment to make it easy.' },
+          { title: 'Celebrate Success', description: 'Recognize top sellers and celebrate reaching your goal!' }
+        ],
+        projectManagerSteps: [
+          { phase: 'Setup (2-1 weeks before)', tasks: [
+            { task: 'Create Aurora campaign', daysBeforeEvent: 14, description: 'Set up organization and goal' },
+            { task: 'Add students', daysBeforeEvent: 12, description: 'Invite all participants' },
+            { task: 'Set incentive prizes', daysBeforeEvent: 10, description: 'Motivate top performers' }
+          ]},
+          { phase: 'Launch', tasks: [
+            { task: 'Kick-off meeting', description: 'Explain the fundraiser, show student pages' },
+            { task: 'Share page links', description: 'Ensure all students have their links' },
+            { task: 'Parent notification', description: 'Explain how to support their student' }
+          ]},
+          { phase: 'Selling Period (2-3 weeks)', tasks: [
+            { task: 'Weekly check-ins', description: 'Review dashboard, encourage sellers' },
+            { task: 'Social media push', description: 'Help students share their pages' },
+            { task: 'Mid-point celebration', description: 'Recognize early leaders' }
+          ]},
+          { phase: 'Close-out', tasks: [
+            { task: 'Final push', description: 'Last chance to order messaging' },
+            { task: 'Coordinate delivery', description: 'Plan product distribution' },
+            { task: 'Celebrate success', description: 'Awards ceremony for top sellers' }
+          ]}
+        ]
+      },
+      {
         id: 'bake-sale',
         label: 'Bake Sale',
         icon: ChefHat,

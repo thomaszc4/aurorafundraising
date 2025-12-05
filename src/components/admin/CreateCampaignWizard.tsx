@@ -29,7 +29,7 @@ import {
   FundraiserCategory as FundraiserCategoryType
 } from '@/data/fundraiserTypes';
 import { parseStudentFile, downloadSampleCSV, ParseResult } from '@/utils/csvParser';
-import { SocialPostGenerator } from './SocialPostGenerator';
+
 
 interface Product {
   id: string;
@@ -68,6 +68,7 @@ export function CreateCampaignWizard({
   const [organizationName, setOrganizationName] = useState(editingCampaign?.organization_name || '');
   const [description, setDescription] = useState(editingCampaign?.description || '');
   const [goalAmount, setGoalAmount] = useState(editingCampaign?.goal_amount?.toString() || '');
+  const [programSize, setProgramSize] = useState(editingCampaign?.program_size?.toString() || '');
   const [startDate, setStartDate] = useState<Date | undefined>(
     editingCampaign?.start_date ? new Date(editingCampaign.start_date) : undefined
   );
@@ -237,7 +238,7 @@ export function CreateCampaignWizard({
     setSelectedFundraiserType(type);
     
     // Map to database values
-    if (type.id === 'product') {
+    if (type.id === 'product' || type.id === 'quickstove') {
       setFundraiserTypeValue('product');
     } else if (type.id === 'walkathon') {
       setFundraiserTypeValue('walkathon');
@@ -267,6 +268,7 @@ export function CreateCampaignWizard({
         organization_name: organizationName,
         description: description || null,
         goal_amount: Math.ceil(parseFloat(goalAmount)),
+        program_size: programSize ? parseInt(programSize) : null,
         start_date: startDate ? startDate.toISOString() : null,
         end_date: endDate ? endDate.toISOString() : null,
         fundraiser_type: fundraiserTypeValue,
@@ -451,28 +453,43 @@ export function CreateCampaignWizard({
                 placeholder="Describe your fundraiser..."
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="goal">Fundraising Goal *</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="goal">Fundraising Goal *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="goal"
+                    type="text"
+                    value={goalAmount ? Number(goalAmount).toLocaleString() : ''}
+                    onChange={e => {
+                      const value = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = value.split('.');
+                      const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : value;
+                      setGoalAmount(sanitized);
+                    }}
+                    onBlur={() => {
+                      if (goalAmount) {
+                        setGoalAmount(Math.ceil(parseFloat(goalAmount)).toString());
+                      }
+                    }}
+                    placeholder="10,000"
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="programSize">Program Size</Label>
                 <Input
-                  id="goal"
-                  type="text"
-                  value={goalAmount ? Number(goalAmount).toLocaleString() : ''}
-                  onChange={e => {
-                    const value = e.target.value.replace(/[^0-9.]/g, '');
-                    const parts = value.split('.');
-                    const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : value;
-                    setGoalAmount(sanitized);
-                  }}
-                  onBlur={() => {
-                    if (goalAmount) {
-                      setGoalAmount(Math.ceil(parseFloat(goalAmount)).toString());
-                    }
-                  }}
-                  placeholder="10,000"
-                  className="pl-7"
+                  id="programSize"
+                  type="number"
+                  value={programSize}
+                  onChange={e => setProgramSize(e.target.value)}
+                  placeholder="e.g. 50 students"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Number of students/participants
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -536,16 +553,6 @@ export function CreateCampaignWizard({
               </div>
             </div>
 
-            {/* AI Social Post Generator */}
-            <div className="pt-4 border-t">
-              <SocialPostGenerator
-                organizationName={name}
-                organizationType={organizationName}
-                fundraiserType={fundraiserTypeValue}
-                goalAmount={goalAmount ? parseFloat(goalAmount) : undefined}
-                description={description}
-              />
-            </div>
           </CardContent>
         </Card>
       )}
@@ -685,6 +692,43 @@ export function CreateCampaignWizard({
                     <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0" />
                   </div>
                 </div>
+
+                {/* Expected Earnings Comparison */}
+                {programSize && goalAmount && (
+                  <div className="rounded-xl border p-4 bg-muted/30">
+                    <h4 className="font-semibold text-foreground mb-3">Expected Earnings Comparison</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 rounded-lg bg-background border">
+                        <p className="text-xs text-muted-foreground mb-1">Your Goal</p>
+                        <p className="text-xl font-bold text-foreground">
+                          ${Number(goalAmount).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-center p-3 rounded-lg bg-background border">
+                        <p className="text-xs text-muted-foreground mb-1">Expected with {selectedFundraiserType.label}</p>
+                        <p className="text-xl font-bold text-foreground">
+                          ${(parseInt(programSize) * selectedFundraiserType.avgRaised).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {programSize} students × ${selectedFundraiserType.avgRaised}/student
+                        </p>
+                      </div>
+                    </div>
+                    {parseInt(programSize) * selectedFundraiserType.avgRaised >= parseFloat(goalAmount) ? (
+                      <div className="mt-3 flex items-center gap-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-lg">
+                        <CheckCircle2 className="h-5 w-5" />
+                        <span className="text-sm font-medium">On Track! This fundraiser should meet your goal.</span>
+                      </div>
+                    ) : (
+                      <div className="mt-3 flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-lg">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="text-sm font-medium">
+                          May fall short by ${(parseFloat(goalAmount) - parseInt(programSize) * selectedFundraiserType.avgRaised).toLocaleString()}. Consider a higher-yield fundraiser or increasing participation.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Configuration for non-product types */}
                 {selectedFundraiserType.id !== 'product' && (

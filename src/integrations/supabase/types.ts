@@ -170,6 +170,7 @@ export type Database = {
           organization_admin_id: string | null
           organization_name: string
           organization_type: string | null
+          program_size: number | null
           selected_product_ids: string[] | null
           start_date: string | null
           status: Database["public"]["Enums"]["campaign_status"] | null
@@ -191,6 +192,7 @@ export type Database = {
           organization_admin_id?: string | null
           organization_name: string
           organization_type?: string | null
+          program_size?: number | null
           selected_product_ids?: string[] | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["campaign_status"] | null
@@ -212,6 +214,7 @@ export type Database = {
           organization_admin_id?: string | null
           organization_name?: string
           organization_type?: string | null
+          program_size?: number | null
           selected_product_ids?: string[] | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["campaign_status"] | null

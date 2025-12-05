@@ -22,6 +22,7 @@ import { DonorDatabase } from '@/components/admin/DonorDatabase';
 import { BulkEmailSender } from '@/components/admin/BulkEmailSender';
 import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
 import { ResourcesManager } from '@/components/admin/ResourcesManager';
+import { SocialPostGenerator } from '@/components/admin/SocialPostGenerator';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { ProgressEnhanced } from '@/components/ui/progress-enhanced';
 import { OnboardingTutorial } from '@/components/admin/OnboardingTutorial';
@@ -351,6 +352,28 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'social-posts':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-2">Social Media Posts</h2>
+              <p className="text-muted-foreground">Generate AI-powered social media posts for your fundraiser</p>
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <SocialPostGenerator
+                  organizationName={selectedCampaign.name}
+                  organizationType={selectedCampaign.organization_name}
+                  fundraiserType={selectedCampaign.fundraiser_type || 'product'}
+                  goalAmount={selectedCampaign.goal_amount ? Number(selectedCampaign.goal_amount) : undefined}
+                  description={selectedCampaign.description || undefined}
+                />
+              </CardContent>
+            </Card>
+          </>
+        );
+
       default:
         return renderOverview();
     }
@@ -482,6 +505,16 @@ export default function AdminDashboard() {
           <CardContent className="pt-6">
             <h3 className="font-semibold mb-1">📁 Resources</h3>
             <p className="text-sm text-muted-foreground">Files, guides, and materials</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => setView('social-posts')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">📱 Social Media Posts</h3>
+            <p className="text-sm text-muted-foreground">Generate AI-powered posts</p>
           </CardContent>
         </Card>
 

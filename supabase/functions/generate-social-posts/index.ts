@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { organizationName, organizationType, fundraiserType, goalAmount, description } = await req.json();
+    const { organizationName, organizationType, fundraiserType, goalAmount, description, brandColors } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -27,6 +27,11 @@ serve(async (req) => {
     };
 
     const typeLabel = fundraiserTypeLabels[fundraiserType] || fundraiserType;
+    
+    const brandColorInfo = brandColors 
+      ? `\nBrand Colors: Primary ${brandColors.primary}, Secondary ${brandColors.secondary}, Accent ${brandColors.accent}
+(When suggesting visual content, reference these brand colors for consistency)`
+      : '';
 
     const systemPrompt = `You are a social media marketing expert specializing in school and nonprofit fundraising campaigns. 
 Create engaging, emotional, and action-driven social media posts that encourage donations and participation.
@@ -39,7 +44,7 @@ Organization: ${organizationName}
 Organization Type: ${organizationType || 'School/Youth Organization'}
 Fundraiser Type: ${typeLabel}
 Goal: $${goalAmount?.toLocaleString() || '5,000'}
-${description ? `Description: ${description}` : ''}
+${description ? `Description: ${description}` : ''}${brandColorInfo}
 
 For each post, create:
 1. The main post text (suitable for Facebook, Instagram, or Twitter)

@@ -75,6 +75,7 @@ export function AdminLayout({
     { title: 'Project Manager', icon: ClipboardList, path: '/admin?view=project-manager' },
     { title: 'Participants', icon: Users, path: '/admin/participants' },
     { title: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
+    { title: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
   const engagementNavItems: NavItem[] = [

@@ -159,6 +159,7 @@ export type Database = {
             | Database["public"]["Enums"]["athon_donation_type"]
             | null
           athon_unit_name: string | null
+          brand_colors: Json | null
           created_at: string
           description: string | null
           end_date: string | null
@@ -181,6 +182,7 @@ export type Database = {
             | Database["public"]["Enums"]["athon_donation_type"]
             | null
           athon_unit_name?: string | null
+          brand_colors?: Json | null
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -203,6 +205,7 @@ export type Database = {
             | Database["public"]["Enums"]["athon_donation_type"]
             | null
           athon_unit_name?: string | null
+          brand_colors?: Json | null
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -1240,6 +1243,70 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_tasks: {
+        Row: {
+          assigned_by: string | null
+          campaign_id: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_completed: boolean | null
+          student_fundraiser_id: string
+          task_name: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          campaign_id: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          student_fundraiser_id: string
+          task_name: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          campaign_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          student_fundraiser_id?: string
+          task_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_tasks_student_fundraiser_id_fkey"
+            columns: ["student_fundraiser_id"]
+            isOneToOne: false
+            referencedRelation: "student_fundraisers"
             referencedColumns: ["id"]
           },
         ]

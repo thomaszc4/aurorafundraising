@@ -18,6 +18,7 @@ interface SocialPostGeneratorProps {
   fundraiserType: string;
   goalAmount?: number;
   description?: string;
+  brandColors?: { primary: string; secondary: string; accent: string } | null;
   onPostsGenerated?: (posts: SocialPost[]) => void;
 }
 
@@ -41,6 +42,7 @@ export function SocialPostGenerator({
   fundraiserType,
   goalAmount,
   description,
+  brandColors,
   onPostsGenerated,
 }: SocialPostGeneratorProps) {
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -62,6 +64,7 @@ export function SocialPostGenerator({
           fundraiserType,
           goalAmount,
           description,
+          brandColors,
         },
       });
 

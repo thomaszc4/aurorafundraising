@@ -77,6 +77,9 @@ export function CreateCampaignWizard({
   );
   const [logoUrl, setLogoUrl] = useState(editingCampaign?.logo_url || '');
   const [logoPreview, setLogoPreview] = useState<string | null>(editingCampaign?.logo_url || null);
+  const [brandColors, setBrandColors] = useState<{ primary: string; secondary: string; accent: string } | null>(
+    editingCampaign?.brand_colors || null
+  );
 
   // Step 2: Fundraiser Type
   const [selectedCategory, setSelectedCategory] = useState<FundraiserCategoryType | null>(null);
@@ -142,14 +145,90 @@ export function CreateCampaignWizard({
     }
   };
 
+  // Extract dominant colors from an image
+  const extractColorsFromImage = (imageDataUrl: string): Promise<{ primary: string; secondary: string; accent: string }> => {
+    return new Promise((resolve) => {
+      const img = document.createElement('img');
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve({ primary: '#2563eb', secondary: '#10b981', accent: '#f59e0b' });
+          return;
+        }
+
+        // Sample the image at a smaller size for performance
+        const sampleSize = 50;
+        canvas.width = sampleSize;
+        canvas.height = sampleSize;
+        ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+        
+        const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
+        const pixels = imageData.data;
+        
+        // Build color frequency map
+        const colorMap: { [key: string]: { count: number; r: number; g: number; b: number } } = {};
+        
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+          const a = pixels[i + 3];
+          
+          // Skip transparent/near-white/near-black pixels
+          if (a < 128) continue;
+          if (r > 240 && g > 240 && b > 240) continue;
+          if (r < 15 && g < 15 && b < 15) continue;
+          
+          // Round to reduce color variations
+          const key = `${Math.round(r / 20) * 20},${Math.round(g / 20) * 20},${Math.round(b / 20) * 20}`;
+          
+          if (!colorMap[key]) {
+            colorMap[key] = { count: 0, r, g, b };
+          }
+          colorMap[key].count++;
+        }
+        
+        // Sort by frequency and get top colors
+        const sortedColors = Object.values(colorMap)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+        
+        const toHex = (r: number, g: number, b: number) => 
+          '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        
+        const primary = sortedColors[0] ? toHex(sortedColors[0].r, sortedColors[0].g, sortedColors[0].b) : '#2563eb';
+        const secondary = sortedColors[1] ? toHex(sortedColors[1].r, sortedColors[1].g, sortedColors[1].b) : '#10b981';
+        const accent = sortedColors[2] ? toHex(sortedColors[2].r, sortedColors[2].g, sortedColors[2].b) : '#f59e0b';
+        
+        resolve({ primary, secondary, accent });
+      };
+      img.onerror = () => {
+        resolve({ primary: '#2563eb', secondary: '#10b981', accent: '#f59e0b' });
+      };
+      img.src = imageDataUrl;
+    });
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Preview
+    // Preview and extract colors
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setLogoPreview(e.target?.result as string);
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      setLogoPreview(dataUrl);
+      
+      // Extract colors from the image
+      try {
+        const colors = await extractColorsFromImage(dataUrl);
+        setBrandColors(colors);
+        toast.success('Brand colors extracted from logo');
+      } catch (err) {
+        console.error('Error extracting colors:', err);
+      }
     };
     reader.readAsDataURL(file);
 
@@ -275,7 +354,8 @@ export function CreateCampaignWizard({
         athon_donation_type: fundraiserTypeValue !== 'product' ? athonDonationType : null,
         athon_unit_name: fundraiserTypeValue !== 'product' ? athonUnitName : null,
         organization_admin_id: user?.id,
-        logo_url: logoUrl || null
+        logo_url: logoUrl || null,
+        brand_colors: brandColors || null
       };
 
       let campaignId: string;

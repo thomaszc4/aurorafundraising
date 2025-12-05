@@ -73,7 +73,7 @@ export function AdminLayout({
   const mainNavItems: NavItem[] = [
     { title: 'Overview', icon: LayoutDashboard, path: '/admin' },
     { title: 'Project Manager', icon: ClipboardList, path: '/admin?view=project-manager' },
-    { title: 'Students', icon: Users, path: '/admin/students' },
+    { title: 'Participants', icon: Users, path: '/admin/participants' },
     { title: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
   ];
 

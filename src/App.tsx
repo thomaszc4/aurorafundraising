@@ -19,7 +19,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminCampaigns from "./pages/admin/Campaigns";
 import AdminOrders from "./pages/admin/Orders";
-import AdminStudents from "./pages/admin/Students";
+import AdminParticipants from "./pages/admin/Participants";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import StudentDashboard from "./pages/student/Dashboard";
 import PublicStudentPage from "./pages/student/PublicPage";
@@ -113,10 +113,10 @@ const App = () => (
               }
             />
             <Route
-              path="/admin/students"
+              path="/admin/participants"
               element={
                 <ProtectedRoute requireAdmin>
-                  <AdminStudents />
+                  <AdminParticipants />
                 </ProtectedRoute>
               }
             />

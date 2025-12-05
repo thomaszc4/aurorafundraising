@@ -75,7 +75,6 @@ export function AdminLayout({
     { title: 'Project Manager', icon: ClipboardList, path: '/admin?view=project-manager' },
     { title: 'Participants', icon: Users, path: '/admin/participants' },
     { title: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
-    { title: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
   const engagementNavItems: NavItem[] = [
@@ -84,9 +83,9 @@ export function AdminLayout({
     { title: 'Analytics', icon: BarChart3, path: '/admin?view=analytics' },
   ];
 
-  const resourcesNavItems: NavItem[] = [
+  const toolsNavItems: NavItem[] = [
     { title: 'Resources', icon: FolderOpen, path: '/admin?view=resources' },
-    { title: 'Settings', icon: Settings, path: '/admin/campaigns' },
+    { title: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
   const isActive = (path?: string) => {
@@ -194,7 +193,7 @@ export function AdminLayout({
               <SidebarGroupLabel>Tools</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {resourcesNavItems.map((item) => (
+                  {toolsNavItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         onClick={() => item.path && navigate(item.path)}

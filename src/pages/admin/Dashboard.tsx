@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft } from 'lucide-react';
+import { 
+  Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft,
+  ClipboardList, Heart, Mail, BarChart3, FileText, Share2, 
+  Settings, Trophy, ListTodo, Zap
+} from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -26,6 +30,8 @@ import { SocialPostGenerator } from '@/components/admin/SocialPostGenerator';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { ProgressEnhanced } from '@/components/ui/progress-enhanced';
 import { OnboardingTutorial } from '@/components/admin/OnboardingTutorial';
+import { BulkTaskAssignment } from '@/components/admin/BulkTaskAssignment';
+import { MilestoneEmailAutomation } from '@/components/admin/MilestoneEmailAutomation';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -274,6 +280,54 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'email':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Email Center</h2>
+                <p className="text-muted-foreground">Manage all your email communications</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('templates')}>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-1">📝 Templates</h3>
+                    <p className="text-sm text-muted-foreground">Build email templates</p>
+                  </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('email-scheduler')}>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-1">📅 Scheduler</h3>
+                    <p className="text-sm text-muted-foreground">Schedule email sends</p>
+                  </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('ab-testing')}>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-1">🔬 A/B Testing</h3>
+                    <p className="text-sm text-muted-foreground">Optimize open rates</p>
+                  </CardContent>
+                </Card>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('email-analytics')}>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-1">📊 Analytics</h3>
+                    <p className="text-sm text-muted-foreground">Track performance</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <BulkEmailSender campaignId={selectedCampaign.id} />
+            </div>
+          </>
+        );
+
+      case 'analytics':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <RetentionAnalytics campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
+
       case 'ab-testing':
         return selectedCampaign && (
           <>
@@ -374,6 +428,25 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'bulk-tasks':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <BulkTaskAssignment campaignId={selectedCampaign.id} />
+          </>
+        );
+
+      case 'milestones':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <MilestoneEmailAutomation 
+              campaignId={selectedCampaign.id} 
+              goalAmount={selectedCampaign.goal_amount ? Number(selectedCampaign.goal_amount) : undefined}
+            />
+          </>
+        );
+
       default:
         return renderOverview();
     }
@@ -456,77 +529,312 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      {/* Quick Actions Grid - Simplified */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer border-primary/30" 
-          onClick={() => setView('project-manager')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">📋 Project Manager</h3>
-            <p className="text-sm text-muted-foreground">Step-by-step guide for your fundraiser</p>
-          </CardContent>
-        </Card>
+      {/* Campaign Management Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-primary" />
+          Campaign Management
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer border-primary/30 bg-primary/5" 
+            onClick={() => setView('project-manager')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Project Manager</h3>
+                  <p className="text-xs text-muted-foreground">Step-by-step tasks</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => setView('donors')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">❤️ Donor CRM</h3>
-            <p className="text-sm text-muted-foreground">Track and thank your supporters</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => navigate('/admin/participants')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Participants</h3>
+                  <p className="text-xs text-muted-foreground">Manage students</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => navigate('/admin/students')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">👥 Students</h3>
-            <p className="text-sm text-muted-foreground">Manage student fundraisers</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => navigate('/admin/orders')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <ShoppingCart className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Orders</h3>
+                  <p className="text-xs text-muted-foreground">Track purchases</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => navigate('/admin/orders')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">🛒 Orders</h3>
-            <p className="text-sm text-muted-foreground">Track all purchases</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => navigate('/admin/settings')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gray-500/10 flex items-center justify-center">
+                  <Settings className="h-5 w-5 text-gray-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Settings</h3>
+                  <p className="text-xs text-muted-foreground">Campaign config</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => setView('resources')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">📁 Resources</h3>
-            <p className="text-sm text-muted-foreground">Files, guides, and materials</p>
-          </CardContent>
-        </Card>
+      {/* Donor Engagement Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Heart className="h-5 w-5 text-rose-500" />
+          Donor Engagement
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('donors')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                  <Heart className="h-5 w-5 text-rose-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Donor CRM</h3>
+                  <p className="text-xs text-muted-foreground">Track supporters</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => setView('social-posts')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">📱 Social Media Posts</h3>
-            <p className="text-sm text-muted-foreground">Generate AI-powered posts</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('journeys')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Automations</h3>
+                  <p className="text-xs text-muted-foreground">Donor journeys</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card 
-          className="hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => setView('retention')}
-        >
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-1">📊 Analytics</h3>
-            <p className="text-sm text-muted-foreground">Retention and performance metrics</p>
-          </CardContent>
-        </Card>
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('leaderboard')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Trophy className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Recognition Wall</h3>
+                  <p className="text-xs text-muted-foreground">Celebrate donors</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('retention')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-indigo-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Analytics</h3>
+                  <p className="text-xs text-muted-foreground">Performance metrics</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Email Center Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Mail className="h-5 w-5 text-sky-500" />
+          Email Center
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('templates')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-sky-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Templates</h3>
+                  <p className="text-xs text-muted-foreground">Email builder</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('email-scheduler')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                  <Mail className="h-5 w-5 text-teal-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Scheduler</h3>
+                  <p className="text-xs text-muted-foreground">Schedule sends</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('ab-testing')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-orange-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">A/B Testing</h3>
+                  <p className="text-xs text-muted-foreground">Optimize emails</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('email-analytics')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-cyan-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Email Analytics</h3>
+                  <p className="text-xs text-muted-foreground">Track opens/clicks</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Tools Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Zap className="h-5 w-5 text-yellow-500" />
+          Tools & Automation
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('bulk-tasks')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <ListTodo className="h-5 w-5 text-violet-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Bulk Tasks</h3>
+                  <p className="text-xs text-muted-foreground">Assign to all</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('milestones')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Trophy className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Milestones</h3>
+                  <p className="text-xs text-muted-foreground">Auto-celebrate</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('social-posts')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                  <Share2 className="h-5 w-5 text-pink-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Social Posts</h3>
+                  <p className="text-xs text-muted-foreground">AI-generated</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer" 
+            onClick={() => setView('resources')}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-slate-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Resources</h3>
+                  <p className="text-xs text-muted-foreground">Files & guides</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </>
   );

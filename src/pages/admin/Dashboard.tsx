@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, TrendingUp, Calendar, Target, ClipboardList, Scale, Heart, User, BarChart3, Zap, FileText, Trophy, ClipboardList as Survey, FlaskConical, Mail, Clock, Palette, Database } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -22,6 +21,10 @@ import { EmailTemplateBuilder } from '@/components/admin/EmailTemplateBuilder';
 import { DonorDatabase } from '@/components/admin/DonorDatabase';
 import { BulkEmailSender } from '@/components/admin/BulkEmailSender';
 import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
+import { ResourcesManager } from '@/components/admin/ResourcesManager';
+import { AdminLayout } from '@/components/layout/AdminLayout';
+import { ProgressEnhanced } from '@/components/ui/progress-enhanced';
+import { OnboardingTutorial } from '@/components/admin/OnboardingTutorial';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -29,6 +32,7 @@ type Campaign = Tables<'campaigns'>;
 export default function AdminDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [campaignStats, setCampaignStats] = useState({
@@ -38,24 +42,14 @@ export default function AdminDashboard() {
     goalProgress: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [showCreateWizard, setShowCreateWizard] = useState(false);
-  const [showProjectManager, setShowProjectManager] = useState(false);
-  const [showComparison, setShowComparison] = useState(false);
-  const [showDonorManagement, setShowDonorManagement] = useState(false);
-  const [showProfileEditor, setShowProfileEditor] = useState(false);
-  const [showRetentionAnalytics, setShowRetentionAnalytics] = useState(false);
-  const [showDonorJourney, setShowDonorJourney] = useState(false);
-  const [showImpactUpdates, setShowImpactUpdates] = useState(false);
-  const [showDonorSurvey, setShowDonorSurvey] = useState(false);
-  const [showABTesting, setShowABTesting] = useState(false);
-  const [showDonorLeaderboard, setShowDonorLeaderboard] = useState(false);
-  const [showEmailAnalytics, setShowEmailAnalytics] = useState(false);
-  const [showEmailScheduler, setShowEmailScheduler] = useState(false);
-  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
-  const [showDonorDatabase, setShowDonorDatabase] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // View state from URL params
+  const currentView = searchParams.get('view') || 'overview';
 
   useEffect(() => {
     fetchCampaigns();
+    checkFirstVisit();
   }, []);
 
   useEffect(() => {
@@ -63,6 +57,18 @@ export default function AdminDashboard() {
       fetchCampaignStats(selectedCampaign.id);
     }
   }, [selectedCampaign]);
+
+  const checkFirstVisit = async () => {
+    const hasSeenTutorial = localStorage.getItem('aurora_seen_tutorial');
+    if (!hasSeenTutorial) {
+      setShowTutorial(true);
+    }
+  };
+
+  const handleTutorialComplete = () => {
+    localStorage.setItem('aurora_seen_tutorial', 'true');
+    setShowTutorial(false);
+  };
 
   const fetchCampaigns = async () => {
     try {
@@ -86,14 +92,12 @@ export default function AdminDashboard() {
 
   const fetchCampaignStats = async (campaignId: string) => {
     try {
-      // Fetch students for this campaign
       const { count: studentsCount } = await supabase
         .from('student_fundraisers')
         .select('*', { count: 'exact', head: true })
         .eq('campaign_id', campaignId)
         .eq('is_active', true);
 
-      // Fetch orders for this campaign
       const { data: fundraisers } = await supabase
         .from('student_fundraisers')
         .select('id, total_raised')
@@ -130,582 +134,379 @@ export default function AdminDashboard() {
   };
 
   const handleCampaignCreated = () => {
-    setShowCreateWizard(false);
+    setSearchParams({});
     fetchCampaigns();
+  };
+
+  const handleCampaignChange = (campaignId: string) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (campaign) {
+      setSelectedCampaign(campaign);
+    }
+  };
+
+  const setView = (view: string) => {
+    if (view === 'overview') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ view });
+    }
   };
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container-wide py-12">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-muted rounded-xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show wizard as main content when creating new fundraiser
-  if (showCreateWizard) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <CreateCampaignWizard
-            onComplete={handleCampaignCreated}
-            onCancel={() => setShowCreateWizard(false)}
-          />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Project Manager
-  if (showProjectManager && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <FundraiserProjectManager
-            campaignId={selectedCampaign.id}
-            fundraiserTypeId={selectedCampaign.fundraiser_type || 'product'}
-            startDate={selectedCampaign.start_date ? new Date(selectedCampaign.start_date) : undefined}
-            onClose={() => setShowProjectManager(false)}
-          />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Comparison Tool
-  if (showComparison) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <FundraiserComparison onClose={() => setShowComparison(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Donor Management
-  if (showDonorManagement && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <DonorManagement campaignId={selectedCampaign.id} onClose={() => setShowDonorManagement(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Profile Editor
-  if (showProfileEditor) {
-    return (
-      <Layout>
-        <div className="container-wide py-12 max-w-2xl mx-auto">
-          <Button variant="ghost" onClick={() => setShowProfileEditor(false)} className="mb-4">← Back to Dashboard</Button>
-          <ProfileEditor />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Retention Analytics
-  if (showRetentionAnalytics && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <RetentionAnalytics campaignId={selectedCampaign.id} onClose={() => setShowRetentionAnalytics(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Donor Journey Manager
-  if (showDonorJourney && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <DonorJourneyManager campaignId={selectedCampaign.id} onClose={() => setShowDonorJourney(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Impact Updates Manager
-  if (showImpactUpdates && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <ImpactUpdatesManager campaignId={selectedCampaign.id} onClose={() => setShowImpactUpdates(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Donor Survey Manager
-  if (showDonorSurvey && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowDonorSurvey(false)} className="mb-4">← Back to Dashboard</Button>
-          <DonorSurveyManager campaignId={selectedCampaign.id} onClose={() => setShowDonorSurvey(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Email A/B Testing
-  if (showABTesting && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowABTesting(false)} className="mb-4">← Back to Dashboard</Button>
-          <EmailABTesting campaignId={selectedCampaign.id} onClose={() => setShowABTesting(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Donor Leaderboard
-  if (showDonorLeaderboard && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowDonorLeaderboard(false)} className="mb-4">← Back to Dashboard</Button>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Donor Recognition Wall</h2>
-            <p className="text-muted-foreground">Celebrating our generous supporters</p>
-          </div>
-          <DonorLeaderboard campaignId={selectedCampaign.id} limit={20} variant="wall" />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Email Analytics Dashboard
-  if (showEmailAnalytics && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowEmailAnalytics(false)} className="mb-4">← Back to Dashboard</Button>
-          <EmailAnalyticsDashboard campaignId={selectedCampaign.id} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Email Scheduler
-  if (showEmailScheduler && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowEmailScheduler(false)} className="mb-4">← Back to Dashboard</Button>
-          <EmailScheduler campaignId={selectedCampaign.id} onClose={() => setShowEmailScheduler(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Template Builder
-  if (showTemplateBuilder && selectedCampaign) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowTemplateBuilder(false)} className="mb-4">← Back to Dashboard</Button>
-          <EmailTemplateBuilder campaignId={selectedCampaign.id} onClose={() => setShowTemplateBuilder(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show Donor Database
-  if (showDonorDatabase) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <Button variant="ghost" onClick={() => setShowDonorDatabase(false)} className="mb-4">← Back to Dashboard</Button>
-          <DonorDatabase onClose={() => setShowDonorDatabase(false)} />
-        </div>
-      </Layout>
-    );
-  }
-
-  // No fundraisers - show create CTA
-  if (campaigns.length === 0) {
-    return (
-      <Layout>
-        <div className="container-wide py-12">
-          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-            <div className="mb-8">
-              <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Target className="w-12 h-12 text-primary" />
-              </div>
-              <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Your Dashboard</h1>
-              <p className="text-muted-foreground text-lg max-w-md mx-auto">
-                Get started by creating your first fundraiser campaign. Set up your organization, add products, and invite students to participate.
-              </p>
-            </div>
-            <Button size="lg" onClick={() => setShowCreateWizard(true)} className="gap-2">
-              <Plus className="w-5 h-5" />
-              Create a Fundraiser
-            </Button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-
-  return (
-    <Layout>
-      <div className="container-wide py-12">
-        {/* Header with campaign selector and new fundraiser button */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              {selectedCampaign?.name || 'Fundraiser Dashboard'}
-            </h1>
-            <p className="text-muted-foreground">{selectedCampaign?.organization_name}</p>
-          </div>
-          <Button onClick={() => setShowCreateWizard(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            New Fundraiser
-          </Button>
-        </div>
-
-        {/* Campaign Tabs */}
-        {campaigns.length > 1 && (
-          <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-            {campaigns.map((campaign) => (
-              <Button
-                key={campaign.id}
-                variant={selectedCampaign?.id === campaign.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCampaign(campaign)}
-              >
-                {campaign.name}
-              </Button>
+      <AdminLayout>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-muted rounded-xl"></div>
             ))}
           </div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${campaignStats.totalRaised.toFixed(2)}</div>
-              {selectedCampaign?.goal_amount && (
-                <p className="text-xs text-muted-foreground">
-                  {campaignStats.goalProgress.toFixed(0)}% of ${Number(selectedCampaign.goal_amount).toLocaleString()} goal
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{campaignStats.totalStudents}</div>
-              <p className="text-xs text-muted-foreground">Participating fundraisers</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{campaignStats.totalOrders}</div>
-              <p className="text-xs text-muted-foreground">Completed orders</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Campaign Status</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold capitalize">{selectedCampaign?.status || 'Draft'}</div>
-              {selectedCampaign?.end_date && (
-                <p className="text-xs text-muted-foreground">
-                  Ends {new Date(selectedCampaign.end_date).toLocaleDateString()}
-                </p>
-              )}
-            </CardContent>
-          </Card>
         </div>
+      </AdminLayout>
+    );
+  }
 
-        {/* Progress Bar */}
-        {selectedCampaign?.goal_amount && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Fundraising Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>${campaignStats.totalRaised.toFixed(2)} raised</span>
-                  <span>${Number(selectedCampaign.goal_amount).toLocaleString()} goal</span>
-                </div>
-                <div className="h-4 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-500"
-                    style={{ width: `${campaignStats.goalProgress}%` }}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+  // Show wizard when creating
+  if (currentView === 'create') {
+    return (
+      <AdminLayout
+        campaignName={selectedCampaign?.name}
+        campaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
+        selectedCampaignId={selectedCampaign?.id}
+        onCampaignChange={handleCampaignChange}
+        onCreateCampaign={() => setView('create')}
+      >
+        <CreateCampaignWizard
+          onComplete={handleCampaignCreated}
+          onCancel={() => setView('overview')}
+        />
+      </AdminLayout>
+    );
+  }
 
-        {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-primary/50 bg-primary/5" onClick={() => setShowProjectManager(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary">
-                <ClipboardList className="h-5 w-5" />
-                Project Manager
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Step-by-step guide to run your fundraiser</p>
-              <Button className="w-full">Open Manager</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-rose-500/50 bg-rose-500/5" onClick={() => setShowDonorManagement(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-rose-600">
-                <Heart className="h-5 w-5" />
-                Donor CRM
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Track donors, send thanks, build relationships</p>
-              <Button variant="outline" className="w-full border-rose-500/50 text-rose-600 hover:bg-rose-500/10">Manage Donors</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-green-500/50 bg-green-500/5" onClick={() => setShowRetentionAnalytics(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-600">
-                <BarChart3 className="h-5 w-5" />
-                Retention Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Quarterly metrics and retention tracking</p>
-              <Button variant="outline" className="w-full border-green-500/50 text-green-600 hover:bg-green-500/10">View Analytics</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-purple-500/50 bg-purple-500/5" onClick={() => setShowDonorJourney(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-600">
-                <Zap className="h-5 w-5" />
-                Donor Journeys
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Automated email workflows for donors</p>
-              <Button variant="outline" className="w-full border-purple-500/50 text-purple-600 hover:bg-purple-500/10">Manage Journeys</Button>
-            </CardContent>
-          </Card>
+  // No campaigns - show create CTA
+  if (campaigns.length === 0) {
+    return (
+      <AdminLayout>
+        {showTutorial && <OnboardingTutorial onComplete={handleTutorialComplete} />}
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Aurora</h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Get started by creating your first fundraiser. Our platform helps you raise 10x more than traditional fundraisers.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => setView('create')} className="gap-2">
+            <Plus className="w-5 h-5" />
+            Create Your First Fundraiser
+          </Button>
         </div>
+      </AdminLayout>
+    );
+  }
 
-        {/* Secondary Row */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-orange-500/50 bg-orange-500/5" onClick={() => setShowImpactUpdates(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-orange-600">
-                <FileText className="h-5 w-5" />
-                Impact Updates
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Share stories, stats, and photos with donors</p>
-              <Button variant="outline" className="w-full border-orange-500/50 text-orange-600 hover:bg-orange-500/10">Create Update</Button>
-            </CardContent>
-          </Card>
+  // Render different views based on URL param
+  const renderContent = () => {
+    const BackButton = ({ onClick }: { onClick: () => void }) => (
+      <Button variant="ghost" onClick={onClick} className="mb-4 gap-2">
+        <ArrowLeft className="h-4 w-4" />
+        Back to Overview
+      </Button>
+    );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-amber-500/50 bg-amber-500/5" onClick={() => setShowComparison(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-amber-600">
-                <Scale className="h-5 w-5" />
-                Compare Types
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Compare fundraiser types side-by-side</p>
-              <Button variant="outline" className="w-full border-amber-500/50 text-amber-600 hover:bg-amber-500/10">Compare</Button>
-            </CardContent>
-          </Card>
+    switch (currentView) {
+      case 'project-manager':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <FundraiserProjectManager
+              campaignId={selectedCampaign.id}
+              fundraiserTypeId={selectedCampaign.fundraiser_type || 'product'}
+              startDate={selectedCampaign.start_date ? new Date(selectedCampaign.start_date) : undefined}
+              onClose={() => setView('overview')}
+            />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-cyan-500/50 bg-cyan-500/5" onClick={() => setShowProfileEditor(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-600">
-                <User className="h-5 w-5" />
-                My Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Update your personal information</p>
-              <Button variant="outline" className="w-full border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10">Edit Profile</Button>
-            </CardContent>
-          </Card>
+      case 'donors':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <DonorManagement campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/students')}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Students
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">View and manage student fundraisers</p>
-              <Button variant="outline" className="w-full">Manage</Button>
-            </CardContent>
-          </Card>
-        </div>
+      case 'retention':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <RetentionAnalytics campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-        {/* Engagement & Testing Row */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-pink-500/50 bg-pink-500/5" onClick={() => setShowDonorLeaderboard(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-pink-600">
-                <Trophy className="h-5 w-5" />
-                Recognition Wall
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Public leaderboard celebrating top donors</p>
-              <Button variant="outline" className="w-full border-pink-500/50 text-pink-600 hover:bg-pink-500/10">View Wall</Button>
-            </CardContent>
-          </Card>
+      case 'journeys':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <DonorJourneyManager campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-blue-500/50 bg-blue-500/5" onClick={() => setShowDonorSurvey(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-600">
-                <Survey className="h-5 w-5" />
-                Donor Surveys
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Collect feedback and communication preferences</p>
-              <Button variant="outline" className="w-full border-blue-500/50 text-blue-600 hover:bg-blue-500/10">Manage Surveys</Button>
-            </CardContent>
-          </Card>
+      case 'impact':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <ImpactUpdatesManager campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-violet-500/50 bg-violet-500/5" onClick={() => setShowABTesting(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-violet-600">
-                <FlaskConical className="h-5 w-5" />
-                Email A/B Testing
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Optimize email open rates and engagement</p>
-              <Button variant="outline" className="w-full border-violet-500/50 text-violet-600 hover:bg-violet-500/10">Run Tests</Button>
-            </CardContent>
-          </Card>
+      case 'surveys':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <DonorSurveyManager campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-cyan-500/50 bg-cyan-500/5" onClick={() => setShowEmailAnalytics(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-600">
-                <Mail className="h-5 w-5" />
-                Email Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Track open rates, clicks, and engagement</p>
-              <Button variant="outline" className="w-full border-cyan-500/50 text-cyan-600 hover:bg-cyan-500/10">View Analytics</Button>
-            </CardContent>
-          </Card>
+      case 'ab-testing':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <EmailABTesting campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-indigo-500/50 bg-indigo-500/5" onClick={() => setShowEmailScheduler(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-indigo-600">
-                <Clock className="h-5 w-5" />
-                Email Scheduler
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Schedule campaigns for optimal send times</p>
-              <Button variant="outline" className="w-full border-indigo-500/50 text-indigo-600 hover:bg-indigo-500/10">Schedule Emails</Button>
-            </CardContent>
-          </Card>
+      case 'email-analytics':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <EmailAnalyticsDashboard campaignId={selectedCampaign.id} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-fuchsia-500/50 bg-fuchsia-500/5" onClick={() => setShowTemplateBuilder(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-fuchsia-600">
-                <Palette className="h-5 w-5" />
-                Template Builder
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Design custom email templates</p>
-              <Button variant="outline" className="w-full border-fuchsia-500/50 text-fuchsia-600 hover:bg-fuchsia-500/10">Build Templates</Button>
-            </CardContent>
-          </Card>
+      case 'email-scheduler':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <EmailScheduler campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col border-emerald-500/50 bg-emerald-500/5" onClick={() => setShowDonorDatabase(true)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-emerald-600">
-                <Database className="h-5 w-5" />
-                Donor Database
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Access all donors across past & current fundraisers</p>
-              <Button variant="outline" className="w-full border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10">View Database</Button>
-            </CardContent>
-          </Card>
-        </div>
+      case 'templates':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <EmailTemplateBuilder campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+          </>
+        );
 
-        {/* Secondary Actions */}
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/orders')}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
-                Orders
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Track and manage all orders</p>
-              <Button variant="outline" className="w-full">View Orders</Button>
-            </CardContent>
-          </Card>
+      case 'database':
+        return (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <DonorDatabase onClose={() => setView('overview')} />
+          </>
+        );
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col" onClick={() => navigate('/admin/campaigns')}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Campaign Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-1">
-              <p className="text-muted-foreground mb-4 flex-1">Edit campaign details and goals</p>
-              <Button variant="outline" className="w-full">Edit Campaign</Button>
-            </CardContent>
-          </Card>
-        </div>
+      case 'leaderboard':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-2">Donor Recognition Wall</h2>
+              <p className="text-muted-foreground">Celebrating our generous supporters</p>
+            </div>
+            <DonorLeaderboard campaignId={selectedCampaign.id} limit={20} variant="wall" />
+          </>
+        );
+
+      case 'comparison':
+        return (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <FundraiserComparison onClose={() => setView('overview')} />
+          </>
+        );
+
+      case 'profile':
+        return (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <div className="max-w-2xl">
+              <ProfileEditor />
+            </div>
+          </>
+        );
+
+      case 'resources':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <ResourcesManager campaignId={selectedCampaign.id} />
+          </>
+        );
+
+      default:
+        return renderOverview();
+    }
+  };
+
+  const renderOverview = () => (
+    <>
+      {showTutorial && <OnboardingTutorial onComplete={handleTutorialComplete} />}
+      
+      {/* Stats Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${campaignStats.totalRaised.toFixed(2)}</div>
+            {selectedCampaign?.goal_amount && (
+              <p className="text-xs text-muted-foreground">
+                {campaignStats.goalProgress.toFixed(0)}% of ${Number(selectedCampaign.goal_amount).toLocaleString()} goal
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Students</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{campaignStats.totalStudents}</div>
+            <p className="text-xs text-muted-foreground">Participating fundraisers</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{campaignStats.totalOrders}</div>
+            <p className="text-xs text-muted-foreground">Completed orders</p>
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setView('project-manager')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Next Steps</CardTitle>
+            <Target className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-semibold text-primary">View Tasks →</div>
+            <p className="text-xs text-muted-foreground">Open project manager</p>
+          </CardContent>
+        </Card>
       </div>
-    </Layout>
+
+      {/* Progress Bar */}
+      {selectedCampaign?.goal_amount && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Fundraising Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>${campaignStats.totalRaised.toFixed(2)} raised</span>
+                <span>${Number(selectedCampaign.goal_amount).toLocaleString()} goal</span>
+              </div>
+              <ProgressEnhanced 
+                value={campaignStats.goalProgress} 
+                showMilestones 
+                className="h-4"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Actions Grid - Simplified */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer border-primary/30" 
+          onClick={() => setView('project-manager')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">📋 Project Manager</h3>
+            <p className="text-sm text-muted-foreground">Step-by-step guide for your fundraiser</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => setView('donors')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">❤️ Donor CRM</h3>
+            <p className="text-sm text-muted-foreground">Track and thank your supporters</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => navigate('/admin/students')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">👥 Students</h3>
+            <p className="text-sm text-muted-foreground">Manage student fundraisers</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => navigate('/admin/orders')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">🛒 Orders</h3>
+            <p className="text-sm text-muted-foreground">Track all purchases</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => setView('resources')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">📁 Resources</h3>
+            <p className="text-sm text-muted-foreground">Files, guides, and materials</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => setView('retention')}
+        >
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-1">📊 Analytics</h3>
+            <p className="text-sm text-muted-foreground">Retention and performance metrics</p>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+
+  return (
+    <AdminLayout
+      campaignName={selectedCampaign?.name}
+      campaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
+      selectedCampaignId={selectedCampaign?.id}
+      onCampaignChange={handleCampaignChange}
+      onCreateCampaign={() => setView('create')}
+    >
+      {renderContent()}
+    </AdminLayout>
   );
 }

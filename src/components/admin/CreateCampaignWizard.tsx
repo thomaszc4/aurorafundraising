@@ -14,12 +14,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Upload, Plus, Trash2, ArrowLeft, ArrowRight, Check, CalendarIcon, 
-  X, CheckCircle2, Clock, Star, Sparkles
+  X, CheckCircle2, Clock, Star, Sparkles, Image, AlertCircle, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
@@ -28,6 +28,7 @@ import {
   FundraiserType,
   FundraiserCategory as FundraiserCategoryType
 } from '@/data/fundraiserTypes';
+import { parseStudentFile, downloadSampleCSV, ParseResult } from '@/utils/csvParser';
 
 interface Product {
   id: string;
@@ -59,6 +60,7 @@ export function CreateCampaignWizard({
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Step 1: Basic Info
   const [name, setName] = useState(editingCampaign?.name || '');
@@ -71,6 +73,8 @@ export function CreateCampaignWizard({
   const [endDate, setEndDate] = useState<Date | undefined>(
     editingCampaign?.end_date ? new Date(editingCampaign.end_date) : undefined
   );
+  const [logoUrl, setLogoUrl] = useState(editingCampaign?.logo_url || '');
+  const [logoPreview, setLogoPreview] = useState<string | null>(editingCampaign?.logo_url || null);
 
   // Step 2: Fundraiser Type
   const [selectedCategory, setSelectedCategory] = useState<FundraiserCategoryType | null>(null);
@@ -88,6 +92,8 @@ export function CreateCampaignWizard({
   const [students, setStudents] = useState<StudentEntry[]>([]);
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentEmail, setNewStudentEmail] = useState('');
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
+  const [showParsePreview, setShowParsePreview] = useState(false);
 
   useEffect(() => {
     if (fundraiserTypeValue === 'product') {
@@ -134,32 +140,64 @@ export function CreateCampaignWizard({
     }
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setLogoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to Supabase storage
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('campaign-logos')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('campaign-logos')
+        .getPublicUrl(fileName);
+
+      setLogoUrl(urlData.publicUrl);
+      toast.success('Logo uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast.error('Failed to upload logo');
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-      
-      const newStudents: StudentEntry[] = jsonData
-        .map((row: any) => ({
-          name: row.name || row.Name || row.student_name || row['Student Name'] || '',
-          email: row.email || row.Email || row.student_email || row['Student Email'] || ''
-        }))
-        .filter(s => s.name && s.email);
-
-      setStudents(prev => [...prev, ...newStudents]);
-      toast.success(`Added ${newStudents.length} students from file`);
+      const result = await parseStudentFile(file);
+      setParseResult(result);
+      setShowParsePreview(true);
     } catch (error) {
       console.error('Error parsing file:', error);
-      toast.error('Failed to parse file. Please use a valid CSV or Excel file.');
+      toast.error('Failed to parse file');
     }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const confirmParsedStudents = () => {
+    if (parseResult) {
+      setStudents(prev => [...prev, ...parseResult.students]);
+      toast.success(`Added ${parseResult.validRows} students`);
+      setShowParsePreview(false);
+      setParseResult(null);
     }
   };
 
@@ -168,8 +206,13 @@ export function CreateCampaignWizard({
       toast.error('Please enter both name and email');
       return;
     }
-    if (students.some(s => s.email === newStudentEmail)) {
-      toast.error('This email is already in the list');
+    // Allow same email for different names (parent with multiple children)
+    const isDuplicate = students.some(
+      s => s.email.toLowerCase() === newStudentEmail.toLowerCase() && 
+           s.name.toLowerCase() === newStudentName.toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error('This student is already in the list');
       return;
     }
     setStudents(prev => [...prev, { name: newStudentName, email: newStudentEmail }]);
@@ -228,7 +271,8 @@ export function CreateCampaignWizard({
         fundraiser_type: fundraiserTypeValue,
         athon_donation_type: fundraiserTypeValue !== 'product' ? athonDonationType : null,
         athon_unit_name: fundraiserTypeValue !== 'product' ? athonUnitName : null,
-        organization_admin_id: user?.id
+        organization_admin_id: user?.id,
+        logo_url: logoUrl || null
       };
 
       let campaignId: string;
@@ -342,6 +386,41 @@ export function CreateCampaignWizard({
             <CardDescription>Enter the basic information for your fundraiser</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <Label>Organization Logo (Optional)</Label>
+              <div className="flex items-center gap-4">
+                <div 
+                  className={cn(
+                    "w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary transition-colors",
+                    logoPreview ? "border-solid border-primary" : "border-muted-foreground/25"
+                  )}
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo" className="w-full h-full object-contain rounded-xl" />
+                  ) : (
+                    <Image className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                  <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()}>
+                    {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your logo will appear on student pages and materials
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Organization Name *</Label>
@@ -739,13 +818,108 @@ export function CreateCampaignWizard({
         </Card>
       )}
 
+      {/* CSV Preview Dialog */}
+      <Dialog open={showParsePreview} onOpenChange={setShowParsePreview}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Preview</DialogTitle>
+            <DialogDescription>
+              Review the parsed data before importing
+            </DialogDescription>
+          </DialogHeader>
+          
+          {parseResult && (
+            <div className="space-y-4">
+              <div className="flex gap-4 text-sm">
+                <div className="bg-green-500/10 text-green-600 px-3 py-1 rounded-full">
+                  {parseResult.validRows} valid students
+                </div>
+                {parseResult.errors.length > 0 && (
+                  <div className="bg-destructive/10 text-destructive px-3 py-1 rounded-full">
+                    {parseResult.errors.length} errors
+                  </div>
+                )}
+              </div>
+
+              {parseResult.warnings.length > 0 && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <ul className="list-disc list-inside text-sm">
+                      {parseResult.warnings.map((w, i) => (
+                        <li key={i}>{w}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {parseResult.errors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <ScrollArea className="h-24">
+                      <ul className="list-disc list-inside text-sm">
+                        {parseResult.errors.slice(0, 10).map((e, i) => (
+                          <li key={i}>{e}</li>
+                        ))}
+                        {parseResult.errors.length > 10 && (
+                          <li>...and {parseResult.errors.length - 10} more errors</li>
+                        )}
+                      </ul>
+                    </ScrollArea>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {parseResult.students.length > 0 && (
+                <ScrollArea className="h-48 border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {parseResult.students.slice(0, 20).map((s, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{s.name}</TableCell>
+                          <TableCell>{s.email}</TableCell>
+                        </TableRow>
+                      ))}
+                      {parseResult.students.length > 20 && (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center text-muted-foreground">
+                            ...and {parseResult.students.length - 20} more
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowParsePreview(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmParsedStudents} disabled={parseResult.validRows === 0}>
+                  Import {parseResult.validRows} Students
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Step 3/4: Students */}
       {((step === 3 && fundraiserTypeValue !== 'product') || (step === 4 && fundraiserTypeValue === 'product')) && (
         <Card>
           <CardHeader>
             <CardTitle>Add Students</CardTitle>
             <CardDescription>
-              Add students to participate in this fundraiser. You can upload a file or add them manually.
+              Add students to participate in this fundraiser. Parents can share email addresses across multiple children.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -762,9 +936,18 @@ export function CreateCampaignWizard({
               <p className="text-sm text-muted-foreground mb-2">
                 Upload a CSV or Excel file with student names and emails
               </p>
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                Choose File
-              </Button>
+              <p className="text-xs text-muted-foreground mb-4">
+                We'll auto-detect columns named "name", "student", "email", "parent email", etc.
+              </p>
+              <div className="flex justify-center gap-2">
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  Choose File
+                </Button>
+                <Button variant="ghost" size="sm" onClick={downloadSampleCSV}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Template
+                </Button>
+              </div>
             </div>
 
             {/* Manual Entry */}
@@ -777,7 +960,7 @@ export function CreateCampaignWizard({
                   onChange={e => setNewStudentName(e.target.value)}
                 />
                 <Input
-                  placeholder="Email"
+                  placeholder="Parent Email"
                   type="email"
                   value={newStudentEmail}
                   onChange={e => setNewStudentEmail(e.target.value)}
@@ -786,6 +969,9 @@ export function CreateCampaignWizard({
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Multiple children can share the same parent email address
+              </p>
             </div>
 
             {/* Student List */}

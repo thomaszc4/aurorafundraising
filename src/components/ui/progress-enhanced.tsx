@@ -33,9 +33,9 @@ const ProgressEnhanced = React.forwardRef<
           className={cn(
             "h-full transition-all duration-500 ease-out rounded-full",
             // Default variant
-            variant === 'default' && "bg-primary",
+            variant === 'default' && "bg-primary-blue",
             // Gradient variant
-            variant === 'gradient' && "bg-gradient-to-r from-primary via-primary-blue to-secondary",
+            variant === 'gradient' && "bg-gradient-to-r from-primary-blue via-secondary to-accent",
             // Striped variant
             variant === 'striped' && "bg-primary bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%)] bg-[length:1rem_1rem] animate-[progress-stripes_1s_linear_infinite]",
             // Glow effect when making progress

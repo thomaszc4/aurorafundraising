@@ -165,6 +165,7 @@ export type Database = {
           fundraiser_type: Database["public"]["Enums"]["fundraiser_type"]
           goal_amount: number | null
           id: string
+          logo_url: string | null
           name: string
           organization_admin_id: string | null
           organization_name: string
@@ -185,6 +186,7 @@ export type Database = {
           fundraiser_type?: Database["public"]["Enums"]["fundraiser_type"]
           goal_amount?: number | null
           id?: string
+          logo_url?: string | null
           name: string
           organization_admin_id?: string | null
           organization_name: string
@@ -205,6 +207,7 @@ export type Database = {
           fundraiser_type?: Database["public"]["Enums"]["fundraiser_type"]
           goal_amount?: number | null
           id?: string
+          logo_url?: string | null
           name?: string
           organization_admin_id?: string | null
           organization_name?: string
@@ -813,8 +816,14 @@ export type Database = {
           customer_email: string
           customer_name: string | null
           customer_phone: string | null
+          delivered_at: string | null
+          delivery_method: string | null
+          delivery_notes: string | null
+          delivery_status: string | null
           id: string
           profit_amount: number | null
+          shipped_at: string | null
+          shipping_address: string | null
           status: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -827,8 +836,14 @@ export type Database = {
           customer_email: string
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_notes?: string | null
+          delivery_status?: string | null
           id?: string
           profit_amount?: number | null
+          shipped_at?: string | null
+          shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -841,8 +856,14 @@ export type Database = {
           customer_email?: string
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_notes?: string | null
+          delivery_status?: string | null
           id?: string
           profit_amount?: number | null
+          shipped_at?: string | null
+          shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -981,6 +1002,79 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      resources: {
+        Row: {
+          campaign_id: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          file_path: string | null
+          id: string
+          is_visible_to_students: boolean | null
+          resource_type: string
+          student_only_for: string | null
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          file_path?: string | null
+          id?: string
+          is_visible_to_students?: boolean | null
+          resource_type?: string
+          student_only_for?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          file_path?: string | null
+          id?: string
+          is_visible_to_students?: boolean | null
+          resource_type?: string
+          student_only_for?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_student_only_for_fkey"
+            columns: ["student_only_for"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_emails: {
         Row: {

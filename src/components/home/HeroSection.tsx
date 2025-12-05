@@ -27,15 +27,15 @@ export function HeroSection() {
 
           {/* Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground leading-tight mb-6 animate-slide-up">
-            Product-Based Fundraising{" "}
-            <span className="text-gradient-teal">Made Simple</span>
+            <span className="text-gradient-teal">10x</span> Your Fundraising{" "}
+            <span className="block">With Products People Love</span>
           </h1>
 
           {/* Subheading */}
           <p className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-100">
-            The all-in-one platform for schools and organizations. Launch campaigns, 
-            track student progress, manage donors, send personalized communications, 
-            and keep up to 50% profit on every sale.
+            Stop selling cookie dough nobody wants. Our unique, useful products mean more sales per student, 
+            higher profit margins, and fundraisers that actually reach their goals. Schools using Aurora 
+            raise <span className="text-secondary font-semibold">10x more</span> than traditional fundraisers.
           </p>
 
           {/* Feature Pills */}
@@ -74,12 +74,12 @@ export function HeroSection() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 mt-20 pt-12 border-t border-primary-foreground/10 animate-fade-in animation-delay-300">
             <div>
-              <div className="text-3xl sm:text-4xl font-bold text-secondary mb-2">500+</div>
-              <div className="text-sm text-primary-foreground/60">Organizations Served</div>
+              <div className="text-3xl sm:text-4xl font-bold text-secondary mb-2">10x</div>
+              <div className="text-sm text-primary-foreground/60">More Than Traditional</div>
             </div>
             <div>
-              <div className="text-3xl sm:text-4xl font-bold text-secondary mb-2">$2M+</div>
-              <div className="text-sm text-primary-foreground/60">Funds Raised</div>
+              <div className="text-3xl sm:text-4xl font-bold text-secondary mb-2">$150+</div>
+              <div className="text-sm text-primary-foreground/60">Avg Per Student</div>
             </div>
             <div>
               <div className="text-3xl sm:text-4xl font-bold text-secondary mb-2">50%</div>

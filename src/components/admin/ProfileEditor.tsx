@@ -18,7 +18,6 @@ interface ProfileData {
   bio: string | null;
   interests: string[] | null;
   communication_preference: string | null;
-  children_names: string[] | null;
 }
 
 export function ProfileEditor() {
@@ -27,7 +26,6 @@ export function ProfileEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newInterest, setNewInterest] = useState('');
-  const [newChildName, setNewChildName] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -40,7 +38,7 @@ export function ProfileEditor() {
     
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('full_name, email, phone, bio, interests, communication_preference')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -64,8 +62,7 @@ export function ProfileEditor() {
         phone: profile.phone,
         bio: profile.bio,
         interests: profile.interests,
-        communication_preference: profile.communication_preference,
-        children_names: profile.children_names
+        communication_preference: profile.communication_preference
       })
       .eq('id', user.id);
 
@@ -91,23 +88,6 @@ export function ProfileEditor() {
     setProfile({
       ...profile,
       interests: (profile.interests || []).filter((_, i) => i !== index)
-    });
-  };
-
-  const addChildName = () => {
-    if (!newChildName.trim() || !profile) return;
-    setProfile({
-      ...profile,
-      children_names: [...(profile.children_names || []), newChildName.trim()]
-    });
-    setNewChildName('');
-  };
-
-  const removeChildName = (index: number) => {
-    if (!profile) return;
-    setProfile({
-      ...profile,
-      children_names: (profile.children_names || []).filter((_, i) => i !== index)
     });
   };
 
@@ -214,31 +194,6 @@ export function ProfileEditor() {
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addInterest())}
             />
             <Button type="button" variant="outline" size="icon" onClick={addInterest}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Children's Names (optional)</Label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {(profile.children_names || []).map((name, index) => (
-              <Badge key={index} variant="outline" className="gap-1">
-                {name}
-                <button onClick={() => removeChildName(index)} className="ml-1 hover:text-destructive">
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newChildName}
-              onChange={(e) => setNewChildName(e.target.value)}
-              placeholder="Add a child's name..."
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addChildName())}
-            />
-            <Button type="button" variant="outline" size="icon" onClick={addChildName}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>

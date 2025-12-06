@@ -64,6 +64,64 @@ export type Database = {
           },
         ]
       }
+      campaign_posts: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          customized_comment: string | null
+          customized_post: string | null
+          generated_image_url: string | null
+          id: string
+          is_participant_visible: boolean | null
+          post_template_id: string
+          selected_by: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          customized_comment?: string | null
+          customized_post?: string | null
+          generated_image_url?: string | null
+          id?: string
+          is_participant_visible?: boolean | null
+          post_template_id: string
+          selected_by?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          customized_comment?: string | null
+          customized_post?: string | null
+          generated_image_url?: string | null
+          id?: string
+          is_participant_visible?: boolean | null
+          post_template_id?: string
+          selected_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_posts_post_template_id_fkey"
+            columns: ["post_template_id"]
+            isOneToOne: false
+            referencedRelation: "post_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_posts_selected_by_fkey"
+            columns: ["selected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_products: {
         Row: {
           campaign_id: string
@@ -169,6 +227,7 @@ export type Database = {
           logo_url: string | null
           name: string
           organization_admin_id: string | null
+          organization_id: string | null
           organization_name: string
           organization_type: string | null
           program_size: number | null
@@ -192,6 +251,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           organization_admin_id?: string | null
+          organization_id?: string | null
           organization_name: string
           organization_type?: string | null
           program_size?: number | null
@@ -215,6 +275,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           organization_admin_id?: string | null
+          organization_id?: string | null
           organization_name?: string
           organization_type?: string | null
           program_size?: number | null
@@ -229,6 +290,13 @@ export type Database = {
             columns: ["organization_admin_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -887,6 +955,113 @@ export type Database = {
           },
         ]
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_admin_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_admin_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_admin_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_org_admin_id_fkey"
+            columns: ["org_admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_templates: {
+        Row: {
+          base_image_url: string | null
+          category: string
+          comment_template: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          platform: string
+          post_template: string
+          updated_at: string
+        }
+        Insert: {
+          base_image_url?: string | null
+          category: string
+          comment_template?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          platform?: string
+          post_template: string
+          updated_at?: string
+        }
+        Update: {
+          base_image_url?: string | null
+          category?: string
+          comment_template?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          platform?: string
+          post_template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           created_at: string
@@ -922,6 +1097,7 @@ export type Database = {
       products: {
         Row: {
           average_raised_per_student: number | null
+          category: string | null
           cost: number | null
           created_at: string
           description: string | null
@@ -937,6 +1113,7 @@ export type Database = {
         }
         Insert: {
           average_raised_per_student?: number | null
+          category?: string | null
           cost?: number | null
           created_at?: string
           description?: string | null
@@ -952,6 +1129,7 @@ export type Database = {
         }
         Update: {
           average_raised_per_student?: number | null
+          category?: string | null
           cost?: number | null
           created_at?: string
           description?: string | null
@@ -1430,7 +1608,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "student" | "organization_admin" | "super_admin"
+      app_role:
+        | "admin"
+        | "student"
+        | "organization_admin"
+        | "super_admin"
+        | "campaign_manager"
+        | "participant"
       athon_donation_type: "pledge_per_unit" | "flat_donation"
       campaign_status: "draft" | "active" | "paused" | "completed"
       donor_segment:
@@ -1578,7 +1762,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "student", "organization_admin", "super_admin"],
+      app_role: [
+        "admin",
+        "student",
+        "organization_admin",
+        "super_admin",
+        "campaign_manager",
+        "participant",
+      ],
       athon_donation_type: ["pledge_per_unit", "flat_donation"],
       campaign_status: ["draft", "active", "paused", "completed"],
       donor_segment: ["first_time", "recurring", "lapsed", "major", "business"],

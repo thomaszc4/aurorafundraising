@@ -32,10 +32,12 @@ interface UserWithRoles {
 }
 
 const ROLE_OPTIONS: { value: AppRole; label: string; icon: React.ReactNode }[] = [
-  { value: 'super_admin', label: 'Super Admin', icon: <ShieldCheck className="h-4 w-4" /> },
+  { value: 'super_admin', label: 'Thomas', icon: <ShieldCheck className="h-4 w-4" /> },
   { value: 'admin', label: 'Admin', icon: <Shield className="h-4 w-4" /> },
   { value: 'organization_admin', label: 'Org Admin', icon: <Building2 className="h-4 w-4" /> },
-  { value: 'student', label: 'Student', icon: <User className="h-4 w-4" /> },
+  { value: 'campaign_manager', label: 'Campaign Manager', icon: <Shield className="h-4 w-4" /> },
+  { value: 'participant', label: 'Participant', icon: <User className="h-4 w-4" /> },
+  { value: 'student', label: 'Student (Legacy)', icon: <User className="h-4 w-4" /> },
 ];
 
 export function UserRoleManager() {
@@ -132,6 +134,8 @@ export function UserRoleManager() {
       super_admin: 'bg-destructive/20 text-destructive',
       admin: 'bg-primary/20 text-primary',
       organization_admin: 'bg-accent-teal/20 text-accent-teal',
+      campaign_manager: 'bg-purple-500/20 text-purple-600',
+      participant: 'bg-blue-500/20 text-blue-600',
       student: 'bg-blue-500/20 text-blue-600',
     };
     return classes[role];

@@ -31,7 +31,16 @@ import {
   LogOut,
   ChevronDown,
   Plus,
-  Target
+  Target,
+  Package,
+  Trophy,
+  Zap,
+  FileText,
+  Calendar,
+  FlaskConical,
+  ListTodo,
+  Milestone,
+  Share2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -75,15 +84,27 @@ export function AdminLayout({
     { title: 'Project Manager', icon: ClipboardList, path: '/admin?view=project-manager' },
     { title: 'Participants', icon: Users, path: '/admin/participants' },
     { title: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
+    { title: 'Products', icon: Package, path: '/admin/products' },
   ];
 
   const engagementNavItems: NavItem[] = [
     { title: 'Donor CRM', icon: Heart, path: '/admin?view=donors' },
-    { title: 'Email Center', icon: Mail, path: '/admin?view=email' },
+    { title: 'Donor Journeys', icon: Zap, path: '/admin?view=journeys' },
+    { title: 'Recognition Wall', icon: Trophy, path: '/admin?view=leaderboard' },
     { title: 'Analytics', icon: BarChart3, path: '/admin?view=analytics' },
   ];
 
+  const emailNavItems: NavItem[] = [
+    { title: 'Email Center', icon: Mail, path: '/admin?view=email' },
+    { title: 'Templates', icon: FileText, path: '/admin?view=templates' },
+    { title: 'Scheduler', icon: Calendar, path: '/admin?view=email-scheduler' },
+    { title: 'A/B Testing', icon: FlaskConical, path: '/admin?view=ab-testing' },
+  ];
+
   const toolsNavItems: NavItem[] = [
+    { title: 'Bulk Tasks', icon: ListTodo, path: '/admin?view=bulk-tasks' },
+    { title: 'Milestones', icon: Milestone, path: '/admin?view=milestones' },
+    { title: 'Social Posts', icon: Share2, path: '/admin?view=social-posts' },
     { title: 'Resources', icon: FolderOpen, path: '/admin?view=resources' },
     { title: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
@@ -174,6 +195,26 @@ export function AdminLayout({
               <SidebarGroupContent>
                 <SidebarMenu>
                   {engagementNavItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton 
+                        onClick={() => item.path && navigate(item.path)}
+                        isActive={isActive(item.path)}
+                        className="w-full"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Email</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {emailNavItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         onClick={() => item.path && navigate(item.path)}

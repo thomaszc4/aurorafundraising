@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, ShoppingBag, Users, LineChart, Mail } from "lucide-react";
-
 export function HeroSection() {
-  return (
-    <section className="relative min-h-screen flex items-center bg-hero overflow-hidden">
+  return <section className="relative min-h-screen flex items-center bg-hero overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary-blue/20 rounded-full blur-3xl animate-float" />
@@ -18,45 +16,20 @@ export function HeroSection() {
       <div className="container-wide relative z-10 pt-32 pb-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 mb-8 animate-fade-in">
-            <Sparkles className="w-4 h-4 text-secondary" />
-            <span className="text-sm font-medium text-primary-foreground/90">
-              Complete Fundraising Platform
-            </span>
-          </div>
+          
 
           {/* Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground leading-tight mb-6 animate-slide-up">
             <span className="text-gradient-teal">10x</span> Your Fundraising{" "}
-            <span className="block">With Products People Love</span>
+            <span className="block">With Unique Products</span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-100">
-            Stop selling cookie dough nobody wants. Our unique, useful products mean more sales per student, 
-            higher profit margins, and fundraisers that actually reach their goals. Schools using Aurora 
-            raise <span className="text-secondary font-semibold">10x more</span> than traditional fundraisers.
+          <p className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-100">Schools using Aurora raise 10x more than traditional fundraisers.<span className="text-secondary font-semibold">10x more</span> than traditional fundraisers.
           </p>
 
           {/* Feature Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-10 animate-slide-up animation-delay-150">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
-              <ShoppingBag className="w-4 h-4 text-secondary" />
-              <span className="text-sm text-primary-foreground/80">Product Sales</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
-              <Users className="w-4 h-4 text-secondary" />
-              <span className="text-sm text-primary-foreground/80">Student Tracking</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
-              <LineChart className="w-4 h-4 text-secondary" />
-              <span className="text-sm text-primary-foreground/80">Real-Time Analytics</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/5 border border-primary-foreground/10">
-              <Mail className="w-4 h-4 text-secondary" />
-              <span className="text-sm text-primary-foreground/80">Donor Engagement</span>
-            </div>
-          </div>
+          
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up animation-delay-200">
@@ -91,6 +64,5 @@ export function HeroSection() {
 
       {/* Bottom Gradient */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
-    </section>
-  );
+    </section>;
 }

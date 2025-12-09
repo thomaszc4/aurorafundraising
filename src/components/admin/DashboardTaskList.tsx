@@ -2,24 +2,23 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, ArrowRight, Calendar, Loader2 } from 'lucide-react';
-import { format, isPast, isToday, addDays, isBefore } from 'date-fns';
+import { ClipboardList, ArrowRight, Loader2, Settings2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { getFundraiserTypeById } from '@/data/fundraiserTypes';
-
-interface Task {
-  id: string;
-  task: string;
-  description: string | null;
-  phase: string;
-  is_completed: boolean;
-  is_custom: boolean;
-  days_before_event: number | null;
-  display_order: number;
-  dueDate?: Date;
-}
+import { SmartTaskItem } from './SmartTaskItem';
+import { 
+  TASK_REGISTRY, 
+  TaskDefinition, 
+  TaskContext, 
+  getNextTasks,
+  PHASE_INFO
+} from '@/data/taskRegistry';
+import { 
+  getAutomationSettings, 
+  createDefaultSettings,
+  getCompletedTaskIds,
+  AutomationSettings
+} from '@/services/automationEngine';
 
 interface DashboardTaskListProps {
   campaignId: string;
@@ -34,188 +33,113 @@ export function DashboardTaskList({
   startDate,
   onViewAll 
 }: DashboardTaskListProps) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskDefinition[]>([]);
+  const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [automationSettings, setAutomationSettings] = useState<AutomationSettings | null>(null);
+  const [context, setContext] = useState<TaskContext | null>(null);
 
   useEffect(() => {
-    fetchTasks();
+    loadData();
   }, [campaignId, fundraiserTypeId]);
 
-  const fetchTasks = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch custom tasks from database
-      const { data: customTasks, error } = await supabase
-        .from('campaign_tasks')
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .eq('is_completed', false)
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-
-      // Get default tasks from fundraiser type
-      const fundraiserType = getFundraiserTypeById(fundraiserTypeId);
-      const defaultTasks: Task[] = [];
-
-      if (fundraiserType?.projectManagerSteps) {
-        fundraiserType.projectManagerSteps.forEach((phase, phaseIndex) => {
-          phase.tasks.forEach((task, taskIndex) => {
-            // Check if this task exists in customTasks (by matching task name)
-            const existsInDb = customTasks?.find(
-              ct => ct.task === task.task && ct.phase === phase.phase
-            );
-            
-            if (!existsInDb) {
-              let dueDate: Date | undefined;
-              if (startDate && task.daysBeforeEvent !== undefined) {
-                dueDate = addDays(startDate, -task.daysBeforeEvent);
-              }
-
-              defaultTasks.push({
-                id: `default-${phaseIndex}-${taskIndex}`,
-                task: task.task,
-                description: task.description,
-                phase: phase.phase,
-                is_completed: false,
-                is_custom: false,
-                days_before_event: task.daysBeforeEvent ?? null,
-                display_order: phaseIndex * 100 + taskIndex,
-                dueDate,
-              });
-            }
-          });
-        });
+      // Load automation settings
+      let settings = await getAutomationSettings(campaignId);
+      if (!settings) {
+        settings = await createDefaultSettings(campaignId);
       }
+      setAutomationSettings(settings);
 
-      // Combine and add due dates to custom tasks
-      const allTasks = [
-        ...defaultTasks,
-        ...(customTasks?.map(ct => {
-          let dueDate: Date | undefined;
-          if (startDate && ct.days_before_event) {
-            dueDate = addDays(startDate, -ct.days_before_event);
-          }
-          return {
-            ...ct,
-            dueDate,
-          };
-        }) || []),
-      ];
+      // Load completed tasks
+      const completed = await getCompletedTaskIds(campaignId);
+      setCompletedTaskIds(completed);
 
-      // Sort by due date (soonest first) then by display_order
-      allTasks.sort((a, b) => {
-        if (a.dueDate && b.dueDate) {
-          return a.dueDate.getTime() - b.dueDate.getTime();
-        }
-        if (a.dueDate) return -1;
-        if (b.dueDate) return 1;
-        return a.display_order - b.display_order;
-      });
+      // Build task context
+      const taskContext = await buildTaskContext(campaignId, fundraiserTypeId, startDate);
+      setContext(taskContext);
 
-      // Only show first 6 tasks
-      setTasks(allTasks.slice(0, 6));
+      // Get next actionable tasks
+      const nextTasks = getNextTasks(taskContext, completed);
+      setTasks(nextTasks.slice(0, 5)); // Show top 5 tasks
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('Error loading tasks:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCompleteTask = async (task: Task) => {
-    try {
-      if (task.is_custom || task.id.startsWith('default-')) {
-        // For default tasks, create a new record in the database
-        if (!task.is_custom) {
-          const { error } = await supabase
-            .from('campaign_tasks')
-            .insert({
-              campaign_id: campaignId,
-              task: task.task,
-              description: task.description,
-              phase: task.phase,
-              is_completed: true,
-              is_custom: false,
-              days_before_event: task.days_before_event,
-              display_order: task.display_order,
-              completed_at: new Date().toISOString(),
-            });
+  const buildTaskContext = async (
+    campaignId: string, 
+    fundraiserType: string,
+    startDate?: Date
+  ): Promise<TaskContext> => {
+    // Fetch campaign data
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('logo_url, goal_amount, start_date, end_date')
+      .eq('id', campaignId)
+      .maybeSingle();
 
-          if (error) throw error;
-        } else {
-          // For existing custom tasks, update them
-          const { error } = await supabase
-            .from('campaign_tasks')
-            .update({
-              is_completed: true,
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', task.id);
+    // Fetch participant count
+    const { count: participantCount } = await supabase
+      .from('student_invitations')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId);
 
-          if (error) throw error;
-        }
+    // Check if invitations were sent
+    const { count: sentInvitations } = await supabase
+      .from('student_invitations')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId)
+      .eq('invitation_sent', true);
 
-        toast.success('Task completed!');
-        setTasks(prev => prev.filter(t => t.id !== task.id));
-      }
-    } catch (error) {
-      console.error('Error completing task:', error);
-      toast.error('Failed to complete task');
-    }
-  };
+    // Check for products
+    const { count: productCount } = await supabase
+      .from('campaign_products')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId);
 
-  const getDueDateBadge = (task: Task) => {
-    if (!task.dueDate) return null;
+    // Check for social posts
+    const { count: postCount } = await supabase
+      .from('campaign_posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('campaign_id', campaignId);
 
-    if (isPast(task.dueDate) && !isToday(task.dueDate)) {
-      return (
-        <Badge variant="destructive" className="text-xs">
-          Overdue
-        </Badge>
-      );
-    }
+    // Calculate total raised
+    const { data: fundraisers } = await supabase
+      .from('student_fundraisers')
+      .select('total_raised')
+      .eq('campaign_id', campaignId);
+    
+    const totalRaised = fundraisers?.reduce((sum, f) => sum + (f.total_raised || 0), 0) || 0;
 
-    if (isToday(task.dueDate)) {
-      return (
-        <Badge variant="default" className="text-xs bg-amber-500">
-          Due Today
-        </Badge>
-      );
-    }
+    const now = new Date();
+    const campaignStart = campaign?.start_date ? new Date(campaign.start_date) : startDate;
+    const campaignEnd = campaign?.end_date ? new Date(campaign.end_date) : undefined;
 
-    const inThreeDays = addDays(new Date(), 3);
-    if (isBefore(task.dueDate, inThreeDays)) {
-      return (
-        <Badge variant="secondary" className="text-xs">
-          Due {format(task.dueDate, 'MMM d')}
-        </Badge>
-      );
-    }
-
-    return (
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
-        <Calendar className="h-3 w-3" />
-        {format(task.dueDate, 'MMM d')}
-      </span>
-    );
-  };
-
-  const getPhaseBadge = (phase: string) => {
-    const phaseColors: Record<string, string> = {
-      'Planning & Setup': 'bg-blue-500/10 text-blue-700',
-      'Pre-Launch': 'bg-purple-500/10 text-purple-700',
-      'Active Fundraising': 'bg-green-500/10 text-green-700',
-      'Close & Thank': 'bg-amber-500/10 text-amber-700',
+    return {
+      campaignId,
+      fundraiserType,
+      hasLogo: !!campaign?.logo_url,
+      hasParticipants: (participantCount || 0) > 0,
+      participantCount: participantCount || 0,
+      invitationsSent: (sentInvitations || 0) > 0,
+      hasProducts: (productCount || 0) > 0,
+      hasSocialPosts: (postCount || 0) > 0,
+      campaignStarted: campaignStart ? now >= campaignStart : false,
+      campaignEnded: campaignEnd ? now >= campaignEnd : false,
+      daysUntilStart: campaignStart ? Math.ceil((campaignStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0,
+      daysUntilEnd: campaignEnd ? Math.ceil((campaignEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0,
+      totalRaised,
+      goalAmount: campaign?.goal_amount || 0,
     };
+  };
 
-    return (
-      <Badge 
-        variant="outline" 
-        className={`text-xs ${phaseColors[phase] || 'bg-muted text-muted-foreground'}`}
-      >
-        {phase}
-      </Badge>
-    );
+  const handleTaskComplete = () => {
+    loadData(); // Reload tasks after completion
   };
 
   if (loading) {
@@ -242,48 +166,45 @@ export function DashboardTaskList({
     );
   }
 
+  const isAutopilot = automationSettings?.automation_mode === 'autopilot';
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" />
-            Your Next Tasks
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onViewAll} className="gap-1">
-            View All <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-primary" />
+              Your Next Tasks
+            </CardTitle>
+            {isAutopilot && (
+              <Badge variant="outline" className="text-green-600 border-green-600">
+                <Zap className="h-3 w-3 mr-1" />
+                Autopilot Active
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={onViewAll} className="gap-1">
+              <Settings2 className="h-4 w-4" />
+              Settings
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onViewAll} className="gap-1">
+              View All <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         {tasks.map((task) => (
-          <div
+          <SmartTaskItem
             key={task.id}
-            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-          >
-            <Checkbox
-              id={task.id}
-              onCheckedChange={() => handleCompleteTask(task)}
-              className="mt-0.5"
-            />
-            <div className="flex-1 min-w-0">
-              <label
-                htmlFor={task.id}
-                className="text-sm font-medium cursor-pointer block"
-              >
-                {task.task}
-              </label>
-              {task.description && (
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                  {task.description}
-                </p>
-              )}
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {getPhaseBadge(task.phase)}
-                {getDueDateBadge(task)}
-              </div>
-            </div>
-          </div>
+            task={task}
+            campaignId={campaignId}
+            isComplete={completedTaskIds.includes(task.id)}
+            isAutopilot={isAutopilot}
+            onComplete={handleTaskComplete}
+          />
         ))}
       </CardContent>
     </Card>

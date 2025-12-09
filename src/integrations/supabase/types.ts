@@ -64,6 +64,104 @@ export type Database = {
           },
         ]
       }
+      automation_log: {
+        Row: {
+          action_type: string
+          campaign_id: string
+          created_at: string
+          details: Json | null
+          executed_at: string | null
+          executed_by: string | null
+          id: string
+          status: string
+          task_id: string
+        }
+        Insert: {
+          action_type: string
+          campaign_id: string
+          created_at?: string
+          details?: Json | null
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          status?: string
+          task_id: string
+        }
+        Update: {
+          action_type?: string
+          campaign_id?: string
+          created_at?: string
+          details?: Json | null
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          status?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_log_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_log_executed_by_fkey"
+            columns: ["executed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_automation_settings: {
+        Row: {
+          auto_celebrate_milestones: boolean
+          auto_generate_social_posts: boolean
+          auto_send_invitations: boolean
+          auto_send_reminders: boolean
+          auto_thank_donors: boolean
+          automation_mode: string
+          campaign_id: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_celebrate_milestones?: boolean
+          auto_generate_social_posts?: boolean
+          auto_send_invitations?: boolean
+          auto_send_reminders?: boolean
+          auto_thank_donors?: boolean
+          automation_mode?: string
+          campaign_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_celebrate_milestones?: boolean
+          auto_generate_social_posts?: boolean
+          auto_send_invitations?: boolean
+          auto_send_reminders?: boolean
+          auto_thank_donors?: boolean
+          automation_mode?: string
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_automation_settings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_posts: {
         Row: {
           campaign_id: string
@@ -160,44 +258,62 @@ export type Database = {
       }
       campaign_tasks: {
         Row: {
+          action_function: string | null
+          action_type: string | null
+          action_url: string | null
           campaign_id: string
+          can_auto_complete: boolean | null
           completed_at: string | null
           created_at: string
           days_before_event: number | null
           description: string | null
+          detailed_instructions: string | null
           display_order: number | null
           id: string
           is_completed: boolean | null
           is_custom: boolean | null
           phase: string
+          prerequisites: string[] | null
           task: string
           updated_at: string
         }
         Insert: {
+          action_function?: string | null
+          action_type?: string | null
+          action_url?: string | null
           campaign_id: string
+          can_auto_complete?: boolean | null
           completed_at?: string | null
           created_at?: string
           days_before_event?: number | null
           description?: string | null
+          detailed_instructions?: string | null
           display_order?: number | null
           id?: string
           is_completed?: boolean | null
           is_custom?: boolean | null
           phase: string
+          prerequisites?: string[] | null
           task: string
           updated_at?: string
         }
         Update: {
+          action_function?: string | null
+          action_type?: string | null
+          action_url?: string | null
           campaign_id?: string
+          can_auto_complete?: boolean | null
           completed_at?: string | null
           created_at?: string
           days_before_event?: number | null
           description?: string | null
+          detailed_instructions?: string | null
           display_order?: number | null
           id?: string
           is_completed?: boolean | null
           is_custom?: boolean | null
           phase?: string
+          prerequisites?: string[] | null
           task?: string
           updated_at?: string
         }

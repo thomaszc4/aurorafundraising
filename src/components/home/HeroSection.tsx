@@ -25,7 +25,7 @@ export function HeroSection() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-100">Schools using Aurora raise 10x more than traditional fundraisers.<span className="text-secondary font-semibold">10x more</span> than traditional fundraisers.
+          <p className="text-lg sm:text-xl text-primary-foreground/70 max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-100">Schools using Aurora raise 10x more than traditional fundraisers.<span className="text-secondary font-semibold">10x more</span> than traditional fundraisers.
           </p>
 
           {/* Feature Pills */}

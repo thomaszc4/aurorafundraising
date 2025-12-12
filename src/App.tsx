@@ -31,6 +31,10 @@ import PublicSurvey from "./pages/survey/PublicSurvey";
 import DonorPreferences from "./pages/preferences/DonorPreferences";
 import Unsubscribe from "./pages/unsubscribe/Unsubscribe";
 import NotFound from "./pages/NotFound";
+import JoinCampaign from "./pages/participant/JoinCampaign";
+import ParticipantDashboard from "./pages/participant/ParticipantDashboard";
+import VendorLogin from "./pages/vendor/VendorLogin";
+import VendorDashboard from "./pages/vendor/VendorDashboard";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +65,14 @@ const App = () => (
             
             {/* Unsubscribe page */}
             <Route path="/unsubscribe/:donorId" element={<Unsubscribe />} />
+            
+            {/* Anonymous Participant Routes */}
+            <Route path="/join/:code" element={<JoinCampaign />} />
+            <Route path="/p/:token" element={<ParticipantDashboard />} />
+            
+            {/* Vendor Portal */}
+            <Route path="/vendor" element={<VendorLogin />} />
+            <Route path="/vendor/dashboard" element={<VendorDashboard />} />
             
             {/* Public student fundraising pages */}
             <Route path="/student/:slug" element={<PublicStudentPage />} />

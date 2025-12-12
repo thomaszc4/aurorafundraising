@@ -162,6 +162,41 @@ export type Database = {
           },
         ]
       }
+      campaign_join_settings: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          id: string
+          join_code: string
+          max_participants: number | null
+          require_code: boolean | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          join_code?: string
+          max_participants?: number | null
+          require_code?: boolean | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          join_code?: string
+          max_participants?: number | null
+          require_code?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_join_settings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_posts: {
         Row: {
           campaign_id: string
@@ -952,6 +987,101 @@ export type Database = {
           },
         ]
       }
+      incentive_progress: {
+        Row: {
+          achieved: boolean | null
+          achieved_at: string | null
+          created_at: string | null
+          id: string
+          incentive_id: string
+          participant_id: string
+        }
+        Insert: {
+          achieved?: boolean | null
+          achieved_at?: string | null
+          created_at?: string | null
+          id?: string
+          incentive_id: string
+          participant_id: string
+        }
+        Update: {
+          achieved?: boolean | null
+          achieved_at?: string | null
+          created_at?: string | null
+          id?: string
+          incentive_id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incentive_progress_incentive_id_fkey"
+            columns: ["incentive_id"]
+            isOneToOne: false
+            referencedRelation: "incentives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incentive_progress_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incentives: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          incentive_type: string
+          is_active: boolean | null
+          name: string
+          reward: string
+          reward_image_url: string | null
+          threshold_amount: number | null
+          threshold_items: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          incentive_type: string
+          is_active?: boolean | null
+          name: string
+          reward: string
+          reward_image_url?: string | null
+          threshold_amount?: number | null
+          threshold_items?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          incentive_type?: string
+          is_active?: boolean | null
+          name?: string
+          reward?: string
+          reward_image_url?: string | null
+          threshold_amount?: number | null
+          threshold_items?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incentives_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1011,6 +1141,7 @@ export type Database = {
           delivery_notes: string | null
           delivery_status: string | null
           id: string
+          participant_id: string | null
           profit_amount: number | null
           shipped_at: string | null
           shipping_address: string | null
@@ -1031,6 +1162,7 @@ export type Database = {
           delivery_notes?: string | null
           delivery_status?: string | null
           id?: string
+          participant_id?: string | null
           profit_amount?: number | null
           shipped_at?: string | null
           shipping_address?: string | null
@@ -1051,6 +1183,7 @@ export type Database = {
           delivery_notes?: string | null
           delivery_status?: string | null
           id?: string
+          participant_id?: string | null
           profit_amount?: number | null
           shipped_at?: string | null
           shipping_address?: string | null
@@ -1062,6 +1195,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_student_fundraiser_id_fkey"
             columns: ["student_fundraiser_id"]
@@ -1138,6 +1278,95 @@ export type Database = {
             columns: ["org_admin_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participant_messages: {
+        Row: {
+          campaign_id: string
+          content: string
+          created_at: string | null
+          id: string
+          sent_by: string | null
+          title: string
+        }
+        Insert: {
+          campaign_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          sent_by?: string | null
+          title: string
+        }
+        Update: {
+          campaign_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          sent_by?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participant_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participant_messages_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participants: {
+        Row: {
+          access_token: string
+          campaign_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          items_sold: number | null
+          nickname: string
+          pin_hash: string
+          total_raised: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          items_sold?: number | null
+          nickname: string
+          pin_hash: string
+          total_raised?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          items_sold?: number | null
+          nickname?: string
+          pin_hash?: string
+          total_raised?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -1706,6 +1935,87 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_accounts: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          password_hash: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash?: string
+        }
+        Relationships: []
+      }
+      vendor_shipments: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          shipped_at: string | null
+          status: string | null
+          tracking_number: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          shipped_at?: string | null
+          status?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          shipped_at?: string | null
+          status?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_shipments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_shipments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_accounts"
             referencedColumns: ["id"]
           },
         ]

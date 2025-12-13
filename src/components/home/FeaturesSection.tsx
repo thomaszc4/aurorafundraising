@@ -70,7 +70,7 @@ export function FeaturesSection() {
             <span className="text-gradient">Fundraise Successfully</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            From product sales to donor engagement, our platform provides all the tools 
+            From product sales to donor engagement, our platform provides all the tools
             to run professional fundraising campaigns.
           </p>
         </div>
@@ -80,18 +80,21 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="group p-8 rounded-3xl bg-card hover:bg-card-elevated border border-border/50 hover:border-primary-blue/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              className="group p-8 rounded-3xl bg-card hover:bg-card-elevated border border-border/50 hover:border-primary-blue/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-primary-blue/10 flex items-center justify-center mb-6 group-hover:bg-primary-blue/20 transition-colors">
-                <feature.icon className="w-7 h-7 text-primary-blue" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-primary-blue/10 flex items-center justify-center mb-6 group-hover:bg-primary-blue text-primary-blue group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-glow-blue">
+                  <feature.icon className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary-blue transition-colors">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>

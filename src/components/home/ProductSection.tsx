@@ -26,26 +26,30 @@ export function ProductSection() {
           <div className="relative order-2 lg:order-1">
             <div className="relative aspect-square max-w-lg mx-auto">
               {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue/20 via-secondary/20 to-accent/20 rounded-3xl blur-3xl" />
-              
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue/30 via-secondary/30 to-accent/30 rounded-full blur-3xl animate-pulse" />
+
               {/* Product Card */}
-              <div className="relative bg-card rounded-3xl border border-border shadow-2xl p-8 h-full flex flex-col justify-center">
-                <span className="inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-semibold mb-4 w-fit">
+              <div className="relative glass-card rounded-3xl p-8 h-full flex flex-col justify-center overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                  <Package className="w-64 h-64" />
+                </div>
+
+                <span className="relative inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-semibold mb-4 w-fit border border-secondary/20">
                   Flagship Product
                 </span>
-                <h3 className="text-3xl font-bold text-foreground mb-4">The QuickStove</h3>
-                <p className="text-muted-foreground mb-6">
-                  A multi-functional, portable stove designed for emergency preparedness, camping, 
+                <h3 className="relative text-3xl font-bold text-foreground mb-4">The QuickStove</h3>
+                <p className="relative text-muted-foreground mb-8 text-lg">
+                  A multi-functional, portable stove designed for emergency preparedness, camping,
                   and outdoor cooking. The perfect product that families actually want and need.
                 </p>
-                <div className="flex items-center gap-4">
-                  <div className="px-4 py-2 rounded-xl bg-primary-blue/10">
-                    <span className="text-sm text-muted-foreground">Profit Margin</span>
-                    <div className="text-2xl font-bold text-primary-blue">50%</div>
+                <div className="relative flex items-center gap-4">
+                  <div className="flex-1 px-4 py-3 rounded-2xl bg-primary-blue/5 border border-primary-blue/10">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Margin</span>
+                    <div className="text-3xl font-bold text-primary-blue">50%</div>
                   </div>
-                  <div className="px-4 py-2 rounded-xl bg-secondary/10">
-                    <span className="text-sm text-muted-foreground">Satisfaction</span>
-                    <div className="text-2xl font-bold text-secondary">98%</div>
+                  <div className="flex-1 px-4 py-3 rounded-2xl bg-secondary/5 border border-secondary/10">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Satisfaction</span>
+                    <div className="text-3xl font-bold text-secondary">98%</div>
                   </div>
                 </div>
               </div>
@@ -62,7 +66,7 @@ export function ProductSection() {
               <span className="text-gradient">Sell Themselves</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-10">
-              Unlike traditional fundraisers with low-value items, we offer products that provide 
+              Unlike traditional fundraisers with low-value items, we offer products that provide
               real value to your supporters and their families.
             </p>
 

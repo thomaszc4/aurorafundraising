@@ -29,8 +29,7 @@ export default function JoinCampaign() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [joinSettings, setJoinSettings] = useState<JoinSettings | null>(null);
   const [nickname, setNickname] = useState('');
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
+
   const [participantCount, setParticipantCount] = useState(0);
 
   useEffect(() => {
@@ -90,20 +89,8 @@ export default function JoinCampaign() {
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!nickname.trim()) {
-      toast.error('Please enter a nickname');
-      return;
-    }
-
-    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-      toast.error('PIN must be 4 digits');
-      return;
-    }
-
-    if (pin !== confirmPin) {
-      toast.error('PINs do not match');
-      return;
-    }
+    const finalNickname = nickname.trim() || `Supporter ${Math.floor(Math.random() * 10000)}`;
+    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
 
     if (!campaign) return;
 
@@ -121,8 +108,8 @@ export default function JoinCampaign() {
         .from('participants')
         .insert({
           campaign_id: campaign.id,
-          nickname: nickname.trim(),
-          pin_hash: pin // In production, hash this properly
+          nickname: finalNickname,
+          pin_hash: randomPin // In production, hash this properly
         })
         .select('access_token')
         .single();
@@ -134,7 +121,7 @@ export default function JoinCampaign() {
       }
 
       toast.success('Welcome to the fundraiser!');
-      
+
       // Store token and redirect
       localStorage.setItem('participant_token', data.access_token);
       navigate(`/p/${data.access_token}`);
@@ -201,7 +188,7 @@ export default function JoinCampaign() {
         <CardContent>
           <form onSubmit={handleJoin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nickname">Pick a Nickname</Label>
+              <Label htmlFor="nickname">Pick a Nickname (Optional)</Label>
               <Input
                 id="nickname"
                 placeholder="e.g., SuperSeller, CookieChamp"
@@ -211,42 +198,11 @@ export default function JoinCampaign() {
                 disabled={submitting}
               />
               <p className="text-xs text-muted-foreground">
-                This is how you'll appear on the leaderboard
+                Leave blank to stay anonymous
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="pin">Create a 4-Digit PIN</Label>
-              <Input
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                placeholder="••••"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                disabled={submitting}
-              />
-              <p className="text-xs text-muted-foreground">
-                You'll use this to log back in
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPin">Confirm PIN</Label>
-              <Input
-                id="confirmPin"
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                placeholder="••••"
-                value={confirmPin}
-                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
-                disabled={submitting}
-              />
-            </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={submitting}>
               {submitting ? (

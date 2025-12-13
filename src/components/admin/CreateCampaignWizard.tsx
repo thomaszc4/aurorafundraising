@@ -30,6 +30,15 @@ import {
 } from '@/data/fundraiserTypes';
 import { parseStudentFile, downloadSampleCSV, ParseResult } from '@/utils/csvParser';
 
+const generateJoinCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 
 interface Product {
   id: string;
@@ -383,6 +392,7 @@ export function CreateCampaignWizard({
           .from('campaign_join_settings')
           .insert({
             campaign_id: campaignId,
+            join_code: generateJoinCode(),
             require_code: false,
             max_participants: programSize ? parseInt(programSize) : null
           });

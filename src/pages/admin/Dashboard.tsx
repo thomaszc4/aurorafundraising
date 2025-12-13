@@ -389,9 +389,7 @@ export default function AdminDashboard() {
       onCampaignChange={handleCampaignChange}
       onCreateCampaign={() => setView('create')}
     >
-      <div className="bg-red-500/20 min-h-screen p-4 rounded-lg">
-        {renderContent()}
-      </div>
+      {renderContent()}
     </AdminLayout>
   );
 }

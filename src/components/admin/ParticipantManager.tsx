@@ -217,7 +217,7 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5" />
-            Participant Join Link
+            Participant Join Linkss
           </CardTitle>
           <CardDescription>
             Share this link with your group - no emails needed!
@@ -236,6 +236,7 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
+              {/* Join Code UI hidden as we moved to UUID links
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Join Code:</span>
@@ -251,6 +252,7 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
                   New Code
                 </Button>
               </div>
+              */}
             </>
           )}
         </CardContent>

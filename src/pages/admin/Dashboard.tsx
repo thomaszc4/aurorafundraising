@@ -8,27 +8,16 @@ import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft } from 'lucide
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
-import { DonorManagement } from '@/components/admin/DonorManagement';
 import { ProfileEditor } from '@/components/admin/ProfileEditor';
-import { RetentionAnalytics } from '@/components/admin/RetentionAnalytics';
-import { DonorJourneyManager } from '@/components/admin/DonorJourneyManager';
-import { ImpactUpdatesManager } from '@/components/admin/ImpactUpdatesManager';
-import { DonorSurveyManager } from '@/components/admin/DonorSurveyManager';
-import { EmailABTesting } from '@/components/admin/EmailABTesting';
-import { EmailAnalyticsDashboard } from '@/components/admin/EmailAnalyticsDashboard';
-import { EmailScheduler } from '@/components/admin/EmailScheduler';
-import { EmailTemplateBuilder } from '@/components/admin/EmailTemplateBuilder';
-import { DonorDatabase } from '@/components/admin/DonorDatabase';
-import { BulkEmailSender } from '@/components/admin/BulkEmailSender';
-import { DonorLeaderboard } from '@/components/fundraising/DonorLeaderboard';
 import { ResourcesManager } from '@/components/admin/ResourcesManager';
 import { SocialPostGenerator } from '@/components/admin/SocialPostGenerator';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { ProgressEnhanced } from '@/components/ui/progress-enhanced';
 import { OnboardingTutorial } from '@/components/admin/OnboardingTutorial';
-import { BulkTaskAssignment } from '@/components/admin/BulkTaskAssignment';
-import { MilestoneEmailAutomation } from '@/components/admin/MilestoneEmailAutomation';
 import { DashboardTaskList } from '@/components/admin/DashboardTaskList';
+import { ParticipantManager } from '@/components/admin/ParticipantManager';
+import { CommunicationCenter } from '@/components/admin/CommunicationCenter';
+import { IncentiveManager } from '@/components/admin/IncentiveManager';
 import { Tables } from '@/integrations/supabase/types';
 
 type Campaign = Tables<'campaigns'>;
@@ -237,143 +226,27 @@ export default function AdminDashboard() {
           </>
         );
 
-      case 'donors':
+      case 'participants':
         return selectedCampaign && (
           <>
             <BackButton onClick={() => setView('overview')} />
-            <DonorManagement campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+            <ParticipantManager campaignId={selectedCampaign.id} />
           </>
         );
 
-      case 'retention':
+      case 'messages':
         return selectedCampaign && (
           <>
             <BackButton onClick={() => setView('overview')} />
-            <RetentionAnalytics campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
+            <CommunicationCenter campaignId={selectedCampaign.id} />
           </>
         );
 
-      case 'journeys':
+      case 'incentives':
         return selectedCampaign && (
           <>
             <BackButton onClick={() => setView('overview')} />
-            <DonorJourneyManager campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'impact':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <ImpactUpdatesManager campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'surveys':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <DonorSurveyManager campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'email':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Email Center</h2>
-                <p className="text-muted-foreground">Manage all your email communications</p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('templates')}>
-                  <CardContent className="pt-6">
-                    <h3 className="font-semibold mb-1">📝 Templates</h3>
-                    <p className="text-sm text-muted-foreground">Build email templates</p>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('email-scheduler')}>
-                  <CardContent className="pt-6">
-                    <h3 className="font-semibold mb-1">📅 Scheduler</h3>
-                    <p className="text-sm text-muted-foreground">Schedule email sends</p>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('ab-testing')}>
-                  <CardContent className="pt-6">
-                    <h3 className="font-semibold mb-1">🔬 A/B Testing</h3>
-                    <p className="text-sm text-muted-foreground">Optimize open rates</p>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setView('email-analytics')}>
-                  <CardContent className="pt-6">
-                    <h3 className="font-semibold mb-1">📊 Analytics</h3>
-                    <p className="text-sm text-muted-foreground">Track performance</p>
-                  </CardContent>
-                </Card>
-              </div>
-              <BulkEmailSender campaignId={selectedCampaign.id} />
-            </div>
-          </>
-        );
-
-      case 'analytics':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <RetentionAnalytics campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'ab-testing':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <EmailABTesting campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'email-analytics':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <EmailAnalyticsDashboard campaignId={selectedCampaign.id} />
-          </>
-        );
-
-      case 'email-scheduler':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <EmailScheduler campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'templates':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <EmailTemplateBuilder campaignId={selectedCampaign.id} onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'database':
-        return (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <DonorDatabase onClose={() => setView('overview')} />
-          </>
-        );
-
-      case 'leaderboard':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Donor Recognition Wall</h2>
-              <p className="text-muted-foreground">Celebrating our generous supporters</p>
-            </div>
-            <DonorLeaderboard campaignId={selectedCampaign.id} limit={20} variant="wall" />
+            <IncentiveManager campaignId={selectedCampaign.id} />
           </>
         );
 
@@ -422,25 +295,6 @@ export default function AdminDashboard() {
                 />
               </CardContent>
             </Card>
-          </>
-        );
-
-      case 'bulk-tasks':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <BulkTaskAssignment campaignId={selectedCampaign.id} />
-          </>
-        );
-
-      case 'milestones':
-        return selectedCampaign && (
-          <>
-            <BackButton onClick={() => setView('overview')} />
-            <MilestoneEmailAutomation 
-              campaignId={selectedCampaign.id} 
-              goalAmount={selectedCampaign.goal_amount ? Number(selectedCampaign.goal_amount) : undefined}
-            />
           </>
         );
 

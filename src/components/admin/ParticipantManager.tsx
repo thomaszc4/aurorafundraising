@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { 
-  Loader2, Users, Link2, Copy, QrCode, Search, 
+import {
+  Loader2, Users, Link2, Copy, QrCode, Search,
   TrendingUp, Crown, Medal, Award, RefreshCw
 } from 'lucide-react';
 
@@ -36,6 +36,15 @@ interface Campaign {
 interface ParticipantManagerProps {
   campaignId?: string;
 }
+
+const generateJoinCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
 
 export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
   const { user } = useAuth();
@@ -102,11 +111,28 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
       // Create join settings if they don't exist
       const { data: newSettings } = await supabase
         .from('campaign_join_settings')
-        .insert({ campaign_id: campId })
+        .insert({
+          campaign_id: campId,
+          join_code: generateJoinCode(),
+          require_code: false
+        })
         .select()
         .single();
-      
+
       data = newSettings;
+    } else if (!data.join_code) {
+      // Backfill missing join code
+      const newCode = generateJoinCode();
+      const { data: updatedSettings } = await supabase
+        .from('campaign_join_settings')
+        .update({ join_code: newCode })
+        .eq('id', data.id)
+        .select()
+        .single();
+
+      if (updatedSettings) {
+        data = updatedSettings;
+      }
     }
 
     setJoinSettings(data);
@@ -136,7 +162,7 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
         .eq('campaign_id', selectedCampaign);
 
       if (error) throw error;
-      
+
       setJoinSettings(prev => prev ? { ...prev, join_code: newCode } : null);
       toast.success('New join code generated!');
     } catch (err) {

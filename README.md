@@ -72,7 +72,3 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 
-                                             This is a test
-
-This is part two of the test, and hopefully this will end the test
-Just kidding, I need to test pushing from antigravity

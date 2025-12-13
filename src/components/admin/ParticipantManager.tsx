@@ -217,7 +217,7 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5" />
-            Participant Join Linkss
+            Participant Join Link
           </CardTitle>
           <CardDescription>
             Share this link with your group - no emails needed!

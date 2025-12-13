@@ -17,6 +17,9 @@ interface Campaign {
 }
 
 interface JoinSettings {
+  join_code?: string;
+  id?: string;
+  campaign_id?: string;
   require_code: boolean;
   max_participants: number | null;
 }
@@ -37,26 +40,47 @@ export default function JoinCampaign() {
       if (!code) return;
 
       try {
-        // Find campaign by join code
-        const { data: settings, error: settingsError } = await supabase
-          .from('campaign_join_settings')
-          .select('campaign_id, require_code, max_participants')
-          .eq('join_code', code.toUpperCase())
-          .single();
+        let campaignId = '';
 
-        if (settingsError || !settings) {
-          toast.error('Campaign not found');
-          setLoading(false);
-          return;
+        // Check if code is a UUID
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code);
+
+        if (isUuid) {
+          campaignId = code;
+
+          // Fetch settings for max participants check
+          const { data: settings } = await supabase
+            .from('campaign_join_settings')
+            .select('require_code, max_participants')
+            .eq('campaign_id', campaignId)
+            .maybeSingle(); // Use maybeSingle as settings might not exist yet
+
+          if (settings) {
+            setJoinSettings({ ...settings, campaign_id: campaignId, join_code: '', id: '' });
+          }
+        } else {
+          // Find campaign by join code (legacy support)
+          const { data: settings, error: settingsError } = await supabase
+            .from('campaign_join_settings')
+            .select('campaign_id, require_code, max_participants')
+            .eq('join_code', code.toUpperCase())
+            .single();
+
+          if (settingsError || !settings) {
+            toast.error('Campaign not found');
+            setLoading(false);
+            return;
+          }
+
+          setJoinSettings(settings);
+          campaignId = settings.campaign_id;
         }
-
-        setJoinSettings(settings);
 
         // Fetch campaign details
         const { data: campaignData, error: campaignError } = await supabase
           .from('campaigns')
           .select('id, name, organization_name, description, goal_amount')
-          .eq('id', settings.campaign_id)
+          .eq('id', campaignId)
           .single();
 
         if (campaignError || !campaignData) {

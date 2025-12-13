@@ -139,8 +139,8 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
   };
 
   const copyJoinLink = () => {
-    if (!joinSettings) return;
-    const link = `${window.location.origin}/join/${joinSettings.join_code}`;
+    if (!selectedCampaign) return;
+    const link = `${window.location.origin}/join/${selectedCampaign}`;
     navigator.clipboard.writeText(link);
     toast.success('Join link copied!');
   };
@@ -229,7 +229,7 @@ export function ParticipantManager({ campaignId }: ParticipantManagerProps) {
               <div className="flex items-center gap-2">
                 <Input
                   readOnly
-                  value={`${window.location.origin}/join/${joinSettings.join_code}`}
+                  value={`${window.location.origin}/join/${selectedCampaign}`}
                   className="font-mono text-sm"
                 />
                 <Button onClick={copyJoinLink}>

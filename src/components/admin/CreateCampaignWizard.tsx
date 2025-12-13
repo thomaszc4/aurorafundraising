@@ -368,7 +368,6 @@ export function CreateCampaignWizard({
         if (error) throw error;
         campaignId = editingCampaign.id;
 
-        await supabase.from('student_invitations').delete().eq('campaign_id', campaignId);
         await supabase.from('campaign_products').delete().eq('campaign_id', campaignId);
       } else {
         const { data, error } = await supabase
@@ -378,6 +377,16 @@ export function CreateCampaignWizard({
           .single();
         if (error) throw error;
         campaignId = data.id;
+
+        // Auto-create join settings for new campaigns
+        const { error: joinError } = await supabase
+          .from('campaign_join_settings')
+          .insert({
+            campaign_id: campaignId,
+            require_code: false,
+            max_participants: programSize ? parseInt(programSize) : null
+          });
+        if (joinError) console.error('Error creating join settings:', joinError);
       }
 
       if (fundraiserTypeValue === 'product' && selectedProductIds.length > 0) {
@@ -386,15 +395,6 @@ export function CreateCampaignWizard({
           product_id: productId
         }));
         await supabase.from('campaign_products').insert(productInserts);
-      }
-
-      if (students.length > 0) {
-        const studentInserts = students.map(s => ({
-          campaign_id: campaignId,
-          student_name: s.name,
-          student_email: s.email
-        }));
-        await supabase.from('student_invitations').insert(studentInserts);
       }
 
       toast.success(editingCampaign ? 'Campaign updated successfully' : 'Campaign created successfully');

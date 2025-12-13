@@ -154,9 +154,9 @@ export default function VendorDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'shipped':
-        return <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">Shipped</Badge>;
+        return <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20">Shipped</Badge>;
       case 'preparing':
-        return <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20">Preparing</Badge>;
+        return <Badge className="bg-accent/10 text-accent hover:bg-accent/20 border-accent/20">Preparing</Badge>;
       default:
         return <Badge variant="secondary" className="bg-white/5 hover:bg-white/10">Pending</Badge>;
     }
@@ -175,8 +175,8 @@ export default function VendorDashboard() {
       {/* Background Elements */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary-blue/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] animate-pulse delay-1000" />
-        <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[80px] animate-float" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[100px] animate-pulse delay-1000" />
+        <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-secondary/10 rounded-full blur-[80px] animate-float" />
         <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5" />
       </div>
 
@@ -193,7 +193,7 @@ export default function VendorDashboard() {
                 <p className="text-sm text-muted-foreground">{vendor?.company_name || vendor?.email}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-red-500/10 hover:text-red-500 transition-all">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive transition-all">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -204,10 +204,10 @@ export default function VendorDashboard() {
       <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-blue-500/20 transition-all" />
+          <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary-blue/30 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-blue/20 transition-all" />
             <div className="flex items-center gap-4 relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-500">
+              <div className="w-12 h-12 rounded-xl bg-primary-blue/10 flex items-center justify-center border border-primary-blue/20 text-primary-blue">
                 <Building className="h-6 w-6" />
               </div>
               <div>
@@ -217,10 +217,10 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-emerald-500/20 transition-all" />
+          <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-secondary/30 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-secondary/20 transition-all" />
             <div className="flex items-center gap-4 relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-500">
+              <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center border border-secondary/20 text-secondary">
                 <Package className="h-6 w-6" />
               </div>
               <div>
@@ -232,10 +232,10 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-purple-500/20 transition-all" />
+          <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-accent/30 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-accent/20 transition-all" />
             <div className="flex items-center gap-4 relative z-10">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-purple-500">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
                 <Truck className="h-6 w-6" />
               </div>
               <div>

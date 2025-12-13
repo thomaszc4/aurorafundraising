@@ -19,6 +19,7 @@ import { ParticipantManager } from '@/components/admin/ParticipantManager';
 import { CommunicationCenter } from '@/components/admin/CommunicationCenter';
 import { IncentiveManager } from '@/components/admin/IncentiveManager';
 import { Tables } from '@/integrations/supabase/types';
+import { applyTheme, BrandColors } from '@/lib/theme';
 
 type Campaign = Tables<'campaigns'>;
 
@@ -47,8 +48,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (selectedCampaign) {
+      applyTheme((selectedCampaign.brand_colors as unknown) as BrandColors);
       fetchCampaignStats(selectedCampaign.id);
+    } else {
+      applyTheme(null);
     }
+
+    return () => applyTheme(null);
   }, [selectedCampaign]);
 
   const checkFirstVisit = async () => {
@@ -347,7 +353,7 @@ export default function AdminDashboard() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-accent/20 transition-all" />
           <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <h3 className="text-sm font-medium text-muted-foreground">Total Orders</h3>
-            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent-foreground">
+            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent">
               <ShoppingCart className="h-4 w-4" />
             </div>
           </div>

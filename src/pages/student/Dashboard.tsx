@@ -12,6 +12,7 @@ import { QRCodeGenerator } from '@/components/student/QRCodeGenerator';
 import { DoorToDoorMode } from '@/components/student/DoorToDoorMode';
 import { ResourcesManager } from '@/components/admin/ResourcesManager';
 import { cn } from '@/lib/utils';
+import { applyTheme, BrandColors } from '@/lib/theme';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function StudentDashboard() {
     if (user) {
       fetchFundraiserData();
     }
+    return () => applyTheme(null);
   }, [user]);
 
   const fetchFundraiserData = async () => {
@@ -39,6 +41,13 @@ export default function StudentDashboard() {
       if (fundraiserData) {
         setFundraiser(fundraiserData);
         setCampaign(fundraiserData.campaigns);
+
+        // Apply campaign theme
+        if (fundraiserData.campaigns?.brand_colors) {
+          applyTheme((fundraiserData.campaigns.brand_colors as unknown) as BrandColors);
+        } else {
+          applyTheme(null);
+        }
 
         const { data: ordersData } = await supabase
           .from('orders')
@@ -232,7 +241,7 @@ export default function StudentDashboard() {
                           <p className="font-medium text-foreground">${Number(order.total_amount).toFixed(2)}</p>
                           <div className={cn(
                             "text-xs px-2 py-0.5 rounded-full inline-block mt-1",
-                            order.status === 'completed' ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
+                            order.status === 'completed' ? "bg-secondary/10 text-secondary" : "bg-accent/10 text-accent"
                           )}>
                             <span className="capitalize">{order.status}</span>
                           </div>

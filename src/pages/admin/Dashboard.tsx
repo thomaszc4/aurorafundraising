@@ -97,7 +97,7 @@ export default function AdminDashboard() {
         .eq('campaign_id', campaignId);
 
       const fundraiserIds = fundraisers?.map(f => f.id) || [];
-      
+
       let ordersCount = 0;
       let totalRaised = 0;
 
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
           .select('*', { count: 'exact', head: true })
           .in('student_fundraiser_id', fundraiserIds)
           .eq('status', 'completed');
-        
+
         ordersCount = count || 0;
         totalRaised = fundraisers?.reduce((sum, f) => sum + Number(f.total_raised || 0), 0) || 0;
       }
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
   const renderOverview = () => (
     <>
       {showTutorial && <OnboardingTutorial onComplete={handleTutorialComplete} />}
-      
+
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
         <Card>
@@ -359,9 +359,9 @@ export default function AdminDashboard() {
                 <span>${campaignStats.totalRaised.toFixed(2)} raised</span>
                 <span>${Number(selectedCampaign.goal_amount).toLocaleString()} goal</span>
               </div>
-              <ProgressEnhanced 
-                value={campaignStats.goalProgress} 
-                showMilestones 
+              <ProgressEnhanced
+                value={campaignStats.goalProgress}
+                showMilestones
                 className="h-4"
               />
             </div>
@@ -389,7 +389,9 @@ export default function AdminDashboard() {
       onCampaignChange={handleCampaignChange}
       onCreateCampaign={() => setView('create')}
     >
-      {renderContent()}
+      <div className="bg-red-500/20 min-h-screen p-4 rounded-lg">
+        {renderContent()}
+      </div>
     </AdminLayout>
   );
 }

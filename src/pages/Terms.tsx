@@ -16,15 +16,15 @@ const Terms = () => {
       </section>
 
       {/* Content */}
-      <section className="section-padding bg-background">
-        <div className="container-tight">
-          <div className="prose prose-lg max-w-none">
+      <section className="section-padding bg-background relative">
+        <div className="container-tight relative z-10">
+          <div className="glass-card p-8 md:p-12 prose prose-lg max-w-none text-foreground prose-headings:text-foreground prose-a:text-primary-blue prose-strong:text-foreground">
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Agreement to Terms</h2>
                 <p className="text-muted-foreground">
-                  By accessing or using the Aurora Fundraising website and services, you agree to 
-                  be bound by these Terms and Conditions. If you disagree with any part of these 
+                  By accessing or using the Aurora Fundraising website and services, you agree to
+                  be bound by these Terms and Conditions. If you disagree with any part of these
                   terms, you may not access our website or use our services.
                 </p>
               </div>
@@ -40,7 +40,7 @@ const Terms = () => {
                   <li>Parents/guardians who provide consent for their children's participation in fundraising activities</li>
                 </ul>
                 <p className="text-muted-foreground mt-4">
-                  Student participants under 18 may only use our platform under the supervision and with 
+                  Student participants under 18 may only use our platform under the supervision and with
                   the consent of a parent, guardian, or authorized school/organization administrator.
                 </p>
               </div>
@@ -95,7 +95,7 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Marketing Communications</h2>
                 <p className="text-muted-foreground mb-4">
-                  We only send marketing communications to individuals who have explicitly opted in. 
+                  We only send marketing communications to individuals who have explicitly opted in.
                   By opting in to marketing communications, you acknowledge that:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
@@ -136,8 +136,8 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Returns and Refunds</h2>
                 <p className="text-muted-foreground">
-                  Due to the nature of fundraising orders, all sales are generally final. However, 
-                  we will work with organizations to address defective products or order errors. 
+                  Due to the nature of fundraising orders, all sales are generally final. However,
+                  we will work with organizations to address defective products or order errors.
                   Please contact us within 14 days of receiving your order to report any issues.
                 </p>
               </div>
@@ -145,9 +145,9 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Intellectual Property</h2>
                 <p className="text-muted-foreground">
-                  All content on our website, including text, graphics, logos, and images, is the 
-                  property of Aurora Fundraising or its content suppliers. You may not reproduce, 
-                  distribute, or create derivative works from this content without our express 
+                  All content on our website, including text, graphics, logos, and images, is the
+                  property of Aurora Fundraising or its content suppliers. You may not reproduce,
+                  distribute, or create derivative works from this content without our express
                   written permission.
                 </p>
               </div>
@@ -155,9 +155,9 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Limitation of Liability</h2>
                 <p className="text-muted-foreground">
-                  To the fullest extent permitted by law, Aurora Fundraising shall not be liable 
-                  for any indirect, incidental, special, consequential, or punitive damages arising 
-                  from your use of our services or products. Our total liability shall not exceed 
+                  To the fullest extent permitted by law, Aurora Fundraising shall not be liable
+                  for any indirect, incidental, special, consequential, or punitive damages arising
+                  from your use of our services or products. Our total liability shall not exceed
                   the amount paid by you for the specific products or services giving rise to the claim.
                 </p>
               </div>
@@ -165,8 +165,8 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Indemnification</h2>
                 <p className="text-muted-foreground">
-                  You agree to indemnify and hold Aurora Fundraising harmless from any claims, 
-                  damages, losses, or expenses arising from your use of our services, your violation 
+                  You agree to indemnify and hold Aurora Fundraising harmless from any claims,
+                  damages, losses, or expenses arising from your use of our services, your violation
                   of these terms, or your violation of any rights of another party.
                 </p>
               </div>
@@ -174,7 +174,7 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Governing Law</h2>
                 <p className="text-muted-foreground">
-                  These Terms and Conditions shall be governed by and construed in accordance with 
+                  These Terms and Conditions shall be governed by and construed in accordance with
                   the laws of the United States, without regard to conflict of law principles.
                 </p>
               </div>
@@ -182,8 +182,8 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Changes to Terms</h2>
                 <p className="text-muted-foreground">
-                  We reserve the right to modify these Terms and Conditions at any time. Changes 
-                  will be effective immediately upon posting to our website. Your continued use of 
+                  We reserve the right to modify these Terms and Conditions at any time. Changes
+                  will be effective immediately upon posting to our website. Your continued use of
                   our services after changes are posted constitutes acceptance of the modified terms.
                 </p>
               </div>
@@ -191,7 +191,7 @@ const Terms = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Severability</h2>
                 <p className="text-muted-foreground">
-                  If any provision of these Terms and Conditions is found to be unenforceable, the 
+                  If any provision of these Terms and Conditions is found to be unenforceable, the
                   remaining provisions will continue in full force and effect.
                 </p>
               </div>

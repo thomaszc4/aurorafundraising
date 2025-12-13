@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { QRCodeGenerator } from '@/components/student/QRCodeGenerator';
 import { DoorToDoorMode } from '@/components/student/DoorToDoorMode';
 import { ResourcesManager } from '@/components/admin/ResourcesManager';
+import { cn } from '@/lib/utils';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -61,8 +62,8 @@ export default function StudentDashboard() {
   };
 
   const shareUrl = fundraiser ? `${window.location.origin}/student/${fundraiser.page_slug}` : '';
-  const progress = fundraiser?.personal_goal 
-    ? (Number(fundraiser.total_raised) / Number(fundraiser.personal_goal)) * 100 
+  const progress = fundraiser?.personal_goal
+    ? (Number(fundraiser.total_raised) / Number(fundraiser.personal_goal)) * 100
     : 0;
 
   if (loading) {
@@ -131,102 +132,121 @@ export default function StudentDashboard() {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-3 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${Number(fundraiser.total_raised).toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground">
+              <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary-blue/30 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-blue/20 transition-all" />
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                  <h3 className="text-sm font-medium text-muted-foreground">Total Raised</h3>
+                  <div className="w-8 h-8 rounded-full bg-primary-blue/10 flex items-center justify-center text-primary-blue">
+                    <DollarSign className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="relative z-10">
+                  <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-blue mt-2">
+                    ${Number(fundraiser.total_raised).toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Goal: ${Number(fundraiser.personal_goal).toFixed(2)}
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{orders.length}</div>
-                  <p className="text-xs text-muted-foreground">
+              <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-secondary/30 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-secondary/20 transition-all" />
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                  <h3 className="text-sm font-medium text-muted-foreground">Total Orders</h3>
+                  <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                    <Package className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="relative z-10">
+                  <div className="text-3xl font-bold text-foreground mt-2">{orders.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {orders.filter(o => o.status === 'completed').length} completed
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Progress</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{progress.toFixed(0)}%</div>
-                  <ProgressEnhanced value={progress} className="mt-2" showMilestones />
-                </CardContent>
-              </Card>
+              <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-accent/30 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-accent/20 transition-all" />
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                  <h3 className="text-sm font-medium text-muted-foreground">Progress</h3>
+                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent-foreground">
+                    <Target className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="relative z-10">
+                  <div className="text-3xl font-bold text-foreground mt-2">{progress.toFixed(0)}%</div>
+                  <ProgressEnhanced value={progress} className="mt-2 h-2" showMilestones />
+                </div>
+              </div>
             </div>
 
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Your Fundraising Page</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="glass-card p-6 rounded-2xl mb-8 border border-white/5">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Your Fundraising Page</h3>
+              </div>
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={shareUrl}
                     readOnly
-                    className="flex-1 px-4 py-2 bg-muted rounded-lg text-sm"
+                    className="flex-1 px-4 py-2 bg-background/50 border border-white/10 rounded-lg text-sm"
                   />
-                  <Button onClick={copyShareLink} size="icon">
+                  <Button onClick={copyShareLink} size="icon" variant="secondary">
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" asChild className="flex-1">
+                  <Button variant="default" asChild className="flex-1 shadow-glow hover:shadow-glow-lg transition-all">
                     <a href={shareUrl} target="_blank" rel="noopener noreferrer">
                       <Share2 className="h-4 w-4 mr-2" />
                       View Page
                     </a>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="glass-card p-6 rounded-2xl border border-white/5">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Recent Orders</h3>
+              </div>
+              <div className="space-y-4">
                 {orders.length === 0 ? (
-                  <p className="text-muted-foreground">No orders yet. Share your link to get started!</p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p>No orders yet. Share your link to get started!</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {orders.slice(0, 10).map((order) => (
-                      <div key={order.id} className="flex items-center justify-between border-b pb-4">
+                      <div key={order.id} className="flex items-center justify-between border-b border-white/5 pb-4 last:border-0 last:pb-0">
                         <div>
-                          <p className="font-medium">{order.customer_name || order.customer_email}</p>
+                          <p className="font-medium text-foreground">{order.customer_name || order.customer_email}</p>
                           <p className="text-sm text-muted-foreground">
                             {new Date(order.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">${Number(order.total_amount).toFixed(2)}</p>
-                          <p className="text-sm text-muted-foreground capitalize">{order.status}</p>
+                          <p className="font-medium text-foreground">${Number(order.total_amount).toFixed(2)}</p>
+                          <div className={cn(
+                            "text-xs px-2 py-0.5 rounded-full inline-block mt-1",
+                            order.status === 'completed' ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
+                          )}>
+                            <span className="capitalize">{order.status}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="share">
-            <QRCodeGenerator 
+            <QRCodeGenerator
               url={shareUrl}
               studentName={user?.email?.split('@')[0] || 'Student'}
               campaignName={campaign?.name || 'Fundraiser'}
@@ -234,7 +254,7 @@ export default function StudentDashboard() {
           </TabsContent>
 
           <TabsContent value="door-to-door">
-            <DoorToDoorMode 
+            <DoorToDoorMode
               shareUrl={shareUrl}
               studentName={user?.email?.split('@')[0] || 'Student'}
               productName={campaign?.name || 'Fundraiser'}
@@ -243,8 +263,8 @@ export default function StudentDashboard() {
 
           <TabsContent value="resources">
             {campaign && (
-              <ResourcesManager 
-                campaignId={campaign.id} 
+              <ResourcesManager
+                campaignId={campaign.id}
               />
             )}
           </TabsContent>

@@ -110,7 +110,7 @@ const FAQ = () => {
           <div className="absolute top-1/3 -left-32 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float" />
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
-        
+
         <div className="container-wide relative z-10">
           <div className="max-w-3xl">
             <span className="inline-block px-4 py-2 rounded-full bg-primary-foreground/10 text-secondary text-sm font-medium mb-6">
@@ -120,7 +120,7 @@ const FAQ = () => {
               Frequently Asked <span className="text-gradient-teal">Questions</span>
             </h1>
             <p className="text-xl text-primary-foreground/70">
-              Find answers about our platform, products, donor management, 
+              Find answers about our platform, products, donor management,
               and fundraising process.
             </p>
           </div>
@@ -138,7 +138,7 @@ const FAQ = () => {
                   <AccordionItem
                     key={index}
                     value={`${category.category}-${index}`}
-                    className="border border-border/50 rounded-2xl px-6 data-[state=open]:border-primary-blue/30 data-[state=open]:shadow-lg transition-all"
+                    className="glass-card mb-4 border border-white/5 px-6 rounded-2xl transition-all duration-300 hover:border-primary-blue/30 data-[state=open]:border-primary-blue/50 data-[state=open]:shadow-lg"
                   >
                     <AccordionTrigger className="text-left font-semibold hover:no-underline py-6">
                       {faq.question}
@@ -161,7 +161,7 @@ const FAQ = () => {
             Still Have Questions?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Our team is happy to answer any additional questions and give you a 
+            Our team is happy to answer any additional questions and give you a
             personalized demo of our platform.
           </p>
           <Button variant="default" size="xl" asChild>

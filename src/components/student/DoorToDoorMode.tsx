@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Home, Check, X, Clock, MapPin, ChevronRight, 
+import {
+  Home, Check, X, Clock, MapPin, ChevronRight,
   RefreshCw, MessageSquare, Copy, QrCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,8 +35,8 @@ export function DoorToDoorMode({ shareUrl, studentName, productName }: DoorToDoo
     notInterested: doors.filter(d => d.status === 'not_interested').length,
   };
 
-  const conversionRate = stats.total > 0 
-    ? ((stats.sold / stats.total) * 100).toFixed(0) 
+  const conversionRate = stats.total > 0
+    ? ((stats.sold / stats.total) * 100).toFixed(0)
     : '0';
 
   const addDoor = (status: DoorEntry['status']) => {
@@ -46,7 +46,7 @@ export function DoorToDoorMode({ shareUrl, studentName, productName }: DoorToDoo
       timestamp: new Date(),
     };
     setDoors(prev => [newDoor, ...prev]);
-    
+
     const messages: Record<string, string> = {
       sold: '🎉 Great job! Sale recorded!',
       interested: '👍 Noted! Follow up later.',
@@ -82,33 +82,31 @@ Thank you so much for your support!`;
   return (
     <div className="space-y-6">
       {/* Stats Bar */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="grid grid-cols-5 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <div className="text-xs text-muted-foreground">Doors</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-600">{stats.sold}</div>
-              <div className="text-xs text-muted-foreground">Sales</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-amber-600">{stats.interested}</div>
-              <div className="text-xs text-muted-foreground">Interested</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-muted-foreground">{stats.notHome}</div>
-              <div className="text-xs text-muted-foreground">Not Home</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-primary">{conversionRate}%</div>
-              <div className="text-xs text-muted-foreground">Conversion</div>
-            </div>
+      <div className="glass-card p-6 rounded-2xl border border-white/5">
+        <div className="grid grid-cols-5 gap-4 text-center">
+          <div>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-xs text-muted-foreground">Doors</div>
           </div>
-          <Progress value={parseInt(conversionRate)} className="mt-4 h-2" />
-        </CardContent>
-      </Card>
+          <div>
+            <div className="text-2xl font-bold text-green-500">{stats.sold}</div>
+            <div className="text-xs text-muted-foreground">Sales</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-amber-500">{stats.interested}</div>
+            <div className="text-xs text-muted-foreground">Interested</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.notHome}</div>
+            <div className="text-xs text-muted-foreground">Not Home</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-primary">{conversionRate}%</div>
+            <div className="text-xs text-muted-foreground">Conversion</div>
+          </div>
+        </div>
+        <Progress value={parseInt(conversionRate)} className="mt-4 h-2" />
+      </div>
 
       {/* Quick Actions */}
       <Card>
@@ -118,31 +116,31 @@ Thank you so much for your support!`;
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Button 
-              onClick={() => addDoor('sold')} 
+            <Button
+              onClick={() => addDoor('sold')}
               className="h-16 bg-green-600 hover:bg-green-700 gap-2"
             >
               <Check className="h-5 w-5" />
               Made a Sale!
             </Button>
-            <Button 
-              onClick={() => addDoor('interested')} 
+            <Button
+              onClick={() => addDoor('interested')}
               variant="outline"
               className="h-16 border-amber-500 text-amber-600 hover:bg-amber-50 gap-2"
             >
               <Clock className="h-5 w-5" />
               Interested
             </Button>
-            <Button 
-              onClick={() => addDoor('not_home')} 
+            <Button
+              onClick={() => addDoor('not_home')}
               variant="outline"
               className="h-16 gap-2"
             >
               <Home className="h-5 w-5" />
               Not Home
             </Button>
-            <Button 
-              onClick={() => addDoor('not_interested')} 
+            <Button
+              onClick={() => addDoor('not_interested')}
               variant="outline"
               className="h-16 gap-2"
             >
@@ -150,7 +148,7 @@ Thank you so much for your support!`;
               Not Interested
             </Button>
           </div>
-          
+
           <div className="flex gap-2 pt-2">
             <Button variant="outline" onClick={copyShareLink} className="flex-1 gap-2">
               <Copy className="h-4 w-4" />
@@ -172,9 +170,9 @@ Thank you so much for your support!`;
               <MessageSquare className="h-5 w-5" />
               Your Sales Script
             </CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowScript(!showScript)}
             >
               {showScript ? 'Hide' : 'Show'}
@@ -186,8 +184,8 @@ Thank you so much for your support!`;
             <div className="bg-muted/50 rounded-lg p-4 text-sm whitespace-pre-line">
               {salesScript}
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full mt-3 gap-2"
               onClick={() => {
                 navigator.clipboard.writeText(salesScript);
@@ -203,29 +201,29 @@ Thank you so much for your support!`;
 
       {/* Recent Activity */}
       {doors.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="glass-card p-6 rounded-2xl border border-white/5">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Recent Activity</h3>
+          </div>
+          <div className="space-y-2">
             {doors.slice(0, 10).map((door) => (
-              <div 
+              <div
                 key={door.id}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-lg",
-                  door.status === 'sold' && "bg-green-50 dark:bg-green-950/20",
-                  door.status === 'interested' && "bg-amber-50 dark:bg-amber-950/20",
-                  door.status === 'not_home' && "bg-muted",
-                  door.status === 'not_interested' && "bg-muted"
+                  "flex items-center justify-between p-3 rounded-lg border border-transparent",
+                  door.status === 'sold' && "bg-green-500/10 border-green-500/20",
+                  door.status === 'interested' && "bg-amber-500/10 border-amber-500/20",
+                  door.status === 'not_home' && "bg-white/5 border-white/5",
+                  door.status === 'not_interested' && "bg-white/5 border-white/5"
                 )}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center",
-                    door.status === 'sold' && "bg-green-100 text-green-600",
-                    door.status === 'interested' && "bg-amber-100 text-amber-600",
-                    door.status === 'not_home' && "bg-muted text-muted-foreground",
-                    door.status === 'not_interested' && "bg-muted text-muted-foreground"
+                    door.status === 'sold' && "bg-green-500/20 text-green-500",
+                    door.status === 'interested' && "bg-amber-500/20 text-amber-500",
+                    door.status === 'not_home' && "bg-white/10 text-muted-foreground",
+                    door.status === 'not_interested' && "bg-white/10 text-muted-foreground"
                   )}>
                     {door.status === 'sold' && <Check className="h-4 w-4" />}
                     {door.status === 'interested' && <Clock className="h-4 w-4" />}
@@ -233,7 +231,7 @@ Thank you so much for your support!`;
                     {door.status === 'not_interested' && <X className="h-4 w-4" />}
                   </div>
                   <div>
-                    <p className="font-medium capitalize">{door.status.replace('_', ' ')}</p>
+                    <p className="font-medium capitalize text-foreground">{door.status.replace('_', ' ')}</p>
                     <p className="text-xs text-muted-foreground">
                       {door.timestamp.toLocaleTimeString()}
                     </p>
@@ -241,16 +239,16 @@ Thank you so much for your support!`;
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Tips Card */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Pro Tips</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl">
+        <div className="mb-2">
+          <h3 className="text-lg font-semibold">Pro Tips</h3>
+        </div>
+        <div>
           <ul className="text-sm space-y-2 text-muted-foreground">
             <li className="flex items-start gap-2">
               <ChevronRight className="h-4 w-4 mt-0.5 text-primary shrink-0" />
@@ -269,8 +267,8 @@ Thank you so much for your support!`;
               <span>Thank everyone for their time, even if they say no</span>
             </li>
           </ul>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

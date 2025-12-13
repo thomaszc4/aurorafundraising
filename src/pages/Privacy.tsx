@@ -16,15 +16,15 @@ const Privacy = () => {
       </section>
 
       {/* Content */}
-      <section className="section-padding bg-background">
-        <div className="container-tight">
-          <div className="prose prose-lg max-w-none">
+      <section className="section-padding bg-background relative">
+        <div className="container-tight relative z-10">
+          <div className="glass-card p-8 md:p-12 prose prose-lg max-w-none text-foreground prose-headings:text-foreground prose-a:text-primary-blue prose-strong:text-foreground">
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Introduction</h2>
                 <p className="text-muted-foreground">
-                  Aurora Fundraising ("we," "our," or "us") is committed to protecting your privacy. 
-                  This Privacy Policy explains how we collect, use, disclose, and safeguard your 
+                  Aurora Fundraising ("we," "our," or "us") is committed to protecting your privacy.
+                  This Privacy Policy explains how we collect, use, disclose, and safeguard your
                   information when you visit our website or engage with our fundraising services.
                 </p>
               </div>
@@ -36,14 +36,14 @@ const Privacy = () => {
                 </p>
                 <h3 className="text-xl font-semibold text-foreground mb-2">Personal Data</h3>
                 <p className="text-muted-foreground mb-4">
-                  When you contact us or participate in a fundraiser, we may collect personally 
-                  identifiable information, such as your name, email address, phone number, 
+                  When you contact us or participate in a fundraiser, we may collect personally
+                  identifiable information, such as your name, email address, phone number,
                   organization name, and mailing address.
                 </p>
                 <h3 className="text-xl font-semibold text-foreground mb-2">Usage Data</h3>
                 <p className="text-muted-foreground">
-                  We may automatically collect certain information when you visit our website, 
-                  including your IP address, browser type, operating system, access times, and 
+                  We may automatically collect certain information when you visit our website,
+                  including your IP address, browser type, operating system, access times, and
                   the pages you have viewed.
                 </p>
               </div>
@@ -66,7 +66,7 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Marketing Communications</h2>
                 <p className="text-muted-foreground mb-4">
-                  We will only send you marketing communications if you have explicitly opted in to receive them. 
+                  We will only send you marketing communications if you have explicitly opted in to receive them.
                   You may withdraw your consent at any time by:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
@@ -79,9 +79,9 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Information Sharing</h2>
                 <p className="text-muted-foreground">
-                  We do not sell, trade, or rent your personal information to third parties. 
-                  We may share your information with trusted service providers who assist us in 
-                  operating our business, provided they agree to keep your information confidential. 
+                  We do not sell, trade, or rent your personal information to third parties.
+                  We may share your information with trusted service providers who assist us in
+                  operating our business, provided they agree to keep your information confidential.
                   We may also disclose information if required by law or to protect our rights.
                 </p>
               </div>
@@ -89,9 +89,9 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Data Security</h2>
                 <p className="text-muted-foreground">
-                  We implement appropriate technical and organizational measures to protect your 
-                  personal information against unauthorized access, alteration, disclosure, or 
-                  destruction. However, no method of transmission over the internet is 100% secure, 
+                  We implement appropriate technical and organizational measures to protect your
+                  personal information against unauthorized access, alteration, disclosure, or
+                  destruction. However, no method of transmission over the internet is 100% secure,
                   and we cannot guarantee absolute security.
                 </p>
               </div>
@@ -99,8 +99,8 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Cookies</h2>
                 <p className="text-muted-foreground">
-                  Our website may use cookies to enhance your browsing experience. You can choose 
-                  to disable cookies through your browser settings, though this may affect the 
+                  Our website may use cookies to enhance your browsing experience. You can choose
+                  to disable cookies through your browser settings, though this may affect the
                   functionality of our website.
                 </p>
               </div>
@@ -108,7 +108,7 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Your Rights</h2>
                 <p className="text-muted-foreground mb-4">
-                  Depending on your location, you may have certain rights regarding your personal 
+                  Depending on your location, you may have certain rights regarding your personal
                   information, including:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
@@ -124,7 +124,7 @@ const Privacy = () => {
               <div className="p-6 bg-muted/50 rounded-xl border border-border">
                 <h2 className="text-2xl font-bold text-foreground mb-4">Children's Privacy (COPPA Compliance)</h2>
                 <p className="text-muted-foreground mb-4">
-                  Aurora Fundraising is committed to complying with the Children's Online Privacy Protection Act 
+                  Aurora Fundraising is committed to complying with the Children's Online Privacy Protection Act
                   (COPPA) and protecting the privacy of children under 13 years of age.
                 </p>
                 <h3 className="text-lg font-semibold text-foreground mb-2">Our Commitment:</h3>
@@ -143,7 +143,7 @@ const Privacy = () => {
                 </ul>
                 <h3 className="text-lg font-semibold text-foreground mb-2">Information Collected About Student Participants:</h3>
                 <p className="text-muted-foreground mb-2">
-                  When schools or organizations create student fundraiser pages, the following information may be collected 
+                  When schools or organizations create student fundraiser pages, the following information may be collected
                   under the direction and consent of the school/organization administrator:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
@@ -152,7 +152,7 @@ const Privacy = () => {
                   <li>Optional: profile photo or avatar (uploaded by adult coordinator)</li>
                 </ul>
                 <p className="text-muted-foreground font-medium">
-                  We do NOT collect from children: email addresses, home addresses, phone numbers, Social Security numbers, 
+                  We do NOT collect from children: email addresses, home addresses, phone numbers, Social Security numbers,
                   or any other sensitive personal information without verifiable parental consent.
                 </p>
               </div>
@@ -160,8 +160,8 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Data Retention</h2>
                 <p className="text-muted-foreground">
-                  We retain personal information only for as long as necessary to fulfill the purposes for which 
-                  it was collected, including to satisfy legal, accounting, or reporting requirements. When 
+                  We retain personal information only for as long as necessary to fulfill the purposes for which
+                  it was collected, including to satisfy legal, accounting, or reporting requirements. When
                   personal information is no longer needed, we securely delete or anonymize it.
                 </p>
               </div>
@@ -169,8 +169,8 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Changes to This Policy</h2>
                 <p className="text-muted-foreground">
-                  We may update this Privacy Policy from time to time. We will notify you of any 
-                  changes by posting the new policy on this page and updating the "Last updated" 
+                  We may update this Privacy Policy from time to time. We will notify you of any
+                  changes by posting the new policy on this page and updating the "Last updated"
                   date. For material changes, we will provide more prominent notice.
                 </p>
               </div>
@@ -178,7 +178,7 @@ const Privacy = () => {
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-4">Contact Us</h2>
                 <p className="text-muted-foreground">
-                  If you have questions about this Privacy Policy, our practices, or wish to exercise your 
+                  If you have questions about this Privacy Policy, our practices, or wish to exercise your
                   privacy rights (including COPPA-related requests), please contact us at:{" "}
                   <a href="mailto:impactfulfundraising@gmail.com" className="text-primary-blue hover:underline">
                     impactfulfundraising@gmail.com

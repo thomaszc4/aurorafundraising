@@ -7,8 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { 
-  ChevronRight, ChevronDown, Clock, CheckCircle2, 
+import {
+  ChevronRight, ChevronDown, Clock, CheckCircle2,
   Sparkles, BookOpen, ArrowLeft, Plus, Pencil, Bell, BellOff,
   Download, GripVertical
 } from 'lucide-react';
@@ -57,7 +57,7 @@ interface SortableTaskItemProps {
 
 function SortableTaskItem({ task, isComplete, dueLabel, dueColor, onToggle, onEdit }: SortableTaskItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
-  
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -93,10 +93,10 @@ function SortableTaskItem({ task, isComplete, dueLabel, dueColor, onToggle, onEd
 }
 
 export function FundraiserProjectManager({
-  campaignId, 
+  campaignId,
   fundraiserTypeId,
   startDate,
-  onClose 
+  onClose
 }: FundraiserProjectManagerProps) {
   const { user } = useAuth();
   const [fundraiserType, setFundraiserType] = useState<FundraiserType | null>(null);
@@ -130,7 +130,7 @@ export function FundraiserProjectManager({
       .select('*')
       .eq('campaign_id', campaignId)
       .order('display_order');
-    
+
     if (data) {
       setCustomTasks(data as DbTask[]);
       const completed: TaskState = {};
@@ -164,7 +164,7 @@ export function FundraiserProjectManager({
       const customTaskId = taskId.replace('custom-', '');
       await supabase
         .from('campaign_tasks')
-        .update({ 
+        .update({
           is_completed: newCompleted,
           completed_at: newCompleted ? new Date().toISOString() : null
         })
@@ -173,7 +173,7 @@ export function FundraiserProjectManager({
   };
 
   const togglePhase = (phase: string) => {
-    setExpandedPhases(prev => 
+    setExpandedPhases(prev =>
       prev.includes(phase) ? prev.filter(p => p !== phase) : [...prev, phase]
     );
   };
@@ -282,14 +282,14 @@ export function FundraiserProjectManager({
   const getPhaseProgress = (phaseIndex: number, taskCount: number, phaseCustomTasks: DbTask[]): number => {
     let completed = 0;
     let total = taskCount + phaseCustomTasks.length;
-    
+
     for (let i = 0; i < taskCount; i++) {
       if (completedTasks[`${phaseIndex}-${i}`]) completed++;
     }
     phaseCustomTasks.forEach(task => {
       if (completedTasks[`custom-${task.id}`]) completed++;
     });
-    
+
     return total > 0 ? (completed / total) * 100 : 0;
   };
 
@@ -297,14 +297,14 @@ export function FundraiserProjectManager({
     if (!fundraiserType) return 0;
     let total = customTasks.length;
     let completed = customTasks.filter(t => completedTasks[`custom-${t.id}`]).length;
-    
+
     fundraiserType.projectManagerSteps.forEach((phase, phaseIndex) => {
       phase.tasks.forEach((_, taskIndex) => {
         total++;
         if (completedTasks[`${phaseIndex}-${taskIndex}`]) completed++;
       });
     });
-    
+
     return total > 0 ? (completed / total) * 100 : 0;
   };
 
@@ -314,7 +314,7 @@ export function FundraiserProjectManager({
     dueDate.setDate(dueDate.getDate() - daysBeforeEvent);
     const today = new Date();
     const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return 'Overdue';
     if (diffDays === 0) return 'Due today';
     if (diffDays === 1) return 'Due tomorrow';
@@ -328,7 +328,7 @@ export function FundraiserProjectManager({
     dueDate.setDate(dueDate.getDate() - daysBeforeEvent);
     const today = new Date();
     const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return 'text-destructive';
     if (diffDays <= 3) return 'text-amber-500';
     return 'text-muted-foreground';
@@ -347,7 +347,7 @@ export function FundraiserProjectManager({
 
   const handleExportPdf = async () => {
     if (!fundraiserType) return;
-    
+
     const phases = fundraiserType.projectManagerSteps.map((phase, phaseIndex) => {
       const phaseCustomTasks = customTasks.filter(t => t.phase === phase.phase);
       const tasks = [
@@ -375,7 +375,7 @@ export function FundraiserProjectManager({
       phases,
       totalProgress: getTotalProgress()
     });
-    
+
     toast.success('PDF exported successfully');
   };
 
@@ -390,14 +390,14 @@ export function FundraiserProjectManager({
 
     const oldIndex = customTasks.findIndex(t => t.id === active.id);
     const newIndex = customTasks.findIndex(t => t.id === over.id);
-    
+
     if (oldIndex === -1 || newIndex === -1) return;
-    
+
     const newTasks = arrayMove(customTasks, oldIndex, newIndex);
     setCustomTasks(newTasks);
 
     // Update display_order in database
-    const updates = newTasks.map((task, index) => 
+    const updates = newTasks.map((task, index) =>
       supabase.from('campaign_tasks').update({ display_order: index }).eq('id', task.id)
     );
     await Promise.all(updates);
@@ -444,26 +444,24 @@ export function FundraiserProjectManager({
       </div>
 
       {/* Progress & Reminders */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="space-y-2 flex-1 mr-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Overall Progress</span>
-                <span className="font-medium">{Math.round(totalProgress)}%</span>
-              </div>
-              <Progress value={totalProgress} className="h-3" />
+      <div className="glass-card p-6 rounded-2xl border border-white/5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="space-y-2 flex-1 mr-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Overall Progress</span>
+              <span className="font-medium">{Math.round(totalProgress)}%</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="reminders" checked={remindersEnabled} onCheckedChange={setRemindersEnabled} />
-              <Label htmlFor="reminders" className="flex items-center gap-1 text-sm cursor-pointer">
-                {remindersEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-                Email Reminders
-              </Label>
-            </div>
+            <Progress value={totalProgress} className="h-3" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center space-x-2">
+            <Switch id="reminders" checked={remindersEnabled} onCheckedChange={setRemindersEnabled} />
+            <Label htmlFor="reminders" className="flex items-center gap-1 text-sm cursor-pointer">
+              {remindersEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+              Email Reminders
+            </Label>
+          </div>
+        </div>
+      </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -489,13 +487,13 @@ export function FundraiserProjectManager({
               Add Custom Task
             </Button>
           </div>
-          
+
           <div className="space-y-4">
             {fundraiserType.projectManagerSteps.map((phase, phaseIndex) => {
               const isExpanded = expandedPhases.includes(phase.phase);
               const phaseCustomTasks = customTasks.filter(t => t.phase === phase.phase);
               const progress = getPhaseProgress(phaseIndex, phase.tasks.length, phaseCustomTasks);
-              const completedCount = phase.tasks.filter((_, i) => completedTasks[`${phaseIndex}-${i}`]).length 
+              const completedCount = phase.tasks.filter((_, i) => completedTasks[`${phaseIndex}-${i}`]).length
                 + phaseCustomTasks.filter(t => completedTasks[`custom-${t.id}`]).length;
               const totalCount = phase.tasks.length + phaseCustomTasks.length;
 
@@ -550,7 +548,7 @@ export function FundraiserProjectManager({
                             </div>
                           );
                         })}
-                        
+
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                           <SortableContext items={phaseCustomTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
                             {phaseCustomTasks.map(task => (
@@ -611,7 +609,7 @@ export function FundraiserProjectManager({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <Badge variant={fundraiserType.difficulty === 'easy' ? 'default' : fundraiserType.difficulty === 'medium' ? 'secondary' : 'destructive'} 
+                <Badge variant={fundraiserType.difficulty === 'easy' ? 'default' : fundraiserType.difficulty === 'medium' ? 'secondary' : 'destructive'}
                   className={fundraiserType.difficulty === 'easy' ? 'bg-emerald-500' : fundraiserType.difficulty === 'medium' ? 'bg-amber-500' : ''}>
                   {fundraiserType.difficulty.charAt(0).toUpperCase() + fundraiserType.difficulty.slice(1)}
                 </Badge>

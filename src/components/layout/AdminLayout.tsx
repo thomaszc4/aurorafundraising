@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
@@ -18,12 +18,12 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  LayoutDashboard, 
-  ClipboardList, 
-  Users, 
-  ShoppingCart, 
-  Heart, 
+import {
+  LayoutDashboard,
+  ClipboardList,
+  Users,
+  ShoppingCart,
+  Heart,
   Settings,
   FolderOpen,
   Mail,
@@ -67,7 +67,7 @@ interface NavItem {
   badge?: string;
 }
 
-export function AdminLayout({ 
+export function AdminLayout({
   children,
   campaignName,
   campaigns = [],
@@ -109,7 +109,14 @@ export function AdminLayout({
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-muted/30">
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+        {/* Background Gradients */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-blue/5 rounded-full blur-3xl opacity-50" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-3xl opacity-50" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
+        </div>
+
         <Sidebar className="border-r border-border">
           <SidebarHeader className="p-4 border-b border-border">
             <div className="flex items-center gap-3">
@@ -121,7 +128,7 @@ export function AdminLayout({
                 <p className="text-xs text-muted-foreground">Fundraising Platform</p>
               </div>
             </div>
-            
+
             {/* Campaign Selector */}
             {campaigns.length > 0 && (
               <DropdownMenu>
@@ -161,7 +168,7 @@ export function AdminLayout({
                 <SidebarMenu>
                   {mainNavItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
+                      <SidebarMenuButton
                         onClick={() => item.path && navigate(item.path)}
                         isActive={isActive(item.path)}
                         className="w-full"
@@ -181,7 +188,7 @@ export function AdminLayout({
                 <SidebarMenu>
                   {toolsNavItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
+                      <SidebarMenuButton
                         onClick={() => item.path && navigate(item.path)}
                         isActive={isActive(item.path)}
                         className="w-full"

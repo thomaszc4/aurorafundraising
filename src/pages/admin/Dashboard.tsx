@@ -309,64 +309,71 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${campaignStats.totalRaised.toFixed(2)}</div>
+        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary-blue/30 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-blue/20 transition-all" />
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <h3 className="text-sm font-medium text-muted-foreground">Total Raised</h3>
+            <div className="w-8 h-8 rounded-full bg-primary-blue/10 flex items-center justify-center text-primary-blue">
+              <DollarSign className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-blue mt-2">
+              ${campaignStats.totalRaised.toFixed(2)}
+            </div>
             {selectedCampaign?.goal_amount && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 {campaignStats.goalProgress.toFixed(0)}% of ${Number(selectedCampaign.goal_amount).toLocaleString()} goal
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Participants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{campaignStats.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">Participating fundraisers</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-secondary/30 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-secondary/20 transition-all" />
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <h3 className="text-sm font-medium text-muted-foreground">Active Participants</h3>
+            <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+              <Users className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-3xl font-bold text-foreground mt-2">{campaignStats.totalStudents}</div>
+            <p className="text-xs text-muted-foreground mt-1">Participating fundraisers</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{campaignStats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">Completed orders</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-accent/30 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-accent/20 transition-all" />
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <h3 className="text-sm font-medium text-muted-foreground">Total Orders</h3>
+            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent-foreground">
+              <ShoppingCart className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-3xl font-bold text-foreground mt-2">{campaignStats.totalOrders}</div>
+            <p className="text-xs text-muted-foreground mt-1">Completed orders</p>
+          </div>
+        </div>
       </div>
 
       {/* Progress Bar */}
       {selectedCampaign?.goal_amount && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Fundraising Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>${campaignStats.totalRaised.toFixed(2)} raised</span>
-                <span>${Number(selectedCampaign.goal_amount).toLocaleString()} goal</span>
-              </div>
-              <ProgressEnhanced
-                value={campaignStats.goalProgress}
-                showMilestones
-                className="h-4"
-              />
+        <div className="glass-card p-6 rounded-2xl mb-8">
+          <h3 className="text-lg font-semibold mb-4">Fundraising Progress</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">${campaignStats.totalRaised.toFixed(2)} raised</span>
+              <span className="text-muted-foreground">${Number(selectedCampaign.goal_amount).toLocaleString()} goal</span>
             </div>
-          </CardContent>
-        </Card>
+            <ProgressEnhanced
+              value={campaignStats.goalProgress}
+              showMilestones
+              className="h-4"
+            />
+          </div>
+        </div>
       )}
 
       {/* Task List - directly below progress */}

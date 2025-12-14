@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressEnhanced } from '@/components/ui/progress-enhanced';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, DollarSign, Package, Share2, Target, QrCode, MapPin, FolderOpen } from 'lucide-react';
+import { Copy, DollarSign, Package, Share2, Target, QrCode, MapPin, FolderOpen, Gamepad2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeGenerator } from '@/components/student/QRCodeGenerator';
 import { DoorToDoorMode } from '@/components/student/DoorToDoorMode';
 import { ResourcesManager } from '@/components/admin/ResourcesManager';
+import { AuroraGame } from '@/components/game/AuroraGame';
 import { cn } from '@/lib/utils';
 import { applyTheme, BrandColors } from '@/lib/theme';
 
@@ -136,6 +137,10 @@ export default function StudentDashboard() {
             <TabsTrigger value="resources" className="gap-2">
               <FolderOpen className="h-4 w-4" />
               Resources
+            </TabsTrigger>
+            <TabsTrigger value="game" className="gap-2">
+              <Gamepad2 className="h-4 w-4" />
+              Play Tundra
             </TabsTrigger>
           </TabsList>
 
@@ -268,6 +273,33 @@ export default function StudentDashboard() {
               studentName={user?.email?.split('@')[0] || 'Student'}
               productName={campaign?.name || 'Fundraiser'}
             />
+          </TabsContent>
+
+          <TabsContent value="game" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Aurora Tundra</h2>
+                <p className="text-muted-foreground">Survival • Multiplayer • Earn Tokens</p>
+              </div>
+              <div className="bg-primary-blue/10 px-4 py-2 rounded-lg border border-primary-blue/20">
+                <p className="text-sm font-medium text-primary-blue">
+                  Tokens: {fundraiser?.tokens || 0} 🪙
+                </p>
+              </div>
+            </div>
+
+            {fundraiser && campaign ? (
+              <AuroraGame
+                playerId={fundraiser.id}
+                campaignId={campaign.id}
+                displayName={user?.email?.split('@')[0] || 'Student'}
+                className="w-full"
+              />
+            ) : (
+              <div className="h-[400px] flex items-center justify-center glass-card rounded-xl">
+                <p>Loading Game...</p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="resources">

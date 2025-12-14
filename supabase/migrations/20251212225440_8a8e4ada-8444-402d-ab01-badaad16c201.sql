@@ -5,7 +5,7 @@ CREATE TABLE public.participants (
   campaign_id UUID REFERENCES public.campaigns(id) ON DELETE CASCADE NOT NULL,
   nickname TEXT NOT NULL,
   pin_hash TEXT NOT NULL,
-  access_token TEXT UNIQUE NOT NULL DEFAULT encode(extensions.gen_random_bytes(32), 'hex'),
+  access_token TEXT UNIQUE NOT NULL DEFAULT encode(public.gen_random_bytes(32), 'hex'),
   total_raised NUMERIC DEFAULT 0,
   items_sold INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,

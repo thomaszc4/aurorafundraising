@@ -36,7 +36,7 @@ import JoinCampaign from "./pages/participant/JoinCampaign";
 import ParticipantDashboard from "./pages/participant/ParticipantDashboard";
 import VendorLogin from "./pages/vendor/VendorLogin";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
-import IndividualDashboard from "./pages/individual/Dashboard"; // Added import
+import IndividualDashboard from "./pages/individual/Dashboard";
 
 const queryClient = new QueryClient();
 

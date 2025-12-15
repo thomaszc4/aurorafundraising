@@ -6,10 +6,11 @@ interface ProtectedRouteProps {
   requireAdmin?: boolean;
   requireStudent?: boolean;
   requireSuperAdmin?: boolean;
+  requireIndividual?: boolean;
 }
 
-export const ProtectedRoute = ({ children, requireAdmin, requireStudent, requireSuperAdmin }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin, isStudent, isSuperAdmin } = useAuth();
+export const ProtectedRoute = ({ children, requireAdmin, requireStudent, requireSuperAdmin, requireIndividual }: ProtectedRouteProps) => {
+  const { user, loading, isAdmin, isStudent, isSuperAdmin, isIndividual, isOrgAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -23,15 +24,25 @@ export const ProtectedRoute = ({ children, requireAdmin, requireStudent, require
     return <Navigate to="/auth" replace />;
   }
 
+  console.log('ProtectedRoute Check:', { path: window.location.pathname, user: !!user, roles: { isAdmin, isStudent, isSuperAdmin, isIndividual } });
+
   if (requireSuperAdmin && !isSuperAdmin) {
+    console.log('Redirecting: Required SuperAdmin');
     return <Navigate to="/" replace />;
   }
 
-  if (requireAdmin && !isAdmin && !isSuperAdmin) {
+  if (requireAdmin && !isAdmin && !isSuperAdmin && !isOrgAdmin) {
+    console.log('Redirecting: Required Admin');
     return <Navigate to="/" replace />;
   }
 
   if (requireStudent && !isStudent) {
+    console.log('Redirecting: Required Student');
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireIndividual && !isIndividual) {
+    console.log('Redirecting: Required Individual');
     return <Navigate to="/" replace />;
   }
 

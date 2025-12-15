@@ -15,15 +15,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Upload, Plus, Trash2, ArrowLeft, ArrowRight, Check, CalendarIcon, 
+import {
+  Upload, Plus, Trash2, ArrowLeft, ArrowRight, Check, CalendarIcon,
   X, CheckCircle2, Clock, Star, Sparkles, Image, AlertCircle, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { 
-  FUNDRAISER_CATEGORIES, 
+import {
+  FUNDRAISER_CATEGORIES,
   getFundraiserTypeById,
   FundraiserType,
   FundraiserCategory as FundraiserCategoryType
@@ -91,8 +91,10 @@ export function CreateCampaignWizard({
   );
 
   // Step 2: Fundraiser Type
-  const [selectedCategory, setSelectedCategory] = useState<FundraiserCategoryType | null>(null);
-  const [selectedFundraiserType, setSelectedFundraiserType] = useState<FundraiserType | null>(null);
+  // Step 2: Fundraiser Type (Hardcoded to QuickStove/Product)
+  // We default these immediately so the UI skips the selection step
+  const [selectedCategory, setSelectedCategory] = useState<FundraiserCategoryType | null>(FUNDRAISER_CATEGORIES[0]);
+  const [selectedFundraiserType, setSelectedFundraiserType] = useState<FundraiserType | null>(FUNDRAISER_CATEGORIES[0].types[0]);
   const [fundraiserTypeValue, setFundraiserTypeValue] = useState<FundraiserTypeValue>('product');
   const [athonDonationType, setAthonDonationType] = useState<AthonDonationType>('pledge_per_unit');
   const [athonUnitName, setAthonUnitName] = useState('');
@@ -129,6 +131,8 @@ export function CreateCampaignWizard({
       .eq('is_active', true);
     if (!error && data) {
       setProducts(data);
+      // Auto-select all active products (QuickStove) since we are skipping the selection step
+      setSelectedProductIds(data.map(p => p.id));
     }
   };
 
@@ -172,45 +176,45 @@ export function CreateCampaignWizard({
         canvas.width = sampleSize;
         canvas.height = sampleSize;
         ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
-        
+
         const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
         const pixels = imageData.data;
-        
+
         // Build color frequency map
         const colorMap: { [key: string]: { count: number; r: number; g: number; b: number } } = {};
-        
+
         for (let i = 0; i < pixels.length; i += 4) {
           const r = pixels[i];
           const g = pixels[i + 1];
           const b = pixels[i + 2];
           const a = pixels[i + 3];
-          
+
           // Skip transparent/near-white/near-black pixels
           if (a < 128) continue;
           if (r > 240 && g > 240 && b > 240) continue;
           if (r < 15 && g < 15 && b < 15) continue;
-          
+
           // Round to reduce color variations
           const key = `${Math.round(r / 20) * 20},${Math.round(g / 20) * 20},${Math.round(b / 20) * 20}`;
-          
+
           if (!colorMap[key]) {
             colorMap[key] = { count: 0, r, g, b };
           }
           colorMap[key].count++;
         }
-        
+
         // Sort by frequency and get top colors
         const sortedColors = Object.values(colorMap)
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
-        
-        const toHex = (r: number, g: number, b: number) => 
+
+        const toHex = (r: number, g: number, b: number) =>
           '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-        
+
         const primary = sortedColors[0] ? toHex(sortedColors[0].r, sortedColors[0].g, sortedColors[0].b) : '#2563eb';
         const secondary = sortedColors[1] ? toHex(sortedColors[1].r, sortedColors[1].g, sortedColors[1].b) : '#10b981';
         const accent = sortedColors[2] ? toHex(sortedColors[2].r, sortedColors[2].g, sortedColors[2].b) : '#f59e0b';
-        
+
         resolve({ primary, secondary, accent });
       };
       img.onerror = () => {
@@ -229,7 +233,7 @@ export function CreateCampaignWizard({
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
       setLogoPreview(dataUrl);
-      
+
       // Extract colors from the image
       try {
         const colors = await extractColorsFromImage(dataUrl);
@@ -245,7 +249,7 @@ export function CreateCampaignWizard({
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-      
+
       const { data, error } = await supabase.storage
         .from('campaign-logos')
         .upload(fileName, file);
@@ -298,8 +302,8 @@ export function CreateCampaignWizard({
     }
     // Allow same email for different names (parent with multiple children)
     const isDuplicate = students.some(
-      s => s.email.toLowerCase() === newStudentEmail.toLowerCase() && 
-           s.name.toLowerCase() === newStudentName.toLowerCase()
+      s => s.email.toLowerCase() === newStudentEmail.toLowerCase() &&
+        s.name.toLowerCase() === newStudentName.toLowerCase()
     );
     if (isDuplicate) {
       toast.error('This student is already in the list');
@@ -324,7 +328,7 @@ export function CreateCampaignWizard({
 
   const handleSelectFundraiserType = (type: FundraiserType) => {
     setSelectedFundraiserType(type);
-    
+
     // Map to database values
     if (type.id === 'product' || type.id === 'quickstove') {
       setFundraiserTypeValue('product');
@@ -337,7 +341,7 @@ export function CreateCampaignWizard({
     } else {
       setFundraiserTypeValue('other_athon');
     }
-    
+
     if (type.defaultUnit) {
       setAthonUnitName(type.defaultUnit);
     }
@@ -418,24 +422,10 @@ export function CreateCampaignWizard({
   };
 
   const canProceed = () => {
-    switch (step) {
-      case 1:
-        return name && organizationName && goalAmount && startDate && endDate;
-      case 2:
-        if (!selectedFundraiserType) return false;
-        if (selectedFundraiserType.id === 'product') return true;
-        return athonUnitName.length > 0;
-      case 3:
-        if (fundraiserTypeValue !== 'product') return true;
-        return selectedProductIds.length > 0;
-      case 4:
-        return true;
-      default:
-        return false;
-    }
+    return name && organizationName && goalAmount && startDate && endDate;
   };
 
-  const totalSteps = fundraiserTypeValue === 'product' ? 4 : 3;
+  const totalSteps = 1;
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -483,7 +473,7 @@ export function CreateCampaignWizard({
             <div className="space-y-2">
               <Label>Organization Logo (Optional)</Label>
               <div className="flex items-center gap-4">
-                <div 
+                <div
                   className={cn(
                     "w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary transition-colors",
                     logoPreview ? "border-solid border-primary" : "border-muted-foreground/25"
@@ -638,7 +628,7 @@ export function CreateCampaignWizard({
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
-              </PopoverContent>
+                  </PopoverContent>
                 </Popover>
               </div>
             </div>
@@ -647,235 +637,7 @@ export function CreateCampaignWizard({
         </Card>
       )}
 
-      {/* Step 2: Fundraiser Type Selection */}
-      {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Choose Your Fundraiser</CardTitle>
-            <CardDescription>Select the type of fundraiser that best fits your organization</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Category Selection */}
-            {!selectedCategory && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {FUNDRAISER_CATEGORIES.map(category => {
-                  const Icon = category.icon;
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => setSelectedCategory(category)}
-                      className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-card p-6 text-left transition-all hover:border-primary hover:shadow-lg"
-                    >
-                      <div className={cn(
-                        "absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-10",
-                        category.color
-                      )} />
-                      <div className={cn(
-                        "mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg",
-                        category.color
-                      )}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <h3 className="text-lg font-bold text-foreground mb-1">{category.label}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{category.description}</p>
-                      <div className="flex items-center text-primary text-sm font-medium">
-                        <span>{category.types.length} fundraiser types</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
 
-            {/* Fundraiser Type Selection within Category */}
-            {selectedCategory && !selectedFundraiserType && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-end">
-                  <Badge variant="outline" className="gap-1">
-                    {(() => {
-                      const Icon = selectedCategory.icon;
-                      return <Icon className="h-3 w-3" />;
-                    })()}
-                    {selectedCategory.label}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {selectedCategory.types.map(type => {
-                    const Icon = type.icon;
-                    return (
-                      <button
-                        key={type.id}
-                        type="button"
-                        onClick={() => handleSelectFundraiserType(type)}
-                        className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md"
-                      >
-                        <div className={cn(
-                          "absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-10",
-                          type.color
-                        )} />
-                        <div className="flex items-start justify-between mb-3">
-                          <div className={cn(
-                            "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white",
-                            type.color
-                          )}>
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <Badge 
-                            variant="secondary" 
-                            className={cn("text-xs text-white", getDifficultyColor(type.difficulty))}
-                          >
-                            {type.difficulty}
-                          </Badge>
-                        </div>
-                        <h4 className="font-semibold text-foreground mb-1">{type.label}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{type.description}</p>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-primary font-medium flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            ~${type.avgRaised}/person
-                          </span>
-                          <span className="text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {type.timeToOrganize}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Selected Fundraiser Type Configuration */}
-            {selectedFundraiserType && (
-              <div className="space-y-6">
-
-                {/* Selected Type Card */}
-                <div className="rounded-2xl border-2 border-primary p-6 bg-primary/5">
-                  <div className="flex items-start gap-4">
-                    <div className={cn(
-                      "inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg flex-shrink-0",
-                      selectedFundraiserType.color
-                    )}>
-                      {(() => {
-                        const Icon = selectedFundraiserType.icon;
-                        return <Icon className="h-7 w-7" />;
-                      })()}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-foreground mb-1">{selectedFundraiserType.label}</h3>
-                        <button
-                          type="button"
-                          onClick={() => setShowSuccessGuide(true)}
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          View Success Guide
-                        </button>
-                      </div>
-                      <p className="text-muted-foreground text-sm">{selectedFundraiserType.description}</p>
-                    </div>
-                    <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0" />
-                  </div>
-                </div>
-
-                {/* Expected Earnings Comparison */}
-                {programSize && goalAmount && (
-                  <div className="rounded-xl border p-4 bg-muted/30">
-                    <h4 className="font-semibold text-foreground mb-3">Expected Earnings Comparison</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 rounded-lg bg-background border">
-                        <p className="text-xs text-muted-foreground mb-1">Your Goal</p>
-                        <p className="text-xl font-bold text-foreground">
-                          ${Number(goalAmount).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-center p-3 rounded-lg bg-background border">
-                        <p className="text-xs text-muted-foreground mb-1">Expected with {selectedFundraiserType.label}</p>
-                        <p className="text-xl font-bold text-foreground">
-                          ${(parseInt(programSize) * selectedFundraiserType.avgRaised).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {programSize} students × ${selectedFundraiserType.avgRaised}/student
-                        </p>
-                      </div>
-                    </div>
-                    {parseInt(programSize) * selectedFundraiserType.avgRaised >= parseFloat(goalAmount) ? (
-                      <div className="mt-3 flex items-center gap-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-lg">
-                        <CheckCircle2 className="h-5 w-5" />
-                        <span className="text-sm font-medium">On Track! This fundraiser should meet your goal.</span>
-                      </div>
-                    ) : (
-                      <div className="mt-3 flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-lg">
-                        <AlertCircle className="h-5 w-5" />
-                        <span className="text-sm font-medium">
-                          May fall short by ${(parseFloat(goalAmount) - parseInt(programSize) * selectedFundraiserType.avgRaised).toLocaleString()}. Consider a higher-yield fundraiser or increasing participation.
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Configuration for non-product types */}
-                {selectedFundraiserType.id !== 'product' && (
-                  <div className="space-y-4 pt-2">
-                    <div className="space-y-2">
-                      <Label>Donation Type</Label>
-                      <RadioGroup
-                        value={athonDonationType}
-                        onValueChange={v => setAthonDonationType(v as AthonDonationType)}
-                      >
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="relative">
-                            <RadioGroupItem value="pledge_per_unit" id="pledge" className="peer sr-only" />
-                            <Label
-                              htmlFor="pledge"
-                              className="flex flex-col p-4 border rounded-lg cursor-pointer hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5"
-                            >
-                              <span className="font-medium">Pledge per {athonUnitName || 'unit'}</span>
-                              <span className="text-xs text-muted-foreground">
-                                Sponsors pledge a $ amount per {athonUnitName || 'unit'} completed
-                              </span>
-                            </Label>
-                          </div>
-                          <div className="relative">
-                            <RadioGroupItem value="flat_donation" id="flat" className="peer sr-only" />
-                            <Label
-                              htmlFor="flat"
-                              className="flex flex-col p-4 border rounded-lg cursor-pointer hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5"
-                            >
-                              <span className="font-medium">Flat donations</span>
-                              <span className="text-xs text-muted-foreground">
-                                Sponsors give a one-time donation amount
-                              </span>
-                            </Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="unit">Unit Name *</Label>
-                      <Input
-                        id="unit"
-                        value={athonUnitName}
-                        onChange={e => setAthonUnitName(e.target.value)}
-                        placeholder={selectedFundraiserType.defaultUnit || 'unit'}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        This is what sponsors will pledge per (e.g., "${'{amount}'} per {athonUnitName || selectedFundraiserType.defaultUnit || 'unit'}")
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Success Guide Modal */}
       <Dialog open={showSuccessGuide} onOpenChange={setShowSuccessGuide}>
@@ -925,44 +687,7 @@ export function CreateCampaignWizard({
         </DialogContent>
       </Dialog>
 
-      {/* Step 3: Products (only for product type) */}
-      {step === 3 && fundraiserTypeValue === 'product' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Products</CardTitle>
-            <CardDescription>Choose which products students can sell</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12"></TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Avg. Raised/Student</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map(product => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedProductIds.includes(product.id)}
-                        onCheckedChange={() => toggleProduct(product.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>${Number(product.price).toFixed(2)}</TableCell>
-                    <TableCell className="text-primary">
-                      ${product.average_raised_per_student?.toFixed(2) || '0.00'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* CSV Preview Dialog */}
       <Dialog open={showParsePreview} onOpenChange={setShowParsePreview}>
@@ -973,7 +698,7 @@ export function CreateCampaignWizard({
               Review the parsed data before importing
             </DialogDescription>
           </DialogHeader>
-          
+
           {parseResult && (
             <div className="space-y-4">
               <div className="flex gap-4 text-sm">
@@ -1059,8 +784,8 @@ export function CreateCampaignWizard({
         </DialogContent>
       </Dialog>
 
-      {/* Step 3/4: Students */}
-      {((step === 3 && fundraiserTypeValue !== 'product') || (step === 4 && fundraiserTypeValue === 'product')) && (
+      {/* Step 2: Students (Renumbered from 3, previously 4) */}
+      {step === 2 && (
         <Card>
           <CardHeader>
             <CardTitle>Add Students</CardTitle>
@@ -1165,15 +890,6 @@ export function CreateCampaignWizard({
           onClick={() => {
             if (step === 1) {
               onCancel();
-            } else if (step === 2) {
-              // Handle back within step 2 substates
-              if (selectedFundraiserType) {
-                setSelectedFundraiserType(null);
-              } else if (selectedCategory) {
-                setSelectedCategory(null);
-              } else {
-                setStep(1);
-              }
             } else {
               setStep(step - 1);
             }
@@ -1184,12 +900,7 @@ export function CreateCampaignWizard({
         <Button
           onClick={() => {
             if (step < totalSteps) {
-              // Skip product selection for non-product types
-              if (step === 2 && fundraiserTypeValue !== 'product') {
-                setStep(3);
-              } else {
-                setStep(step + 1);
-              }
+              setStep(step + 1);
             } else {
               handleSubmit();
             }

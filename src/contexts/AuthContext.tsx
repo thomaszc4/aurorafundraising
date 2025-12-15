@@ -8,13 +8,14 @@ interface AuthContextType {
   session: Session | null;
   userRoles: string[];
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, role?: 'organization_admin' | 'individual', organizationName?: string, programName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isStudent: boolean;
   isOrgAdmin: boolean;
+  isIndividual: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,12 +33,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          // Fetch user role after a short delay to ensure profile is created
+          // Fetch user role after a delay to ensure profile/role is created via trigger
           setTimeout(async () => {
             await fetchUserRoles(session.user.id);
-          }, 100);
+          }, 1000);
         } else {
           setUserRoles([]);
         }
@@ -45,11 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserRoles(session.user.id);
+        await fetchUserRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -73,12 +74,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error in fetchUserRoles:', error);
       setUserRoles([]);
+    } finally {
+      console.log('Final User Roles:', userRoles); // Debug log
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'organization_admin' | 'individual' = 'organization_admin',
+    organizationName?: string,
+    programName?: string
+  ) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -86,10 +96,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          role: role,
+          organization_name: organizationName,
+          program_name: programName
         },
       },
     });
-    
+
     return { error };
   };
 
@@ -98,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
     });
-    
+
     return { error };
   };
 
@@ -112,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = userRoles.includes('admin') || isSuperAdmin;
   const isStudent = userRoles.includes('student');
   const isOrgAdmin = userRoles.includes('organization_admin');
+  const isIndividual = userRoles.includes('individual');
 
   const value = {
     user,
@@ -125,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isSuperAdmin,
     isStudent,
     isOrgAdmin,
+    isIndividual,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

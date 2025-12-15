@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft, Gamepad2 } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -18,6 +18,7 @@ import { DashboardTaskList } from '@/components/admin/DashboardTaskList';
 import { ParticipantManager } from '@/components/admin/ParticipantManager';
 import { CommunicationCenter } from '@/components/admin/CommunicationCenter';
 import { IncentiveManager } from '@/components/admin/IncentiveManager';
+import { AuroraGame } from '@/components/game/AuroraGame';
 import { Tables } from '@/integrations/supabase/types';
 import { applyTheme, BrandColors } from '@/lib/theme';
 
@@ -232,6 +233,27 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'game':
+        return selectedCampaign && (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Aurora Tundra (Preview)</h2>
+                  <p className="text-muted-foreground">Test the game environment</p>
+                </div>
+              </div>
+              <AuroraGame
+                playerId={user?.id || 'admin-preview'}
+                campaignId={selectedCampaign.id}
+                displayName={user?.email?.split('@')[0] || 'Admin'}
+                className="w-full"
+              />
+            </div>
+          </>
+        );
+
       case 'participants':
         return selectedCampaign && (
           <>
@@ -314,7 +336,7 @@ export default function AdminDashboard() {
       {showTutorial && <OnboardingTutorial onComplete={handleTutorialComplete} />}
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary-blue/30 transition-all duration-300">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-blue/20 transition-all" />
           <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
@@ -362,6 +384,25 @@ export default function AdminDashboard() {
             <p className="text-xs text-muted-foreground mt-1">Completed orders</p>
           </div>
         </div>
+
+        {/* NEW GAME CARD */}
+        <div
+          onClick={() => setView('game')}
+          className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all duration-300 cursor-pointer"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary/20 transition-all" />
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <h3 className="text-sm font-medium text-muted-foreground">Aurora Tundra</h3>
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Gamepad2 className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-lg font-bold text-foreground mt-2">Play Game</div>
+            <p className="text-xs text-muted-foreground mt-1">Preview & Test</p>
+          </div>
+        </div>
+
       </div>
 
       {/* Progress Bar */}

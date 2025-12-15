@@ -29,9 +29,11 @@ export function Navbar() {
     isAdmin,
     isStudent,
     isSuperAdmin,
+    isIndividual,
+    isOrgAdmin,
     signOut
   } = useAuth();
-  
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -43,84 +45,90 @@ export function Navbar() {
     setIsMobileMenuOpen(false);
   }, [location]);
   return <header className="fixed top-0 left-0 right-0 z-50 bg-primary shadow-lg">
-      <nav className="container-wide">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <img alt="Aurora Fundraising" className="h-28 w-auto" src="/lovable-uploads/9452e228-a5f0-4f97-ac95-d1fc5d6acf18.png" />
-          </Link>
+    <nav className="container-wide">
+      <div className="flex items-center justify-between h-20">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3">
+          <img alt="Aurora Fundraising" className="h-28 w-auto" src="/lovable-uploads/9452e228-a5f0-4f97-ac95-d1fc5d6acf18.png" />
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map(link => <Link key={link.path} to={link.path} className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${location.pathname === link.path ? "text-secondary bg-primary-foreground/10" : "text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/5"}`}>
-                {link.name}
-              </Link>)}
-          </div>
-
-          {/* Auth Buttons */}
-          <div className="hidden lg:flex items-center gap-2">
-            {user ? <>
-                {isSuperAdmin && <Button variant="heroOutline" size="default" asChild>
-                    <Link to="/admin/super">Super Admin</Link>
-                  </Button>}
-                {isAdmin && <Button variant="heroOutline" size="default" asChild>
-                    <Link to="/admin">Admin Dashboard</Link>
-                  </Button>}
-                {isStudent && <Button variant="heroOutline" size="default" asChild>
-                    <Link to="/dashboard">My Dashboard</Link>
-                  </Button>}
-                <Button variant="ghost" size="icon" onClick={signOut} title="Sign Out" className="text-primary-foreground hover:bg-primary-foreground/10">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </> : <>
-                <Button variant="heroOutline" size="default" asChild>
-                  <Link to="/auth">Sign In</Link>
-                </Button>
-                <Button variant="hero" size="default" asChild>
-                  <Link to="/contact">Start Fundraising</Link>
-                </Button>
-              </>}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button className="lg:hidden p-2 text-primary-foreground" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Toggle menu">
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-1">
+          {navLinks.map(link => <Link key={link.path} to={link.path} className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${location.pathname === link.path ? "text-secondary bg-primary-foreground/10" : "text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/5"}`}>
+            {link.name}
+          </Link>)}
         </div>
-      </nav>
 
-      {/* Mobile Menu */}
-      <div className={`lg:hidden absolute top-full left-0 right-0 bg-primary/98 backdrop-blur-lg transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? "max-h-screen py-6" : "max-h-0"}`}>
-        <div className="container-wide flex flex-col gap-2">
-          {navLinks.map(link => <Link key={link.path} to={link.path} className={`px-4 py-3 text-base font-medium rounded-xl transition-all duration-200 ${location.pathname === link.path ? "text-secondary bg-primary-foreground/10" : "text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/5"}`}>
-              {link.name}
-            </Link>)}
+        {/* Auth Buttons */}
+        <div className="hidden lg:flex items-center gap-2">
           {user ? <>
-              {isSuperAdmin && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
-                  <Link to="/admin/super">Super Admin</Link>
-                </Button>}
-              {isAdmin && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
-                  <Link to="/admin">Admin Dashboard</Link>
-                </Button>}
-              {isStudent && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
-                  <Link to="/dashboard">My Dashboard</Link>
-                </Button>}
-              <Button variant="ghost" size="lg" className="mt-2" onClick={() => {
+            {isSuperAdmin && <Button variant="heroOutline" size="default" asChild>
+              <Link to="/admin/super">Super Admin</Link>
+            </Button>}
+            {(isAdmin || isOrgAdmin) && <Button variant="heroOutline" size="default" asChild>
+              <Link to="/admin">My Dashboard</Link>
+            </Button>}
+            {isStudent && <Button variant="heroOutline" size="default" asChild>
+              <Link to="/dashboard">My Dashboard</Link>
+            </Button>}
+            {isIndividual && <Button variant="heroOutline" size="default" asChild>
+              <Link to="/individual/dashboard">My Dashboard</Link>
+            </Button>}
+            <Button variant="ghost" size="icon" onClick={signOut} title="Sign Out" className="text-primary-foreground hover:bg-primary-foreground/10">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </> : <>
+            <Button variant="heroOutline" size="default" asChild>
+              <Link to="/auth">Sign In</Link>
+            </Button>
+            <Button variant="hero" size="default" asChild>
+              <Link to="/contact">Start Fundraising</Link>
+            </Button>
+          </>}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button className="lg:hidden p-2 text-primary-foreground" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Toggle menu">
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+    </nav>
+
+    {/* Mobile Menu */}
+    <div className={`lg:hidden absolute top-full left-0 right-0 bg-primary/98 backdrop-blur-lg transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? "max-h-screen py-6" : "max-h-0"}`}>
+      <div className="container-wide flex flex-col gap-2">
+        {navLinks.map(link => <Link key={link.path} to={link.path} className={`px-4 py-3 text-base font-medium rounded-xl transition-all duration-200 ${location.pathname === link.path ? "text-secondary bg-primary-foreground/10" : "text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/5"}`}>
+          {link.name}
+        </Link>)}
+        {user ? <>
+          {isSuperAdmin && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+            <Link to="/admin/super">Super Admin</Link>
+          </Button>}
+          {(isAdmin || isOrgAdmin) && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+            <Link to="/admin">My Dashboard</Link>
+          </Button>}
+          {isStudent && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+            <Link to="/dashboard">My Dashboard</Link>
+          </Button>}
+          {isIndividual && <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+            <Link to="/individual/dashboard">My Dashboard</Link>
+          </Button>}
+          <Button variant="ghost" size="lg" className="mt-2" onClick={() => {
             signOut();
             setIsMobileMenuOpen(false);
           }}>
-                <LogOut className="h-5 w-5 mr-2" />
-                Sign Out
-              </Button>
-            </> : <>
-              <Button variant="heroOutline" size="lg" className="mt-4" asChild>
-                <Link to="/auth">Sign In</Link>
-              </Button>
-              <Button variant="hero" size="lg" className="mt-2" asChild>
-                <Link to="/contact">Start Fundraising</Link>
-              </Button>
-            </>}
-        </div>
+            <LogOut className="h-5 w-5 mr-2" />
+            Sign Out
+          </Button>
+        </> : <>
+          <Button variant="heroOutline" size="lg" className="mt-4" asChild>
+            <Link to="/auth">Sign In</Link>
+          </Button>
+          <Button variant="hero" size="lg" className="mt-2" asChild>
+            <Link to="/contact">Start Fundraising</Link>
+          </Button>
+        </>}
       </div>
-    </header>;
+    </div>
+  </header>;
 }

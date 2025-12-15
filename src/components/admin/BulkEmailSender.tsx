@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Users, Tag, Eye, Mail, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface Donor {
   id: string;
@@ -208,7 +209,7 @@ export function BulkEmailSender({ campaignId, onClose }: BulkEmailSenderProps) {
     }
 
     setSending(false);
-    
+
     if (errorCount === 0) {
       toast.success(`Successfully sent ${successCount} emails`);
     } else {
@@ -329,8 +330,8 @@ export function BulkEmailSender({ campaignId, onClose }: BulkEmailSenderProps) {
                 <Eye className="h-4 w-4 mr-2" />
                 Preview
               </Button>
-              <Button 
-                onClick={handleSend} 
+              <Button
+                onClick={handleSend}
                 disabled={sending || selectedDonors.size === 0}
                 className="flex-1"
               >
@@ -432,10 +433,10 @@ export function BulkEmailSender({ campaignId, onClose }: BulkEmailSenderProps) {
               </div>
               <div>
                 <Label className="text-muted-foreground">Content</Label>
-                <div 
+                <div
                   className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: replaceMergeTags(content, previewDonor).replace(/\n/g, '<br>') 
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(replaceMergeTags(content, previewDonor).replace(/\n/g, '<br>'))
                   }}
                 />
               </div>

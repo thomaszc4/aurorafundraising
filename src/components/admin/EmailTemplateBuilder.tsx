@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Type, Image, Columns, Square, MousePointer, 
+import {
+  Type, Image, Columns, Square, MousePointer,
   Save, Eye, Plus, Trash2, GripVertical, Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface EmailBlock {
   id: string;
@@ -188,7 +189,7 @@ export function EmailTemplateBuilder({ campaignId, onClose }: EmailTemplateBuild
 
     try {
       const htmlBody = generateFullHtml();
-      
+
       if (selectedTemplate) {
         const { error } = await supabase
           .from('email_templates')
@@ -244,7 +245,7 @@ export function EmailTemplateBuilder({ campaignId, onClose }: EmailTemplateBuild
           <Settings className="h-4 w-4" />
           Edit {block.type}
         </h4>
-        
+
         {block.type === 'header' && (
           <>
             <Input
@@ -415,7 +416,7 @@ export function EmailTemplateBuilder({ campaignId, onClose }: EmailTemplateBuild
                 {label}
               </Button>
             ))}
-            
+
             <div className="border-t pt-4 mt-4">
               <p className="text-xs font-medium mb-2">Merge Tags</p>
               <div className="space-y-1">
@@ -464,9 +465,9 @@ export function EmailTemplateBuilder({ campaignId, onClose }: EmailTemplateBuild
           </CardHeader>
           <CardContent>
             {previewMode ? (
-              <div 
+              <div
                 className="border rounded-lg p-4 bg-white min-h-[400px]"
-                dangerouslySetInnerHTML={{ __html: generateFullHtml() }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(generateFullHtml()) }}
               />
             ) : (
               <div className="space-y-2 min-h-[400px]">
@@ -478,18 +479,17 @@ export function EmailTemplateBuilder({ campaignId, onClose }: EmailTemplateBuild
                   blocks.map(block => (
                     <div
                       key={block.id}
-                      className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                        selectedBlock === block.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-                      }`}
+                      className={`border rounded-lg p-3 cursor-pointer transition-colors ${selectedBlock === block.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                        }`}
                       onClick={() => setSelectedBlock(block.id)}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <GripVertical className="h-4 w-4 text-muted-foreground" />
                         <Badge variant="outline" className="text-xs">{block.type}</Badge>
                       </div>
-                      <div 
+                      <div
                         className="text-sm"
-                        dangerouslySetInnerHTML={{ __html: renderBlockToHtml(block) }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderBlockToHtml(block)) }}
                       />
                     </div>
                   ))

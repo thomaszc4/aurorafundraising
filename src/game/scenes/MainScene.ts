@@ -76,7 +76,7 @@ export class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('snow_ground', '/assets/game/snow_ground_seamless_v2_1765704047104.png');
+        this.load.image('snow_ground', '/assets/game/snow_ground_v3.png');
         this.load.image('tree', '/assets/game/pine_tree_small.png');
         this.load.image('ice_crystal', '/assets/game/ice_crystal_v2.png');
         this.load.image('fog_noise', '/assets/game/fog_noise_texture_1765702486021.png');
@@ -90,15 +90,20 @@ export class MainScene extends Phaser.Scene {
     }
 
     async create() {
+        // 0. Force Background Color (Fix Checkers)
+        this.cameras.main.setBackgroundColor('#dbe7eb');
+
         // 1. World Bounds
         this.physics.world.setBounds(0, 0, 8000, 8000);
 
         // 2. Background
-        const bg = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'snow_ground');
-        bg.setOrigin(0, 0);
-        bg.setScrollFactor(0);
-        bg.setDepth(-100);
-        (this as any).bg = bg;
+        try {
+            const bg = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'snow_ground');
+            bg.setOrigin(0, 0);
+            bg.setScrollFactor(0);
+            bg.setDepth(-100);
+            (this as any).bg = bg;
+        } catch (e) { console.warn("Background load failed", e); }
 
         // 3. Groups
         this.resources = this.add.group();
@@ -112,7 +117,16 @@ export class MainScene extends Phaser.Scene {
         this.generateAnimals();
 
         // 5. Player Init (Loading or Spawning)
-        await this.initializePlayer();
+        // Race DB load vs Timeout to prevent hanging
+        const playerLoadPromise = this.initializePlayer();
+        const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
+        await Promise.race([playerLoadPromise, timeoutPromise]);
+
+        // Ensure player exists if DB hung
+        if (!this.player) {
+            console.warn("Player init timed out or failed. Spawning local fallback.");
+            this.createLocalPlayer(4000, 4000);
+        }
 
         // 6. Setup Inputs
         this.setupInputs();
@@ -217,6 +231,9 @@ export class MainScene extends Phaser.Scene {
         } catch (e) {
             console.warn("DB offline or error", e);
         }
+
+        // If player already created by timeout fallback, abort
+        if (this.player) return;
 
         let startX = 4000;
         let startY = 4000;

@@ -252,7 +252,7 @@ export const AuroraGame: React.FC<AuroraGameProps> = ({ playerId, campaignId, di
         if (isLoading || !gameRef.current || gameInstanceRef.current) return;
 
         const config: Phaser.Types.Core.GameConfig = {
-            type: Phaser.AUTO,
+            type: Phaser.CANVAS, // Fallback to Canvas to avoid WebGL errors on some devices
             parent: gameRef.current,
             width: '100%',
             height: '100%',

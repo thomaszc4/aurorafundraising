@@ -43,7 +43,6 @@ export default class Igloo extends Phaser.GameObjects.Container {
     private createWalls(scene: Phaser.Scene) {
         // Generate walls with a random gap
         const wallThickness = 20;
-        const wallThickness = 20;
         const segmentCount = 36; // Increased segments for smoother circular collision
         const anglePerSeg = 360 / segmentCount;
 
@@ -77,60 +76,12 @@ export default class Igloo extends Phaser.GameObjects.Container {
             wall.setStrokeStyle(2, 0x8888cc);
 
             // Enable Body
-            // FIX: Arcade Physics doesn't support rotated bodies. Long rects become big squares blocking the door.
-            // Solution: Use a small circle for physics at the center of the wall segment.
-            // The segment visual is long, but the collision will be a "pillar" at the center.
-            // Better: Use MULTIPLE small invisible circles if we needed a solid wall, but for a ring,
-            // let's try setting the body size to be smaller than the visual length?
-            // Actually, setting it to a Circle is best.
             scene.physics.add.existing(wall, true);
             const body = wall.body as Phaser.Physics.Arcade.StaticBody;
 
-            // Make the body a circle centered on the wall segment
-            // This prevents "corners" from sticking out and blocking the door gap.
-            // Radius ~ half width? w is length ~185. h is thickness ~20.
-            // We want it to be thin?
-            // Arcade physics circles are always centered (unless offset). 
-            // Let's just make the physics body a small blocking circle at the center of the segment.
-            // This might leave "gaps" you can walk through if the segments are far apart.
-            // But our segments are close.
-            // Let's make the body a circle of radius = wall length / 4?
-
-            // Alternative: The user wants "hit boxes match shape".
-            // Since we can't rotate rects, we should probably stick to circles.
-            body.setCircle(30); // 30 radius = 60 diam.
-            // This will make "pillars" of collision.
-            // We might need MORE segments if we want a solid wall.
-            // But let's check current count: 12 segments.
-            // Radius 350. Circumference ~2200. Seg length = 185.
-            // 60 diam circle leaves 125 gap? That's too permeable.
-
-            // Let's just make the body a square of size 50,50?
-            // Or Keep it default but `setSize` to be smaller?
-
-            // Problem: If we shrink the body, players walk through walls.
-            // If we don't, they block the door.
-
-            // BEST FIX: Don't use the VISUAL wall as the physics body.
-            // Create invisible physics circles along the path.
-            // But strictly answering "hit boxes match shape" in Arcade is hard.
-            // Let's simple try sizing the body to be a square at the center that doesn't rotate?
-            body.setSize(40, 40);
-            body.setOffset((h - 40) / 2, (w - 40) / 2); // Centering is tricky with rotation visual offset.
-            // Actually, for a Rectangle, setSize works on unrotated dimensions.
-            // Visual: h=20, w=185.
-            // If we set size 40,40, it's a small box.
-
-            // Let's try `setCircle(wallLength/2)`? No that's huge.
-            // Let's Try: circular body radius 32.
+            // Use circular collider to allow smooth movement through the door
             body.setCircle(32);
             body.setOffset(h / 2 - 32, w / 2 - 32);
-            // 12 segments * 64px coverage = 768px covered.
-            // Circumference 2200.
-            // This will have holes.
-
-            // Fine, let's bump segment count to 24 (double it) and use smaller circles.
-            // This creates a nice "beaded necklace" collider which IS circular.
 
         }
     }

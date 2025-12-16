@@ -15,7 +15,7 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
         // Visual Representation
         if (type === 'tree') {
             const tree = scene.add.sprite(0, -32, 'tree'); // Offset up so pivot is at base
-            tree.setScale(1.5);
+            tree.setScale(3.0);
             this.add(tree);
         } else if (type === 'water') {
             const water = scene.add.rectangle(0, 0, 64, 64, 0x0000ff, 0.5); // Blue square
@@ -42,8 +42,8 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
         const body = this.body as Phaser.Physics.Arcade.Body;
         body.setImmovable(true);
         // Make the hit box smaller than the visual so you can walk "behind" it slightly or get close
-        body.setSize(40, 40);
-        body.setOffset(-20, -20);
+        body.setSize(80, 80);
+        body.setOffset(-40, -40);
     }
 
     showPrompt() {

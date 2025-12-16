@@ -78,7 +78,7 @@ export class MainScene extends Phaser.Scene {
     preload() {
         this.load.image('snow_ground', '/assets/game/snow_ground_seamless_v2_1765704047104.png');
         this.load.image('tree', '/assets/game/pine_tree_small.png');
-        this.load.image('ice_crystal', '/assets/game/ice_crystal_v2.png');
+        this.load.image('ice_crystal', '/assets/game/ice_crystal_sprite_1765704033442.png');
         this.load.image('fog_noise', '/assets/game/fog_noise_texture_1765702486021.png');
         this.load.spritesheet('player', '/assets/game/player_spritesheet_1765701694127.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('penguin', '/assets/game/penguin_sprite_v2.png', { frameWidth: 64, frameHeight: 64 });
@@ -122,8 +122,7 @@ export class MainScene extends Phaser.Scene {
 
         // 8. Multiplayer
         this.setupMultiplayer();
-        await this.loadStructures(); // Load existing buildings
-        await this.ensurePlayerHome(); // Force spawn igloo if missing
+        this.loadStructures(); // Load existing buildings
 
         // 9. Fog (Visuals)
         this.setupFogOfWar();
@@ -560,33 +559,6 @@ export class MainScene extends Phaser.Scene {
         } catch (e) { console.warn("Save Structure Error", e); }
     }
 
-    async ensurePlayerHome() {
-        if (!this.campaignId || !this.playerId) return;
-
-        // 1. Check local loaded structures first
-        let hasIgloo = false;
-        // Ideally we check local list, but we don't store ownership meta in the Phaser Object easily without casting
-        // simpler to check DB or just check if we have ANY igloo nearby?
-        // Let's check DB to be safe
-
-        try {
-            const { count } = await supabase
-                .from('game_structures' as any)
-                .select('*', { count: 'exact', head: true })
-                .eq('campaign_id', this.campaignId)
-                .eq('owner_id', this.playerId)
-                .eq('type', 'igloo');
-
-            if (count === 0 && this.player) {
-                console.log("No home found! Spawning Igloo...");
-                // Spawn at player pos
-                this.spawnStructure('igloo', this.player.x, this.player.y, true);
-            } else {
-                console.log("Home found.");
-            }
-        } catch (e) { console.warn("Ensure Home Error", e); }
-    }
-
     broadcastStructure(type: string, x: number, y: number) {
         if (this.isConnected && this.networkManager) this.networkManager.sendStructurePlace(type, x, y);
     }
@@ -749,23 +721,13 @@ export class MainScene extends Phaser.Scene {
             // Warmth
             if (this.tickTimer++ > 60) {
                 this.tickTimer = 0;
-                let nearHeatSource = false;
+                let nearFire = false;
                 this.builtObjects.getChildren().forEach((obj: any) => {
                     const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, obj.x, obj.y);
-                    if (obj instanceof Campfire && d < 100) nearHeatSource = true;
-                    if (obj instanceof Igloo && d < 300) nearHeatSource = true;
+                    if (d < 100) nearFire = true;
                 });
-
-                if (this.isStormActive) {
-                    // Storm implies extreme cold, but Igloo protects you.
-                    // If near heat source (Igloo/Fire), you lose less heat or maintain.
-                    // Let's make Igloo/Fire POWERFUL enough to warm you slowly even in storm, or at least neutral.
-                    if (nearHeatSource) this.warmth = Math.min(100, this.warmth + 1);
-                    else this.warmth = Math.max(0, this.warmth - 5);
-                } else {
-                    // Normal weather
-                    this.warmth = nearHeatSource ? Math.min(100, this.warmth + 5) : Math.max(0, this.warmth - 1);
-                }
+                if (this.isStormActive) this.warmth = Math.max(0, this.warmth - (nearFire ? 1 : 5));
+                else this.warmth = nearFire ? Math.min(100, this.warmth + 5) : Math.max(0, this.warmth - 1);
                 window.dispatchEvent(new CustomEvent('game-stat-update', { detail: { warmth: this.warmth } }));
                 const freezeAlpha = (100 - this.warmth) / 100 * 0.8;
                 if (this.coldOverlay) this.coldOverlay.setAlpha(freezeAlpha);

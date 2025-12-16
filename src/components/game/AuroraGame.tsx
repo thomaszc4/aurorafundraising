@@ -256,7 +256,7 @@ export const AuroraGame: React.FC<AuroraGameProps> = ({ playerId, campaignId, di
             parent: gameRef.current,
             width: '100%',
             height: '100%',
-            backgroundColor: '#000000', // Black background to hide loading
+            backgroundColor: '#dbe7eb', // Snow background to hide loading/transparency
             pixelArt: true, // Critical for pixel art assets
             physics: {
                 default: 'arcade',

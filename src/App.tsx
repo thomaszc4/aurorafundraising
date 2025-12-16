@@ -16,6 +16,7 @@ import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Auth from "./pages/Auth";
+import Logout from "./pages/Logout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminCampaigns from "./pages/admin/Campaigns";
@@ -36,7 +37,8 @@ import JoinCampaign from "./pages/participant/JoinCampaign";
 import ParticipantDashboard from "./pages/participant/ParticipantDashboard";
 import VendorLogin from "./pages/vendor/VendorLogin";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
-import IndividualDashboard from "./pages/individual/Dashboard"; // Added import
+import IndividualDashboard from "./pages/individual/Dashboard";
+import PublicCampaignPage from "./pages/campaign/PublicCampaignPage";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +100,7 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/logout" element={<Logout />} />
 
               {/* Public survey page */}
               <Route path="/survey/:campaignId" element={<PublicSurvey />} />
@@ -203,6 +206,9 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+
+              {/* Public Campaign Page */}
+              <Route path="/campaign/:id" element={<PublicCampaignPage />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

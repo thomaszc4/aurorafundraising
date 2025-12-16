@@ -75,6 +75,7 @@ export default function AdminDashboard() {
       const { data, error } = await supabase
         .from('campaigns')
         .select('*')
+        .eq('organization_admin_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -82,6 +83,9 @@ export default function AdminDashboard() {
       setCampaigns(data || []);
       if (data && data.length > 0) {
         setSelectedCampaign(data[0]);
+      } else {
+        // Auto-start creation wizard for new users
+        setView('create');
       }
     } catch (error) {
       console.error('Error fetching campaigns:', error);

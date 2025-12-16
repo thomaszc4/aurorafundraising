@@ -79,13 +79,13 @@ export default function AdminCampaigns() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this campaign? This will also delete all associated students.')) return;
-    
+
     try {
       const { error } = await supabase
         .from('campaigns')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       toast.success('Campaign deleted successfully');
       fetchCampaigns();
@@ -184,8 +184,8 @@ export default function AdminCampaigns() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Campaign</TableHead>
                   <TableHead>Organization</TableHead>
+                  <TableHead>Program</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Students</TableHead>
                   <TableHead>Goal</TableHead>
@@ -206,8 +206,8 @@ export default function AdminCampaigns() {
                     const status = getCampaignStatus(campaign);
                     return (
                       <TableRow key={campaign.id}>
-                        <TableCell className="font-medium">{campaign.name}</TableCell>
                         <TableCell>{campaign.organization_name}</TableCell>
+                        <TableCell className="font-medium">{campaign.name}</TableCell>
                         <TableCell>
                           <Badge className={getFundraiserTypeBadge(campaign.fundraiser_type)}>
                             {campaign.fundraiser_type.replace('_', ' ')}
@@ -223,7 +223,7 @@ export default function AdminCampaigns() {
                           {campaign.goal_amount ? `$${Number(campaign.goal_amount).toLocaleString()}` : '-'}
                         </TableCell>
                         <TableCell>
-                          {campaign.start_date 
+                          {campaign.start_date
                             ? `${new Date(campaign.start_date).toLocaleDateString()} - ${campaign.end_date ? new Date(campaign.end_date).toLocaleDateString() : 'Ongoing'}`
                             : 'Not set'
                           }

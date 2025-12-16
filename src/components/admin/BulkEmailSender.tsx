@@ -42,7 +42,7 @@ const MERGE_TAGS = [
   { tag: '{{total_donated}}', description: 'Total amount donated' },
   { tag: '{{donation_count}}', description: 'Number of donations' },
   { tag: '{{organization_name}}', description: 'Your organization name' },
-  { tag: '{{campaign_name}}', description: 'Campaign name' },
+  { tag: '{{campaign_name}}', description: 'Program Name' },
   { tag: '{{unsubscribe_link}}', description: 'Unsubscribe link' },
   { tag: '{{preferences_link}}', description: 'Preferences link' },
 ];

@@ -45,7 +45,7 @@ const BLOCK_TYPES = [
 
 const MERGE_TAGS = [
   { tag: '{{donor_name}}', label: 'Donor Name' },
-  { tag: '{{campaign_name}}', label: 'Campaign Name' },
+  { tag: '{{campaign_name}}', label: 'Program Name' },
   { tag: '{{donation_amount}}', label: 'Donation Amount' },
   { tag: '{{organization_name}}', label: 'Organization Name' },
 ];

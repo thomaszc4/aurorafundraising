@@ -5,10 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, Share2, Heart, ShieldCheck, Users, ArrowRight } from 'lucide-react';
+import { DollarSign, Share2, Heart, ShieldCheck, Users, ArrowRight, Book, Rocket, Laptop, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+
+import { LiveDonationFeed } from '@/components/campaign/LiveDonationFeed';
+import { LeaderboardWidget } from '@/components/campaign/LeaderboardWidget';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function PublicCampaignPage() {
     const { id } = useParams();
@@ -16,6 +20,7 @@ export default function PublicCampaignPage() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ totalRaised: 0, percentGoal: 0, donorCount: 0 });
     const [donationAmount, setDonationAmount] = useState('50');
+    const [coverFees, setCoverFees] = useState(true);
 
     useEffect(() => {
         if (id) fetchCampaign();
@@ -71,7 +76,7 @@ export default function PublicCampaignPage() {
                 .from('orders')
                 .insert({
                     campaign_id: campaign.id,
-                    total_amount: parseFloat(donationAmount),
+                    total_amount: parseFloat(donationAmount) + (coverFees ? (parseFloat(donationAmount) * 0.029 + 0.30) : 0),
                     status: 'completed',
                     customer_email: 'donor@test.com',
                     customer_name: 'Test Donor',
@@ -108,7 +113,7 @@ export default function PublicCampaignPage() {
         );
     }
 
-    const presetAmounts = ['25', '50', '100', '250'];
+
 
     return (
         <Layout>
@@ -184,6 +189,27 @@ export default function PublicCampaignPage() {
                                         </li>
                                     </ul>
                                 </div>
+
+                                <div className="mt-8 p-6 bg-muted/30 rounded-2xl border border-border/50">
+                                    <h3 className="text-lg font-semibold text-foreground mb-4">Trust & Transparency</h3>
+                                    <div className="relative pl-2">
+                                        <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border/50"></div>
+                                        <div className="space-y-6 relative">
+                                            <div className="flex gap-4 items-start">
+                                                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white z-10 shadow-sm mt-0.5"><ShieldCheck className="w-3 h-3" /></div>
+                                                <div><p className="font-medium text-sm">Campaign Launched</p><p className="text-xs text-muted-foreground">Verified Organization</p></div>
+                                            </div>
+                                            <div className="flex gap-4 items-start">
+                                                <div className="w-6 h-6 rounded-full bg-primary-blue flex items-center justify-center text-white z-10 shadow-glow-blue mt-0.5"><Heart className="w-3 h-3" /></div>
+                                                <div><p className="font-medium text-sm">Fundraising Active</p><p className="text-xs text-muted-foreground">Accepting secure donations</p></div>
+                                            </div>
+                                            <div className="flex gap-4 items-start">
+                                                <div className="w-6 h-6 rounded-full bg-muted border-2 border-border flex items-center justify-center z-10 mt-0.5"></div>
+                                                <div><p className="font-medium text-sm text-muted-foreground">Goal Purchased</p><p className="text-xs text-muted-foreground">Expected: Jan 2026</p></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
@@ -191,6 +217,9 @@ export default function PublicCampaignPage() {
                     {/* Right Column: Donation */}
                     <div className="lg:col-span-1 animate-slide-up animation-delay-300">
                         <div className="sticky top-24 space-y-6">
+                            <LeaderboardWidget campaignId={campaign.id} />
+                            <LiveDonationFeed campaignId={campaign.id} />
+
                             <Card className="border-none shadow-2xl ring-1 ring-border/50 relative overflow-hidden">
                                 <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-primary-blue/5 to-transparent pointer-events-none" />
 
@@ -212,17 +241,30 @@ export default function PublicCampaignPage() {
 
                                     <div className="space-y-4">
                                         <label className="text-sm font-medium text-foreground">Select Amount</label>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            {presetAmounts.map((amount) => (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { amount: '25', label: 'Supplies', icon: Book },
+                                                { amount: '50', label: 'Class Trip', icon: Rocket },
+                                                { amount: '100', label: 'Technology', icon: Laptop },
+                                                { amount: '250', label: 'Scholarship', icon: GraduationCap }
+                                            ].map((tier) => (
                                                 <button
-                                                    key={amount}
-                                                    onClick={() => setDonationAmount(amount)}
-                                                    className={`py-2 px-1 rounded-lg text-sm font-medium transition-all duration-200 border ${donationAmount === amount
-                                                            ? 'bg-primary-blue text-white border-primary-blue shadow-lg shadow-primary-blue/25 scale-105'
-                                                            : 'bg-background hover:bg-muted border-border text-muted-foreground hover:text-foreground'
+                                                    key={tier.amount}
+                                                    onClick={() => setDonationAmount(tier.amount)}
+                                                    className={`relative p-3 rounded-xl border-2 transition-all duration-200 text-left hover:scale-[1.02] ${donationAmount === tier.amount
+                                                        ? 'bg-primary-blue/5 border-primary-blue shadow-md'
+                                                        : 'bg-background hover:bg-muted border-border hover:border-primary-blue/30'
                                                         }`}
                                                 >
-                                                    ${amount}
+                                                    <div className={`absolute top-3 right-3 ${donationAmount === tier.amount ? 'text-primary-blue' : 'text-muted-foreground'}`}>
+                                                        <tier.icon className="w-5 h-5" />
+                                                    </div>
+                                                    <div className={`text-lg font-bold ${donationAmount === tier.amount ? 'text-primary-blue' : 'text-foreground'}`}>
+                                                        ${tier.amount}
+                                                    </div>
+                                                    <div className="text-xs font-medium text-muted-foreground mt-1">
+                                                        {tier.label}
+                                                    </div>
                                                 </button>
                                             ))}
                                         </div>
@@ -246,8 +288,22 @@ export default function PublicCampaignPage() {
                                         className="w-full h-14 text-lg font-semibold shadow-glow-teal hover:shadow-glow hover:scale-[1.02] transition-all bg-gradient-teal border-0"
                                         onClick={handleDonate}
                                     >
-                                        Donate Now
+                                        Donate ${((parseFloat(donationAmount || '0') || 0) + (coverFees ? ((parseFloat(donationAmount || '0') || 0) * 0.029 + 0.30) : 0)).toFixed(2)}
                                     </Button>
+
+                                    <div className="flex items-center space-x-2 pt-2 justify-center">
+                                        <Checkbox
+                                            id="cover-fees"
+                                            checked={coverFees}
+                                            onCheckedChange={(checked) => setCoverFees(checked as boolean)}
+                                        />
+                                        <label
+                                            htmlFor="cover-fees"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+                                        >
+                                            Cover the ${((parseFloat(donationAmount || '0') || 0) * 0.029 + 0.30).toFixed(2)} transaction fee
+                                        </label>
+                                    </div>
 
                                     <p className="text-xs text-center text-muted-foreground">
                                         All donations are secure and encrypted.
@@ -260,20 +316,44 @@ export default function PublicCampaignPage() {
                                     <div className="bg-white/10 p-2 rounded-lg">
                                         <Share2 className="w-5 h-5" />
                                     </div>
-                                    <div>
-                                        <h4 className="font-semibold mb-1">Share this campaign</h4>
-                                        <p className="text-sm text-primary-foreground/80 mb-3">Help us reach our goal effectively by sharing with friends.</p>
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="w-full"
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(window.location.href);
-                                                toast.success("Link copied to clipboard!");
-                                            }}
-                                        >
-                                            Copy Link
-                                        </Button>
+                                    <div className="w-full">
+                                        <h4 className="font-semibold mb-1">Share & Multiply Impact</h4>
+                                        <p className="text-sm text-primary-foreground/80 mb-3">Sharing can double your impact!</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="w-full gap-2"
+                                                onClick={() => {
+                                                    const text = `Help ${campaign.name} reach our goal! Donate here: ${window.location.href}`;
+                                                    window.open(`sms:?body=${encodeURIComponent(text)}`);
+                                                }}
+                                            >
+                                                📱 SMS
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="w-full gap-2"
+                                                onClick={() => {
+                                                    const text = `Help ${campaign.name} reach our goal! Donate here: ${window.location.href}`;
+                                                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+                                                }}
+                                            >
+                                                💬 WhatsApp
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full col-span-2 border-white/20 hover:bg-white/10 text-primary-foreground"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(window.location.href);
+                                                    toast.success("Link copied to clipboard!");
+                                                }}
+                                            >
+                                                🔗 Copy Link
+                                            </Button>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

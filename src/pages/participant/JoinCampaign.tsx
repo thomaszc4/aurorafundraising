@@ -34,6 +34,7 @@ export default function JoinCampaign() {
   const [nickname, setNickname] = useState('');
 
   const [participantCount, setParticipantCount] = useState(0);
+  const [existingToken, setExistingToken] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -99,6 +100,26 @@ export default function JoinCampaign() {
           .eq('is_active', true);
 
         setParticipantCount(count || 0);
+
+        // Check if user already joined this campaign (duplicate prevention)
+        const storageKey = `participant_token_${campaignData.id}`;
+        const savedToken = localStorage.getItem(storageKey);
+        if (savedToken) {
+          // Verify token is still valid
+          const { data: existingParticipant } = await supabase
+            .from('participants')
+            .select('id')
+            .eq('access_token', savedToken)
+            .eq('is_active', true)
+            .single();
+
+          if (existingParticipant) {
+            setExistingToken(savedToken);
+          } else {
+            // Token is stale, remove it
+            localStorage.removeItem(storageKey);
+          }
+        }
       } catch (err) {
         console.error('Error fetching campaign:', err);
         toast.error('Failed to load campaign');
@@ -113,20 +134,33 @@ export default function JoinCampaign() {
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalNickname = nickname.trim() || `Supporter ${Math.floor(Math.random() * 10000)}`;
+    // Sanitize nickname: trim, limit length, remove special chars
+    const sanitizedNickname = nickname
+      .trim()
+      .slice(0, 20)
+      .replace(/[<>'";]/g, '');
+    const finalNickname = sanitizedNickname || `Supporter ${Math.floor(Math.random() * 10000)}`;
     const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
 
     if (!campaign) return;
 
-    // Check max participants
-    if (joinSettings?.max_participants && participantCount >= joinSettings.max_participants) {
-      toast.error('This campaign has reached its maximum participants');
-      return;
-    }
-
     setSubmitting(true);
 
     try {
+      // Re-fetch participant count to mitigate race condition
+      const { count: freshCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('campaign_id', campaign.id)
+        .eq('is_active', true);
+
+      // Check max participants with fresh count
+      if (joinSettings?.max_participants && (freshCount || 0) >= joinSettings.max_participants) {
+        toast.error('This campaign has reached its maximum participants');
+        setSubmitting(false);
+        return;
+      }
+
       // Create participant with simple PIN hash (in production, use proper hashing)
       const { data, error } = await supabase
         .from('participants')
@@ -146,7 +180,8 @@ export default function JoinCampaign() {
 
       toast.success('Welcome to the fundraiser!');
 
-      // Store token and redirect
+      // Store token in localStorage for this specific campaign (duplicate prevention)
+      localStorage.setItem(`participant_token_${campaign.id}`, data.access_token);
       localStorage.setItem('participant_token', data.access_token);
       navigate(`/p/${data.access_token}`);
     } catch (err) {
@@ -175,6 +210,34 @@ export default function JoinCampaign() {
               This join link may be invalid or expired. Ask your teacher or coach for the correct link!
             </CardDescription>
           </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show return screen if user already joined this campaign
+  if (existingToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader className="space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+              <PartyPopper className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle>Welcome Back!</CardTitle>
+            <CardDescription>
+              You've already joined {campaign.name}. Click below to go to your dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => navigate(`/p/${existingToken}`)}
+            >
+              Go to My Dashboard
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );

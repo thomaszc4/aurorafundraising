@@ -31,9 +31,9 @@ import {
 } from '@/components/ui/table';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { StudentTaskManager } from '@/components/admin/StudentTaskManager';
-import { 
-  Edit, ExternalLink, Plus, Trash2, Send, UserCheck, Clock, 
-  CheckCircle2, Mail, RefreshCw, Users, UserPlus 
+import {
+  Edit, ExternalLink, Plus, Trash2, Send, UserCheck, Clock,
+  CheckCircle2, Mail, RefreshCw, Users, UserPlus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -152,9 +152,9 @@ export default function AdminParticipants() {
 
       await supabase
         .from('student_invitations')
-        .update({ 
-          invitation_sent: true, 
-          invitation_sent_at: new Date().toISOString() 
+        .update({
+          invitation_sent: true,
+          invitation_sent_at: new Date().toISOString()
         })
         .eq('id', invitation.id);
 
@@ -184,7 +184,7 @@ export default function AdminParticipants() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (editingFundraiser) {
         const { error } = await supabase
@@ -197,8 +197,14 @@ export default function AdminParticipants() {
             campaign_id: formData.campaign_id,
           })
           .eq('id', editingFundraiser.id);
-        
-        if (error) throw error;
+
+        if (error) {
+          // Handle unique violation for page_slug
+          if (error.code === '23505' && error.message?.includes('page_slug')) {
+            throw new Error('This Page URL is already taken. Please choose another one.');
+          }
+          throw error;
+        }
         toast.success('Student fundraiser updated successfully');
       } else {
         const { data: profile, error: profileError } = await supabase
@@ -206,13 +212,14 @@ export default function AdminParticipants() {
           .select('id')
           .eq('email', formData.student_email)
           .single();
-        
+
         if (profileError || !profile) {
           toast.error('User not found with that email. Make sure they have an account first.');
           return;
         }
 
-        const { error } = await supabase
+        // 1. Create the fundraiser
+        const { error: fundraiserError } = await supabase
           .from('student_fundraisers')
           .insert({
             student_id: profile.id,
@@ -222,17 +229,29 @@ export default function AdminParticipants() {
             custom_message: formData.custom_message || null,
             is_active: formData.is_active,
           });
-        
-        if (error) throw error;
 
-        await supabase
+        if (fundraiserError) {
+          if (fundraiserError.code === '23505' && fundraiserError.message?.includes('page_slug')) {
+            throw new Error('This Page URL is already taken. Please choose another one.');
+          }
+          throw fundraiserError;
+        }
+
+        // 2. Assign role (Non-blocking)
+        const { error: roleError } = await supabase
           .from('user_roles')
           .upsert({
             user_id: profile.id,
             role: 'student',
           }, { onConflict: 'user_id,role' });
 
-        toast.success('Student fundraiser created successfully');
+        if (roleError) {
+          console.error('Error assigning student role:', roleError);
+          // Don't throw, just warn
+          toast.warning('Fundraiser created, but failed to assign "student" role. You may need to assign it manually.');
+        } else {
+          toast.success('Student fundraiser created successfully');
+        }
       }
 
       setIsDialogOpen(false);
@@ -259,13 +278,13 @@ export default function AdminParticipants() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this student fundraiser?')) return;
-    
+
     try {
       const { error } = await supabase
         .from('student_fundraisers')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       toast.success('Student fundraiser deleted successfully');
       fetchData();
@@ -277,13 +296,13 @@ export default function AdminParticipants() {
 
   const handleDeleteInvitation = async (id: string) => {
     if (!confirm('Are you sure you want to delete this invitation?')) return;
-    
+
     try {
       const { error } = await supabase
         .from('student_invitations')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       toast.success('Invitation deleted successfully');
       fetchData();
@@ -563,15 +582,15 @@ export default function AdminParticipants() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {invitation.invitation_sent_at 
+                              {invitation.invitation_sent_at
                                 ? format(new Date(invitation.invitation_sent_at), 'MMM d, yyyy')
                                 : '-'
                               }
                             </TableCell>
                             <TableCell className="text-right">
                               {!invitation.account_created && (
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => handleSendInvitation(invitation)}
                                   disabled={sendingInvitation === invitation.id}
@@ -591,9 +610,9 @@ export default function AdminParticipants() {
                                   )}
                                 </Button>
                               )}
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => handleDeleteInvitation(invitation.id)}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -640,7 +659,7 @@ export default function AdminParticipants() {
                           </TableRow>
                         ) : (
                           fundraisers.map((fundraiser) => (
-                            <TableRow 
+                            <TableRow
                               key={fundraiser.id}
                               className={selectedFundraiserId === fundraiser.id ? 'bg-muted/50' : ''}
                               onClick={() => setSelectedFundraiserId(fundraiser.id)}
@@ -657,7 +676,7 @@ export default function AdminParticipants() {
                                 ${Number(fundraiser.total_raised || 0).toFixed(2)}
                               </TableCell>
                               <TableCell>
-                                {fundraiser.personal_goal 
+                                {fundraiser.personal_goal
                                   ? `$${Number(fundraiser.personal_goal).toFixed(0)}`
                                   : '-'
                                 }
@@ -668,7 +687,7 @@ export default function AdminParticipants() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">
-                                <a 
+                                <a
                                   href={`/student/${fundraiser.page_slug}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -678,16 +697,16 @@ export default function AdminParticipants() {
                                     <ExternalLink className="h-4 w-4" />
                                   </Button>
                                 </a>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={(e) => { e.stopPropagation(); handleEdit(fundraiser); }}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={(e) => { e.stopPropagation(); handleDelete(fundraiser.id); }}
                                 >
                                   <Trash2 className="h-4 w-4 text-destructive" />
@@ -701,9 +720,9 @@ export default function AdminParticipants() {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <div>
-                <StudentTaskManager 
+                <StudentTaskManager
                   studentFundraiserId={selectedFundraiserId}
                   studentName={fundraisers.find(f => f.id === selectedFundraiserId)?.profiles?.full_name || undefined}
                 />

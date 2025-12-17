@@ -442,9 +442,10 @@ export function CreateCampaignWizard({
 
       toast.success(editingCampaign ? 'Campaign updated successfully' : 'Campaign created successfully');
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving campaign:', error);
-      toast.error('Failed to save campaign');
+      const errorMessage = error?.message || error?.code || 'Unknown error';
+      toast.error(`Failed to save campaign: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

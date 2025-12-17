@@ -233,6 +233,7 @@ export default function AdminDashboard() {
               fundraiserTypeId={selectedCampaign.fundraiser_type || 'product'}
               startDate={selectedCampaign.start_date ? new Date(selectedCampaign.start_date) : undefined}
               onClose={() => setView('overview')}
+              onNavigate={(view) => setView(view)}
             />
           </>
         );

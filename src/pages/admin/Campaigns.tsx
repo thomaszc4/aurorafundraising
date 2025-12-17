@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { Edit, Plus, Trash2, Users } from 'lucide-react';
+import { Copy, Edit, Plus, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { useNavigate } from 'react-router-dom';
@@ -234,6 +234,17 @@ export default function AdminCampaigns() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              navigator.clipboard.writeText(campaign.id);
+                              toast.success('Campaign ID copied!');
+                            }}
+                            title="Copy Campaign ID"
+                          >
+                            <Copy className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(campaign)}>
                             <Edit className="h-4 w-4" />
                           </Button>

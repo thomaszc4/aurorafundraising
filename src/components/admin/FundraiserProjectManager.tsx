@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import {
   ChevronRight, ChevronDown, Clock, CheckCircle2,
   Sparkles, BookOpen, ArrowLeft, Plus, Pencil, Bell, BellOff,
-  Download, GripVertical
+  Download, GripVertical, ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFundraiserTypeById, FundraiserType } from '@/data/fundraiserTypes';
@@ -28,6 +28,7 @@ interface FundraiserProjectManagerProps {
   fundraiserTypeId: string;
   startDate?: Date;
   onClose?: () => void;
+  onNavigate?: (view: string) => void;
 }
 
 interface TaskState {
@@ -96,7 +97,8 @@ export function FundraiserProjectManager({
   campaignId,
   fundraiserTypeId,
   startDate,
-  onClose
+  onClose,
+  onNavigate
 }: FundraiserProjectManagerProps) {
   const { user } = useAuth();
   const [fundraiserType, setFundraiserType] = useState<FundraiserType | null>(null);
@@ -421,11 +423,6 @@ export function FundraiserProjectManager({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
-          {onClose && (
-            <Button variant="ghost" size="icon" onClick={onClose} className="mt-1">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
           <div className={cn(
             "h-14 w-14 rounded-xl flex items-center justify-center bg-gradient-to-br text-white shadow-lg",
             fundraiserType.color
@@ -544,6 +541,17 @@ export function FundraiserProjectManager({
                                 </div>
                                 <p className={cn("text-sm mt-1", isComplete ? "text-muted-foreground/60" : "text-muted-foreground")}>{task.description}</p>
                               </div>
+                              {task.actionView && onNavigate && !isComplete && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onNavigate(task.actionView!)}
+                                  className="gap-1.5 shrink-0"
+                                >
+                                  {task.actionLabel || 'Go'}
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              )}
                               {isComplete && <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />}
                             </div>
                           );

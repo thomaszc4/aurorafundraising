@@ -79,10 +79,10 @@ export function Navbar() {
             </Button>
           </> : <>
             <Button variant="heroOutline" size="default" asChild>
-              <Link to="/auth">Sign In</Link>
+              <Link to="/auth?tab=signin">Sign In</Link>
             </Button>
             <Button variant="hero" size="default" asChild>
-              <Link to="/contact">Start Fundraising</Link>
+              <Link to="/auth?tab=signup">Start Fundraising</Link>
             </Button>
           </>}
         </div>

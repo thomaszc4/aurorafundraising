@@ -10,9 +10,10 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requireAdmin, requireStudent, requireSuperAdmin, requireIndividual }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin, isStudent, isSuperAdmin, isIndividual, isOrgAdmin } = useAuth();
+  const { user, loading, isAdmin, isStudent, isSuperAdmin, isIndividual, isOrgAdmin, rolesLoaded } = useAuth();
 
-  if (loading) {
+  // Wait for initial auth load AND roles to be fetched
+  if (loading || (user && !rolesLoaded)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>

@@ -73,8 +73,8 @@ export function CreateCampaignWizard({
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Step 1: Basic Info
-  const [name, setName] = useState(editingCampaign?.name || '');
-  const [organizationName, setOrganizationName] = useState(editingCampaign?.organization_name || '');
+  const [name, setName] = useState(editingCampaign?.name || (user?.user_metadata?.program_name ? `${user.user_metadata.program_name} Fundraiser` : '') || '');
+  const [organizationName, setOrganizationName] = useState(editingCampaign?.organization_name || user?.user_metadata?.organization_name || '');
   const [description, setDescription] = useState(editingCampaign?.description || '');
   const [goalAmount, setGoalAmount] = useState(editingCampaign?.goal_amount?.toString() || '');
   const [programSize, setProgramSize] = useState(editingCampaign?.program_size?.toString() || '');
@@ -127,8 +127,8 @@ export function CreateCampaignWizard({
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, price, average_raised_per_student')
-      .eq('is_active', true);
+      .select('id, name, price, average_raised_per_student');
+    // .eq('is_active', true); // Temporarily disabled for debugging 400 error
     if (!error && data) {
       setProducts(data);
       // Auto-select all active products (QuickStove) since we are skipping the selection step
@@ -353,8 +353,37 @@ export function CreateCampaignWizard({
       return;
     }
 
+    if (!user?.id) {
+      toast.error('Authentication error: You must be logged in to create a campaign.');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Ensure user profile exists to prevent FK violation
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || 'Admin',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          throw new Error('Failed to create user profile');
+        }
+      }
+
       const campaignData = {
         name,
         organization_name: organizationName,
@@ -366,7 +395,7 @@ export function CreateCampaignWizard({
         fundraiser_type: fundraiserTypeValue,
         athon_donation_type: fundraiserTypeValue !== 'product' ? athonDonationType : null,
         athon_unit_name: fundraiserTypeValue !== 'product' ? athonUnitName : null,
-        organization_admin_id: user?.id,
+        organization_admin_id: user.id,
         logo_url: logoUrl || null,
         brand_colors: brandColors || null
       };
@@ -413,9 +442,10 @@ export function CreateCampaignWizard({
 
       toast.success(editingCampaign ? 'Campaign updated successfully' : 'Campaign created successfully');
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving campaign:', error);
-      toast.error('Failed to save campaign');
+      const errorMessage = error?.message || error?.code || 'Unknown error';
+      toast.error(`Failed to save campaign: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -506,21 +536,21 @@ export function CreateCampaignWizard({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Organization Name *</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Lincoln High School"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="org">Program Type *</Label>
+                <Label htmlFor="org">Organization Name *</Label>
                 <Input
                   id="org"
                   value={organizationName}
                   onChange={e => setOrganizationName(e.target.value)}
-                  placeholder="Marching Band"
+                  placeholder="Sky High Academy"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Program Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Robotics Club Fundraiser"
                 />
               </div>
             </div>

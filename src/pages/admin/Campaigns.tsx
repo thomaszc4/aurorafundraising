@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { Edit, Plus, Trash2, Users } from 'lucide-react';
+import { Copy, Edit, Plus, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { useNavigate } from 'react-router-dom';
@@ -79,13 +79,13 @@ export default function AdminCampaigns() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this campaign? This will also delete all associated students.')) return;
-    
+
     try {
       const { error } = await supabase
         .from('campaigns')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       toast.success('Campaign deleted successfully');
       fetchCampaigns();
@@ -184,8 +184,8 @@ export default function AdminCampaigns() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Campaign</TableHead>
                   <TableHead>Organization</TableHead>
+                  <TableHead>Program</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Students</TableHead>
                   <TableHead>Goal</TableHead>
@@ -206,8 +206,8 @@ export default function AdminCampaigns() {
                     const status = getCampaignStatus(campaign);
                     return (
                       <TableRow key={campaign.id}>
-                        <TableCell className="font-medium">{campaign.name}</TableCell>
                         <TableCell>{campaign.organization_name}</TableCell>
+                        <TableCell className="font-medium">{campaign.name}</TableCell>
                         <TableCell>
                           <Badge className={getFundraiserTypeBadge(campaign.fundraiser_type)}>
                             {campaign.fundraiser_type.replace('_', ' ')}
@@ -223,7 +223,7 @@ export default function AdminCampaigns() {
                           {campaign.goal_amount ? `$${Number(campaign.goal_amount).toLocaleString()}` : '-'}
                         </TableCell>
                         <TableCell>
-                          {campaign.start_date 
+                          {campaign.start_date
                             ? `${new Date(campaign.start_date).toLocaleDateString()} - ${campaign.end_date ? new Date(campaign.end_date).toLocaleDateString() : 'Ongoing'}`
                             : 'Not set'
                           }
@@ -234,6 +234,17 @@ export default function AdminCampaigns() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              navigator.clipboard.writeText(campaign.id);
+                              toast.success('Campaign ID copied!');
+                            }}
+                            title="Copy Campaign ID"
+                          >
+                            <Copy className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(campaign)}>
                             <Edit className="h-4 w-4" />
                           </Button>

@@ -16,6 +16,7 @@ interface AuthContextType {
   isStudent: boolean;
   isOrgAdmin: boolean;
   isIndividual: boolean;
+  rolesLoaded: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setRolesLoaded(false);
 
         if (session?.user) {
           // Fetch user role after a delay to ensure profile/role is created via trigger
@@ -58,7 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRoles = async (userId: string) => {
+  const fetchUserRoles = async (userId: string, attempt = 1) => {
+    let roles: string[] = [];
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -67,15 +71,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching user roles:', error);
-        setUserRoles([]);
       } else {
-        setUserRoles(data?.map(r => r.role) || []);
+        roles = data?.map(r => r.role) || [];
+        setUserRoles(roles);
       }
     } catch (error) {
       console.error('Error in fetchUserRoles:', error);
-      setUserRoles([]);
     } finally {
-      console.log('Final User Roles:', userRoles); // Debug log
+      // If no roles found, possibly due to trigger delay, retry up to 3 times
+      if (roles.length === 0 && attempt < 3) {
+        console.log(`No roles found, retrying... (${attempt + 1}/3)`);
+        setTimeout(() => fetchUserRoles(userId, attempt + 1), 1000);
+        return; // Don't set rolesLoaded yet
+      }
+
+      console.log('Final User Roles:', roles);
+      setRolesLoaded(true);
     }
   };
 
@@ -140,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isStudent,
     isOrgAdmin,
     isIndividual,
+    rolesLoaded,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

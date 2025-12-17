@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -16,11 +16,11 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { 
-  Settings, 
-  Palette, 
-  Target, 
-  CalendarDays, 
+import {
+  Settings,
+  Palette,
+  Target,
+  CalendarDays,
   Save,
   Upload,
   Image as ImageIcon,
@@ -98,7 +98,7 @@ export default function CampaignSettings() {
   const handleSave = async () => {
     if (!campaign) return;
     setSaving(true);
-    
+
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
@@ -113,7 +113,7 @@ export default function CampaignSettings() {
         program_size: campaign.program_size,
         brand_colors: campaign.brand_colors,
       };
-      
+
       const { error } = await supabase
         .from('campaigns')
         .update(updateData)
@@ -132,7 +132,7 @@ export default function CampaignSettings() {
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0] || !campaign) return;
-    
+
     const file = e.target.files[0];
     setUploading(true);
 
@@ -155,7 +155,7 @@ export default function CampaignSettings() {
 
       const { error: updateError } = await supabase
         .from('campaigns')
-        .update({ 
+        .update({
           logo_url: publicUrl,
           brand_colors: colors
         })
@@ -309,17 +309,17 @@ export default function CampaignSettings() {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label>Campaign Name</Label>
-                      <Input
-                        value={campaign.name}
-                        onChange={(e) => setCampaign({ ...campaign, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
                       <Label>Organization Name</Label>
                       <Input
                         value={campaign.organization_name}
                         onChange={(e) => setCampaign({ ...campaign, organization_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Program Name</Label>
+                      <Input
+                        value={campaign.name}
+                        onChange={(e) => setCampaign({ ...campaign, name: e.target.value })}
                       />
                     </div>
                   </div>
@@ -489,24 +489,24 @@ export default function CampaignSettings() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Color Preview */}
                     <div className="mt-4 p-4 rounded-lg border bg-card">
                       <p className="text-sm text-muted-foreground mb-3">Preview</p>
                       <div className="flex gap-4">
-                        <div 
+                        <div
                           className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-xs font-medium"
                           style={{ backgroundColor: campaign.brand_colors?.primary || '#3B82F6' }}
                         >
                           Primary
                         </div>
-                        <div 
+                        <div
                           className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-xs font-medium"
                           style={{ backgroundColor: campaign.brand_colors?.secondary || '#10B981' }}
                         >
                           Secondary
                         </div>
-                        <div 
+                        <div
                           className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-xs font-medium"
                           style={{ backgroundColor: campaign.brand_colors?.accent || '#F59E0B' }}
                         >
@@ -579,7 +579,7 @@ export default function CampaignSettings() {
                             )}
                           >
                             <CalendarDays className="mr-2 h-4 w-4" />
-                            {campaign.start_date 
+                            {campaign.start_date
                               ? format(new Date(campaign.start_date), 'PPP')
                               : 'Select start date'
                             }
@@ -589,9 +589,9 @@ export default function CampaignSettings() {
                           <Calendar
                             mode="single"
                             selected={campaign.start_date ? new Date(campaign.start_date) : undefined}
-                            onSelect={(date) => setCampaign({ 
-                              ...campaign, 
-                              start_date: date?.toISOString() || null 
+                            onSelect={(date) => setCampaign({
+                              ...campaign,
+                              start_date: date?.toISOString() || null
                             })}
                           />
                         </PopoverContent>
@@ -609,7 +609,7 @@ export default function CampaignSettings() {
                             )}
                           >
                             <CalendarDays className="mr-2 h-4 w-4" />
-                            {campaign.end_date 
+                            {campaign.end_date
                               ? format(new Date(campaign.end_date), 'PPP')
                               : 'Select end date'
                             }
@@ -619,9 +619,9 @@ export default function CampaignSettings() {
                           <Calendar
                             mode="single"
                             selected={campaign.end_date ? new Date(campaign.end_date) : undefined}
-                            onSelect={(date) => setCampaign({ 
-                              ...campaign, 
-                              end_date: date?.toISOString() || null 
+                            onSelect={(date) => setCampaign({
+                              ...campaign,
+                              end_date: date?.toISOString() || null
                             })}
                           />
                         </PopoverContent>

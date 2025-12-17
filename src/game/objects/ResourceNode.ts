@@ -4,7 +4,7 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
     public resourceType: 'tree' | 'ice' | 'water';
     public amount: number;
     private interactorPrompt: Phaser.GameObjects.Text;
-    private visual: Phaser.GameObjects.Shape | Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle; // Updated Type
+    private visual: Phaser.GameObjects.Sprite | Phaser.GameObjects.Shape;
 
     constructor(scene: Phaser.Scene, x: number, y: number, type: 'tree' | 'ice' | 'water' = 'tree') {
         super(scene, x, y);
@@ -17,15 +17,18 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
             const tree = scene.add.sprite(0, -32, 'tree'); // Offset up so pivot is at base
             tree.setScale(3.0);
             this.add(tree);
+            this.visual = tree;
         } else if (type === 'water') {
             const water = scene.add.rectangle(0, 0, 64, 64, 0x0000ff, 0.5); // Blue square
             this.add(water);
+            this.visual = water;
             // Assuming this node will be added to a physics group that collides with player
         } else {
             // Ice Crystal
             const ice = scene.add.sprite(0, 0, 'ice_crystal');
             ice.setScale(0.08);
             this.add(ice);
+            this.visual = ice;
         }
 
         // Prompt (Hidden by default)
@@ -64,8 +67,12 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
         this.interactorPrompt.y = -50;
     }
 
+    private isHarvesting = false;
+
     harvest(): { type: string, amount: number } | null {
-        if (this.amount <= 0) return null;
+        if (this.amount <= 0 || this.isHarvesting) return null;
+        this.isHarvesting = true;
+        this.scene.time.delayedCall(100, () => this.isHarvesting = false); // Debounce
 
         this.amount--;
 

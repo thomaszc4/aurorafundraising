@@ -133,17 +133,6 @@ export class MainScene extends Phaser.Scene {
             this.logDiag(`Loaded: ${key}`);
         });
 
-        // ROBUSTNESS: Generate 'fog_noise_debug' purely procedurally as a fallback
-        // This ensures consistent visual style (gray stripes) even if asset fails
-        const gfxFog = this.make.graphics({ x: 0, y: 0 });
-        gfxFog.fillStyle(0x888888, 0.5);
-        gfxFog.fillRect(0, 0, 64, 64);
-        gfxFog.fillStyle(0xffffff, 0.5);
-        gfxFog.fillRect(10, 10, 20, 20);
-        gfxFog.fillRect(40, 40, 20, 20);
-        gfxFog.generateTexture('fog_noise_debug', 64, 64);
-        gfxFog.destroy();
-
         this.load.on('loaderror', (file: any) => {
             this.assetStatus.push(`❌ ${file.key} (Using Placeholder)`);
             this.logDiag(`FAIL: ${file.key} -> Placeholder`);
@@ -179,19 +168,7 @@ export class MainScene extends Phaser.Scene {
 
         const v = `?v=${CACHE_BUST}`;
         this.load.image('snow_ground', '/assets/game/snow_ground_v3.png' + v);
-        this.load.image('snow_ground', '/assets/game/snow_ground_v3.png' + v);
-
-        // FIX: The 'pine_tree_small.png' asset was causing WebGL artifacting (Checkers).
-        // REPLACED with Procedural Texture for stability.
-        // this.load.image('tree', '/assets/game/pine_tree_small.png' + v);
-        const gfxTree = this.make.graphics({ x: 0, y: 0 });
-        gfxTree.fillStyle(0x2d5a27); // Dark Green
-        gfxTree.fillTriangle(0, 64, 32, 0, 64, 64);
-        gfxTree.fillStyle(0x5d4037); // Brown Trunk
-        gfxTree.fillRect(26, 64, 12, 10);
-        gfxTree.generateTexture('tree', 64, 74);
-        gfxTree.destroy();
-
+        this.load.image('tree', '/assets/game/pine_tree_small.png' + v);
         this.load.image('ice_crystal', '/assets/game/ice_crystal_v2.png' + v);
         this.load.image('fog_noise', '/assets/game/fog_noise_texture_1765702486021.png' + v);
 
@@ -205,9 +182,9 @@ export class MainScene extends Phaser.Scene {
         this.load.spritesheet('char_local_f', '/assets/game/char_local_f.png' + v, charConfig);
 
         // RETORED ASSETS due to missing files
-        this.load.image('penguin', '/assets/game/penguin.png' + v);
-        this.load.image('polar_bear', '/assets/game/polar_bear_high_res_1765704059746.png' + v);
-        this.load.image('wolf', '/assets/game/wolf_sprite_v2.png' + v);
+        this.load.spritesheet('penguin', '/assets/game/penguin.png' + v, { frameWidth: 64, frameHeight: 64 });
+        this.load.spritesheet('polar_bear', '/assets/game/polar_bear_high_res_1765704059746.png' + v, { frameWidth: 64, frameHeight: 64 });
+        this.load.spritesheet('wolf', '/assets/game/wolf_sprite_v2.png' + v, { frameWidth: 64, frameHeight: 64 });
         this.load.image('seal', '/assets/game/seal_sprite_1765702498963.png' + v);
         this.load.image('fish', '/assets/game/fish_icon_1765702512195.png' + v);
         this.load.image('water', '/assets/game/ice_crystal_sprite_1765704033442.png' + v); // Placeholder
@@ -223,7 +200,19 @@ export class MainScene extends Phaser.Scene {
             this.game.canvas.style.backgroundColor = '#dbe7eb';
         }
 
-
+        // SAFETY 1: Green Box FIRST thing.
+        const safeBox = this.add.rectangle(100, 100, 200, 200, 0x00ff00);
+        safeBox.setDepth(9999);
+        safeBox.setScrollFactor(0);
+        // DIAGNOSTICS UI
+        this.diagnosticsText = this.add.text(10, 10, "DIAGNOSTICS INIT...", {
+            font: '16px monospace', color: '#00ff00', backgroundColor: '#000000aa',
+            wordWrap: { width: 400 }
+        });
+        this.diagnosticsText.setScrollFactor(0).setDepth(10000);
+        this.logDiag("CREATE START");
+        this.heartbeat = this.add.rectangle(750, 50, 50, 50, 0xff0000);
+        this.heartbeat.setScrollFactor(0).setDepth(10000);
 
         // console.log("NUCLEAR OPTION: STOPPING CREATE HERE.");
         // return; // <--- STOP EVERYTHING ELSE
@@ -253,11 +242,9 @@ export class MainScene extends Phaser.Scene {
                 screenBg.setDepth(0); // CRITICAL: Depth 0, not -9999
                 (this as any).bg = screenBg;
 
-                // FIX 2: World-space background (Snow Blanket)
-                const worldBg = this.add.tileSprite(4000, 4000, 8000, 8000, 'snow_ground');
+                // FIX 2: World-space background that moves with camera  
+                const worldBg = this.add.rectangle(4000, 4000, 10000, 10000, 0xdbe7eb);
                 worldBg.setDepth(1); // Just above screen bg
-                worldBg.setAlpha(0.9); // Slight transparecny to blend with atmosphere
-                worldBg.setTint(0xeefaff); // Slight cool tint
 
                 // Resize handler for screen bg
                 this.scale.on('resize', (gameSize: any) => {
@@ -265,7 +252,14 @@ export class MainScene extends Phaser.Scene {
                     screenBg.setSize(gameSize.width * 2, gameSize.height * 2);
                 });
 
-
+                // DEBUG HUD: On-Screen Live Data
+                (this as any).debugHUD = this.add.text(20, 150, "HUD INIT...", {
+                    fontSize: '20px',
+                    fontFamily: 'monospace',
+                    color: '#ffffff',
+                    backgroundColor: '#000000aa',
+                    padding: { x: 10, y: 10 }
+                }).setScrollFactor(0).setDepth(20000);
 
                 console.log("BACKGROUND FIX APPLIED: screenBg depth=0, worldBg depth=1");
             } catch (e) { this.logDiag("BG_FAIL: " + e); }
@@ -287,18 +281,11 @@ export class MainScene extends Phaser.Scene {
             let startX = 4000, startY = 4000;
             const playerData = null; // FORCE NEW PLAYER FOR DEBUG
 
-
-
             this.appearance = {
                 archetype: Phaser.Math.RND.pick(['alpinist', 'surveyor', 'local']),
                 gender: Phaser.Math.RND.pick(['m', 'f'])
             };
             console.log("New Player - Generated Identity:", this.appearance);
-
-            // ... (Player creation omitted for brevity in match, but included in flow) ...
-
-            // NOTE: To match correctly I must include the context between generation and overlays roughly or do two replaces.
-            // Let's do two replaces for safety. This first one handles Generation.
 
             // Create Player Object (GUARANTEED REACH)
             console.log("Spawn Point:", startX, startY);
@@ -307,10 +294,10 @@ export class MainScene extends Phaser.Scene {
             this.logDiag("SETUP_INPUTS");
 
             // 6. Fog of War
-            this.setupFogOfWar(); // ACTIVE
+            // this.setupFogOfWar(); // DISABLED FOR DEBUG
 
             // 7. Multiplayer
-            this.setupMultiplayer(); // ACTIVE
+            // this.setupMultiplayer(); // DISABLED FOR DEBUG
 
             // 8. Inputs
             this.setupInputs();
@@ -335,7 +322,13 @@ export class MainScene extends Phaser.Scene {
             this.physics.add.collider(this.player, this.builtObjects);
 
             console.log("MainScene Create Complete");
+            this.add.text(10, 100, "Version: Local Fallback Active", { color: '#00ff00', fontSize: '10px' }).setScrollFactor(0).setDepth(10001);
 
+            // SAFETY: Green Box at 100,100 to prove scene is alive
+            const safeBox = this.add.rectangle(100, 100, 200, 200, 0x00ff00);
+            safeBox.setDepth(9999);
+            safeBox.setScrollFactor(0);
+            this.add.text(10, 50, "SCENE ALIVE", { color: '#000000', backgroundColor: '#00ff00' }).setScrollFactor(0).setDepth(9999);
 
             this.scale.on('resize', (gameSize: any) => {
                 this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
@@ -369,9 +362,9 @@ export class MainScene extends Phaser.Scene {
                 this.physics.add.existing(lake, true); // Static body
                 this.terrainGroup.add(lake);
                 (lake as any).isWater = true;
-                lake.setDepth(5); // VISIBLE ABOVE BG
+            } else {
+                this.add.ellipse(x, y, w, h, 0xffffff, 0.3); // Decorative snow
             }
-            // Removed scattered snow images (replaced by global blanket)
         }
     }
 
@@ -659,23 +652,7 @@ export class MainScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         this.cameras.main.centerOn(x, y); // FORCE ALIGNMENT
         console.log("PLAYER_DONE - Player Object:", this.player);
-
-        // EMERGENCY IGLOO SPAWN (If none exists nearby/globally)
-        // Wait 1s to let DB load, then check
-        this.time.delayedCall(1000, () => {
-            // Simple check: Do we have an Igloo in the scene?
-            // Since builtObjects tracks them.
-            let hasIgloo = false;
-            this.builtObjects.getChildren().forEach(obj => {
-                if (obj instanceof Igloo) hasIgloo = true;
-            });
-
-            if (!hasIgloo) {
-                console.log("FORCE SPAWNING IGLOO (Missing)");
-                // Spawn slightly offset so player isn't stuck in wall
-                this.spawnStructure('igloo', this.player.x + 100, this.player.y + 100, false);
-            }
-        });
+        // this.createAnimations(); 
     }
 
     updatePlayerAppearance(appearance: { archetype: string, gender: string }) {
@@ -800,12 +777,7 @@ export class MainScene extends Phaser.Scene {
         const width = 8000;
         const height = 8000;
         this.fogTexture = this.make.renderTexture({ x: 0, y: 0, width, height });
-
-        // Use Asset if available, otherwise Fallback to Debug Texture
-        const noiseKey = this.textures.exists('fog_noise') ? 'fog_noise' : 'fog_noise_debug';
-        console.log(`FOG SETUP: Using texture '${noiseKey}'`);
-
-        const cloudTile = this.make.tileSprite({ x: 0, y: 0, width: width, height: height, key: noiseKey }, false);
+        const cloudTile = this.make.tileSprite({ x: 0, y: 0, width: width, height: height, key: 'fog_noise' }, false);
         cloudTile.setAlpha(1);
         cloudTile.setTint(0x8899aa);
         this.fogTexture.draw(cloudTile, 0, 0);

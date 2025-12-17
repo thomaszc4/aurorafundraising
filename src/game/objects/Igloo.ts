@@ -1,6 +1,13 @@
 
 import Phaser from 'phaser';
 
+const DEPTH = {
+    FLOOR: 10, // Above Snow(5) and Ripples(5)
+    WALLS: 110,
+    BLACKOUT: 200,
+    ROOF: 300
+};
+
 export default class Igloo extends Phaser.GameObjects.Container {
     private roof!: Phaser.GameObjects.Graphics;
     private floor!: Phaser.GameObjects.Graphics;
@@ -29,14 +36,14 @@ export default class Igloo extends Phaser.GameObjects.Container {
         // this.blackout.setAlpha(0);
 
         // Store for cleanup
-        this.setData('parts', [this.floor, this.roof, this.blackout, this.wallsGroup]);
+        this.setData('parts', [this.floor, this.roof, this.wallsGroup]);
     }
 
     private createFloor(scene: Phaser.Scene) {
         this.floor = scene.add.graphics();
         this.floor.fillStyle(0xddeeff, 1); // Packed snow/ice floor
         this.floor.fillCircle(0, 0, this.radius);
-        this.floor.setDepth(5); // Below Player (100)
+        this.floor.setDepth(DEPTH.FLOOR); // Below Player (100)
         this.floor.setPosition(this.x, this.y);
     }
 
@@ -69,7 +76,7 @@ export default class Igloo extends Phaser.GameObjects.Container {
 
             const wall = scene.add.rectangle(wx, wy, h, w, 0xaaaaee); // Rotated 90
             wall.setRotation(angleRad);
-            wall.setDepth(110);
+            wall.setDepth(DEPTH.WALLS);
 
             // Physics Body
             this.wallsGroup.add(wall);
@@ -87,42 +94,8 @@ export default class Igloo extends Phaser.GameObjects.Container {
     }
 
     private createBlackout(scene: Phaser.Scene) {
-        // A massive black rectangle covering the world
-        // Masked to SHOW the Igloo Interior (Inverted Mask)
-        // Oops, we want to HIDE the world.
-        // So we draw a black rectangle everywhere EXCEPT a hole in the middle.
-
-        this.blackout = scene.add.graphics();
-        this.blackout.fillStyle(0x000000, 1);
-        this.blackout.fillRect(-4000, -4000, 8000, 8000); // Huge rect relative to center
-
-        // Punch a hole
-        // Graphics masking is tricky. Easiest is to use an inverted GeometryMask on the Scene?
-        // Or simpler: Draw a "Hollow Rectangle" using path logic?
-        // Phaser Graphics supports holes in fills if using beginPath/arc/rect logic correctly.
-
-        // Let's use Geometry Mask approach on the GRAPHICS itself? No.
-        // Let's try "Big Rect with Hole" path.
-        this.blackout.clear();
-        this.blackout.fillStyle(0x000000, 1);
-
-        // Draw the outer rectangle (huge)
-        this.blackout.beginPath();
-        // Clockwise outer
-        this.blackout.moveTo(-4000, -4000);
-        this.blackout.lineTo(4000, -4000);
-        this.blackout.lineTo(4000, 4000);
-        this.blackout.lineTo(-4000, 4000);
-        this.blackout.closePath();
-
-        // Counter-clockwise inner (Hole)
-        this.blackout.arc(0, 0, this.radius + 5, 0, Math.PI * 2, true);
-        this.blackout.closePath();
-
-        this.blackout.fillPath();
-
-        this.blackout.setDepth(200); // Above Player/Walls, Below Roof
-        this.blackout.setPosition(this.x, this.y);
+        // Disabled for now as it was causing issues.
+        // Future implementation should use a proper Vision Mask.
     }
 
     private createRoof(scene: Phaser.Scene) {
@@ -133,12 +106,20 @@ export default class Igloo extends Phaser.GameObjects.Container {
         this.roof.fillStyle(0xeeeeee, 1);
         this.roof.fillCircle(0, 0, this.radius - 50); // Dome curve effect
 
-        this.roof.setDepth(300); // Top layer
+        this.roof.fillStyle(0xeeeeee, 1);
+        this.roof.setDepth(DEPTH.ROOF); // Top layer
         this.roof.setPosition(this.x, this.y);
     }
 
+    // Called by MainScene update loop
+    update(time: number, delta: number) {
+        // We'll need access to player from scene but loose coupling is hard. 
+        // Pass player in? Or just use scene.player if public?
+        // Ideally MainScene calls updateLogic(player).
+    }
+
     updateLogic(player: Phaser.GameObjects.Container) {
-        if (!this.active) return;
+        if (!this.active || !this.roof) return;
         const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
 
         // Transition Range
@@ -146,14 +127,14 @@ export default class Igloo extends Phaser.GameObjects.Container {
 
         if (isInside) {
             // Fade out Roof
-            if (this.roof.alpha > 0) this.roof.setAlpha(this.roof.alpha - 0.1);
+            if (this.roof.alpha > 0) this.roof.setAlpha(Math.max(0, this.roof.alpha - 0.1));
             // Fade IN Blackout (Hide outside world)
-            // if (this.blackout.alpha < 1) this.blackout.setAlpha(this.blackout.alpha + 0.1);
+            if (this.blackout && this.blackout.alpha < 1) this.blackout.setAlpha(Math.min(1, this.blackout.alpha + 0.1));
         } else {
             // Fade IN Roof
-            if (this.roof.alpha < 1) this.roof.setAlpha(this.roof.alpha + 0.1);
+            if (this.roof.alpha < 1) this.roof.setAlpha(Math.min(1, this.roof.alpha + 0.1));
             // Fade OUT Blackout (Show world)
-            // if (this.blackout.alpha > 0) this.blackout.setAlpha(this.blackout.alpha - 0.1);
+            if (this.blackout && this.blackout.alpha > 0) this.blackout.setAlpha(Math.max(0, this.blackout.alpha - 0.1));
         }
     }
 

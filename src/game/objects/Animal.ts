@@ -18,13 +18,13 @@ export default class Animal extends Phaser.Physics.Arcade.Sprite {
 
         // Scale & Speed
         if (this.animalType === 'polar_bear') {
-            this.setScale(0.08); // Reduced from 0.12
+            this.setScale(0.25);
             this.speed = 90;
         } else if (this.animalType === 'wolf') {
-            this.setScale(0.07); // Reduced from 0.2 -> ~1/3
+            this.setScale(0.2);
             this.speed = 100;
         } else { // Penguin, Seal
-            this.setScale(0.05); // Reduced from 0.15 -> 1/3
+            this.setScale(0.15);
             this.speed = 40;
         }
 
@@ -35,9 +35,9 @@ export default class Animal extends Phaser.Physics.Arcade.Sprite {
     public tamed: boolean = false;
 
     private startWander() {
-        if (this.tamed) return; // Follow logic handled in MainScene or elsewhere
+        if (this.tamed) return;
+        if (this.moveEvent) return; // FIX: Don't recreate if already running!
 
-        if (this.moveEvent) this.moveEvent.destroy();
         this.moveEvent = this.scene.time.addEvent({
             delay: Phaser.Math.Between(2000, 5000),
             callback: this.wander,
@@ -68,7 +68,11 @@ export default class Animal extends Phaser.Physics.Arcade.Sprite {
         if (this.animalType === 'wolf' || this.animalType === 'polar_bear') {
             // Aggressive: Chase
             if (dist < 250) {
-                if (this.moveEvent) { this.moveEvent.destroy(); this.moveEvent = null; } // Stop wandering
+                // Only trigger chase if not already chasing (or if moveEvent exists, meaning we were wandering)
+                if (this.moveEvent) {
+                    this.moveEvent.destroy();
+                    this.moveEvent = null;
+                }
                 this.scene.physics.moveToObject(this, player, this.speed * 1.5);
                 this.checkFlip(this.body!.velocity.x);
             } else if (!this.moveEvent) {

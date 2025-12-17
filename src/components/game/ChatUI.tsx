@@ -21,45 +21,57 @@ export const ChatUI: React.FC<ChatUIProps> = ({ campaignId, playerName }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
-        const channel = supabase.channel(`chat_${campaignId}`)
-            .on('broadcast', { event: 'message' }, (payload) => {
-                setMessages(prev => [...prev, payload.payload]);
-                setIsOpen(true); // Auto-open on new message? Optional.
-            })
-            .subscribe();
+        const handleChat = (data: any) => {
+            setMessages(prev => [...prev.slice(-49), {
+                id: crypto.randomUUID(),
+                sender: data.id === (window as any).GAME_NETWORK?.playerId ? 'You' : 'Player', // We need names in chat payload really
+                text: data.message,
+                timestamp: Date.now()
+            }]);
+            setIsOpen(true);
+        };
+
+        // Poll for Network Manager or use event?
+        // Easier: Listen to window event or just assume NetworkManager is ready?
+        // Best: HubScene emits global event?
+        // Let's rely on simple interval for now or add a listener if we can access the instance.
+
+        const interval = setInterval(() => {
+            const net = (window as any).GAME_NETWORK;
+            if (net) {
+                // Hacky: We need to hook into the callback.
+                // NetworkManager doesn't expose a simple "add listener from UI" unless we expose it.
+                // It has .on().
+                net.on('chat', (payload: any) => {
+                    // We need to fetch specific logic? 
+                    // payload is { id, message }
+                    // We need sender name. Net manager doesn't send name in 'chat' payload yet.
+                    // I should enable sending name in NetworkManager.sendChat.
+
+                    setMessages(prev => [...prev.slice(-49), {
+                        id: crypto.randomUUID(),
+                        sender: payload.id.substring(0, 6), // Placeholder
+                        text: payload.message,
+                        timestamp: Date.now()
+                    }]);
+                    setIsOpen(true);
+                });
+                clearInterval(interval);
+            }
+        }, 1000);
 
         return () => {
-            supabase.removeChannel(channel);
+            // Cleanup?
         };
-    }, [campaignId]);
+    }, []);
 
-    useEffect(() => {
-        if (isOpen) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages, isOpen]);
-
-    const sendMessage = async (e?: React.FormEvent) => {
+    const sendMessage = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!inputText.trim()) return;
 
-        const msg: ChatMessage = {
-            id: Math.random().toString(36).substr(2, 9),
-            sender: playerName,
-            text: inputText.trim(),
-            timestamp: Date.now()
-        };
-
-        // Optimistic UI
-        setMessages(prev => [...prev, msg]);
-
-        // Broadcast
-        await supabase.channel(`chat_${campaignId}`).send({
-            type: 'broadcast',
-            event: 'message',
-            payload: msg
-        });
-
+        if ((window as any).GAME_NETWORK) {
+            (window as any).GAME_NETWORK.sendChat(inputText.trim());
+        }
         setInputText('');
     };
 

@@ -89,10 +89,20 @@ export const InventorySidebar: React.FC<InventorySidebarProps> = ({ inventory, o
                     <div className="grid grid-cols-4 gap-2">
                         {/* Display inventory slots */}
                         {inventory.map((item, index) => (
-                            <div key={index} className="aspect-square bg-secondary/10 border border-border rounded-md flex flex-col items-center justify-center relative group cursor-pointer hover:bg-secondary/20 transition-colors"
+                            <div key={index}
+                                role="button"
+                                tabIndex={0}
+                                className="aspect-square bg-secondary/10 border border-border rounded-md flex flex-col items-center justify-center relative group cursor-pointer hover:bg-secondary/20 transition-colors focus:ring-2 focus:ring-ring focus:outline-none"
                                 onClick={() => {
                                     if (item.name === 'Campfire' || item.name === 'Igloo Kit' || item.name === 'Stone Wall') {
                                         onPlace(item.name);
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        if (item.name === 'Campfire' || item.name === 'Igloo Kit' || item.name === 'Stone Wall') {
+                                            onPlace(item.name);
+                                        }
                                     }
                                 }}
                             >

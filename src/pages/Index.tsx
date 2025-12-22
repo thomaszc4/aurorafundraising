@@ -5,6 +5,7 @@ import { FeaturesSection } from "@/components/home/FeaturesSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { ProductSection } from "@/components/home/ProductSection";
 import { CTASection } from "@/components/home/CTASection";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { Leaderboard } from "@/components/fundraising/Leaderboard";
 import { DonorLeaderboard } from "@/components/fundraising/DonorLeaderboard";
 
@@ -13,9 +14,10 @@ const Index = () => {
     <Layout>
       <HeroSection />
       <FundraisingCalculator />
-      <FeaturesSection />
-      <HowItWorksSection />
       <ProductSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <TestimonialsSection />
 
       {/* Leaderboard Section */}
       <section className="py-24 bg-gradient-to-b from-background to-muted/30 relative overflow-hidden">
@@ -23,13 +25,13 @@ const Index = () => {
         <div className="container-wide">
           <div className="text-center mb-16">
             <span className="inline-block px-3 py-1 rounded-full bg-primary-blue/10 text-primary-blue text-xs font-semibold mb-4">
-              Top Performers
+              Live Rankings
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Our Top <span className="text-gradient-teal">Fundraisers</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              Celebrating the students making the biggest impact in their communities
+              Celebrating the students making the biggest impact in their communities right now
             </p>
           </div>
           <div className="max-w-4xl mx-auto glass-card p-6 rounded-3xl border border-secondary/20 shadow-xl">

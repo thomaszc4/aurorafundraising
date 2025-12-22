@@ -27,11 +27,11 @@ export function CTASection() {
         <div className="glass-card p-12 rounded-3xl text-center border border-white/10 shadow-glow">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
             Ready to Transform Your{" "}
-            <span className="text-gradient-teal">Fundraising?</span>
+            <span className="text-gradient-teal">Risk-Free?</span>
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            Join hundreds of organizations using our complete fundraising platform
-            to raise more money with less effort.
+            Join hundreds of organizations maximizing their revenue with Aurora.
+            <span className="text-foreground font-semibold block mt-2">No upfront costs. You keep 50% of everything you sell.</span>
           </p>
 
           {/* Benefits Grid */}
@@ -49,12 +49,12 @@ export function CTASection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button variant="hero" size="xl" asChild className="w-full sm:w-auto shadow-lg shadow-primary-blue/25 hover:shadow-primary-blue/40">
               <Link to="/contact">
-                Schedule Free Consultation
+                Start Your Free Campaign
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
             <Button variant="outline" size="xl" asChild className="w-full sm:w-auto border-foreground/20 hover:bg-foreground/5">
-              <Link to="/faq">View FAQ</Link>
+              <Link to="/faq">Read Our Guarantee</Link>
             </Button>
           </div>
         </div>

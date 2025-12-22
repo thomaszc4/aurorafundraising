@@ -67,21 +67,45 @@ const PRODUCT_FUNDRAISER: FundraiserType = {
     },
     {
       phase: 'Launch (Week 2)', tasks: [
-        { task: 'Kick-off announcement', daysBeforeEvent: 14, description: 'Announce the fundraiser officially', actionView: 'messages', actionLabel: 'Compose Message' },
+        {
+          task: 'Kick-off announcement',
+          daysBeforeEvent: 14,
+          description: 'Announce the fundraiser officially',
+          actionView: 'messages&title=Fundraiser Kick-off!&content=Hi everyone, our fundraiser is officially live! Please login to your dashboard to get started.',
+          actionLabel: 'Compose Message'
+        },
         { task: 'Share social posts', daysBeforeEvent: 14, description: 'Post on social media channels', actionView: 'social-posts', actionLabel: 'Create Posts' },
-        { task: 'Send parent emails', daysBeforeEvent: 12, description: 'Email families about the fundraiser', actionView: 'messages', actionLabel: 'Compose Email' }
+        {
+          task: 'Send parent emails',
+          daysBeforeEvent: 12,
+          description: 'Email families about the fundraiser',
+          actionView: 'messages&title=Fundraiser Information&content=Dear Parents, we are excited to announce our new fundraiser! Check your email for login instructions.',
+          actionLabel: 'Compose Email'
+        }
       ]
     },
     {
       phase: 'Active Selling (Weeks 2-3)', tasks: [
         { task: 'Monitor progress', description: 'Track sales and participant activity daily', actionView: 'overview', actionLabel: 'View Dashboard' },
-        { task: 'Send reminders', daysBeforeEvent: 7, description: 'Remind participants to keep selling', actionView: 'messages', actionLabel: 'Send Reminder' },
+        {
+          task: 'Send reminders',
+          daysBeforeEvent: 7,
+          description: 'Remind participants to keep selling',
+          actionView: 'messages&title=Keep up the great work!&content=We are halfway there! Keep sharing your link and reaching out to supporters.',
+          actionLabel: 'Send Reminder'
+        },
         { task: 'Celebrate milestones', description: 'Recognize achievements and top sellers', actionView: 'incentives', actionLabel: 'Setup Incentives' }
       ]
     },
     {
       phase: 'Final Push (Week 4)', tasks: [
-        { task: 'Last chance reminders', daysBeforeEvent: 3, description: 'Final push for sales', actionView: 'messages', actionLabel: 'Send Final Push' },
+        {
+          task: 'Last chance reminders',
+          daysBeforeEvent: 3,
+          description: 'Final push for sales',
+          actionView: 'messages&title=Only 3 days left!&content=This is the final push! Let\'s finish strong.',
+          actionLabel: 'Send Final Push'
+        },
         { task: 'Close campaign', daysBeforeEvent: 0, description: 'End the fundraiser', actionView: 'settings', actionLabel: 'Campaign Settings' },
         { task: 'Announce results', description: 'Share final totals and thank everyone', actionView: 'social-posts', actionLabel: 'Create Thank You Post' }
       ]
@@ -90,7 +114,12 @@ const PRODUCT_FUNDRAISER: FundraiserType = {
       phase: 'Fulfillment', tasks: [
         { task: 'Process orders', description: 'Review and finalize all orders' },
         { task: 'Coordinate delivery', description: 'Arrange product pickup or distribution' },
-        { task: 'Thank donors', description: 'Send thank you messages to supporters', actionView: 'messages', actionLabel: 'Send Thank You' }
+        {
+          task: 'Thank donors',
+          description: 'Send thank you messages to supporters',
+          actionView: 'messages&title=Thank You!&content=Thank you so much for your support. Because of you, we reached our goal!',
+          actionLabel: 'Send Thank You'
+        }
       ]
     }
   ]

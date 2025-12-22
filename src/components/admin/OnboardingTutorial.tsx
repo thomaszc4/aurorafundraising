@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Target, 
-  Users, 
-  DollarSign, 
-  ClipboardList, 
-  Share2, 
+import {
+  Target,
+  Users,
+  DollarSign,
+  ClipboardList,
+  Share2,
   CheckCircle2,
   ArrowRight,
-  X
+  X,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,8 +28,14 @@ const steps = [
   {
     icon: ClipboardList,
     title: 'Project Manager',
-    description: 'Your step-by-step guide to a successful fundraiser. Every task is laid out with the resources you need to complete it.',
-    highlight: 'Never wonder "what\'s next?" - we guide you through every step.',
+    description: 'Your step-by-step guide to a successful fundraiser. Every task is laid out with the resources you need to complete it. Smart links take you directly to where you need to go.',
+    highlight: 'Never wonder "what\'s next?" - we guide you through every step with one-click actions.',
+  },
+  {
+    icon: Calendar,
+    title: 'Visual Timeline',
+    description: 'See your entire campaign at a glance with the Gantt Chart. Sync your timeline to your personal calendar so you never miss a deadline.',
+    highlight: 'Export to Google Calendar, Outlook, or Apple Calendar in one click.',
   },
   {
     icon: Users,
@@ -95,7 +102,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
 
         <CardContent className="text-center space-y-4">
           <p className="text-muted-foreground">{step.description}</p>
-          
+
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
             <p className="text-sm font-medium text-primary">{step.highlight}</p>
           </div>

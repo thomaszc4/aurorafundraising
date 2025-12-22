@@ -16,7 +16,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { Copy, Edit, Plus, Trash2, Users } from 'lucide-react';
+import { Copy, Edit, Plus, Trash2, Users, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { useNavigate } from 'react-router-dom';
@@ -92,6 +92,33 @@ export default function AdminCampaigns() {
     } catch (error) {
       console.error('Error deleting campaign:', error);
       toast.error('Failed to delete campaign');
+    }
+  };
+
+  const handleFinalize = async (campaign: Campaign) => {
+    if (!confirm('This will finalize the campaign and generate a Purchase Order for the vendor. Continue?')) return;
+
+    try {
+      // MVP: Fetch the first vendor. In a real app, you might select which vendor to generate for if multiple exist.
+      const { data: vendors } = await supabase.from('vendor_accounts').select('id').limit(1).single();
+
+      if (!vendors) {
+        toast.error('No vendor account found. Cannot generate PO.');
+        return;
+      }
+
+      const { error } = await supabase.rpc('generate_purchase_order', {
+        p_campaign_id: campaign.id,
+        p_vendor_id: vendors.id
+      });
+
+      if (error) throw error;
+
+      toast.success('Campaign finalized and Purchase Order generated!');
+      fetchCampaigns();
+    } catch (error) {
+      console.error('Error generalizing PO:', error);
+      toast.error('Failed to finalize campaign');
     }
   };
 
@@ -251,6 +278,11 @@ export default function AdminCampaigns() {
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(campaign.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
+                          {status !== 'completed' && (
+                            <Button variant="ghost" size="icon" onClick={() => handleFinalize(campaign)} title="Finalize & Generate PO">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +26,7 @@ import {
   Save,
   Upload,
   Image as ImageIcon,
+  Plus,
   Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -53,6 +56,8 @@ interface Campaign {
 }
 
 export default function CampaignSettings() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -76,6 +81,7 @@ export default function CampaignSettings() {
       const { data, error } = await supabase
         .from('campaigns')
         .select('*')
+        .eq('organization_admin_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -234,38 +240,52 @@ export default function CampaignSettings() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container-wide py-12">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-64 bg-muted rounded-xl"></div>
-          </div>
+      <AdminLayout>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="h-64 bg-muted rounded-xl"></div>
         </div>
-      </Layout>
+      </AdminLayout>
+    );
+  }
+
+  if (campaigns.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Aurora</h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Get started by creating your first fundraiser. Configure your settings after you've created a campaign.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => navigate('/admin?view=create')} className="gap-2">
+            <Plus className="w-5 h-5" />
+            Create Your First Fundraiser
+          </Button>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout>
-      <div className="container-wide py-12">
-        <div className="flex justify-between items-center mb-8">
+    <AdminLayout
+      campaignName={campaign?.name}
+      campaigns={campaigns.map(c => ({ id: c.id, name: c.name }))}
+      selectedCampaignId={selectedCampaignId || undefined}
+      onCampaignChange={setSelectedCampaignId}
+      onCreateCampaign={() => navigate('/admin?view=create')}
+    >
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">Campaign Settings</h1>
             <p className="text-muted-foreground">Configure your campaign details and branding</p>
           </div>
           <div className="flex items-center gap-4">
-            <Select value={selectedCampaignId || ''} onValueChange={setSelectedCampaignId}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select campaign" />
-              </SelectTrigger>
-              <SelectContent>
-                {campaigns.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Button onClick={handleSave} disabled={saving || !campaign}>
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Saving...' : 'Save Changes'}
@@ -643,6 +663,6 @@ export default function CampaignSettings() {
           </Tabs>
         )}
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

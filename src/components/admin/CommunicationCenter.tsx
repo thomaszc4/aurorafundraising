@@ -7,8 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { 
-  Loader2, Send, MessageSquare, Users, Clock, Trash2 
+import {
+  Loader2, Send, MessageSquare, Users, Clock, Trash2
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -36,17 +36,19 @@ interface Campaign {
 
 interface CommunicationCenterProps {
   campaignId?: string;
+  initialTitle?: string;
+  initialContent?: string;
 }
 
-export function CommunicationCenter({ campaignId }: CommunicationCenterProps) {
+export function CommunicationCenter({ campaignId, initialTitle, initialContent }: CommunicationCenterProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<string>(campaignId || '');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState(initialTitle || '');
+  const [content, setContent] = useState(initialContent || '');
   const [participantCount, setParticipantCount] = useState(0);
 
   useEffect(() => {

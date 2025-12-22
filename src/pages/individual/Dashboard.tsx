@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { IndividualSetupWizard } from '@/components/individual/IndividualSetupWizard';
+import { SocialPostGenerator } from '@/components/admin/SocialPostGenerator';
 
 export default function IndividualDashboard() {
     const { user } = useAuth();
@@ -184,36 +185,36 @@ export default function IndividualDashboard() {
                 </TabsList>
 
                 <TabsContent value="share" className="space-y-4">
+                    {/* Quick Link Copy */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Share Your Campaign</CardTitle>
-                            <CardDescription>Get the word out to friends and family</CardDescription>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Your Campaign Link</CardTitle>
+                            <CardDescription>Share this link to receive donations</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex flex-col gap-3">
-                                <Label className="text-sm font-medium text-muted-foreground">Your Campaign Link</Label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        readOnly
-                                        className="font-mono text-sm bg-muted/50"
-                                        value={`${window.location.origin}/campaign/${campaign.id}`}
-                                    />
-                                    <Button onClick={copyLink} className="shrink-0 font-semibold shadow-sm">
-                                        <Copy className="h-4 w-4 mr-2" />
-                                        Copy Link
-                                    </Button>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Share this link via text, email, or social media. Anyone with the link can donate.
-                                </p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Social Share Buttons could go here */}
-                                <Button className="w-full bg-[#1877F2] hover:bg-[#1877F2]/90">Facebook</Button>
-                                <Button className="w-full bg-[#1DA1F2] hover:bg-[#1DA1F2]/90">Twitter</Button>
+                        <CardContent>
+                            <div className="flex gap-2">
+                                <Input
+                                    readOnly
+                                    className="font-mono text-sm bg-muted/50"
+                                    value={`${window.location.origin}/campaign/${campaign.id}`}
+                                />
+                                <Button onClick={copyLink} className="shrink-0">
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Social Post Generator */}
+                    <SocialPostGenerator
+                        campaignId={campaign.id}
+                        organizationName={campaign.name || 'My Fundraiser'}
+                        organizationType={campaign.organization_type}
+                        fundraiserType={campaign.fundraiser_type || 'donation'}
+                        goalAmount={campaign.goal_amount}
+                        description={campaign.description}
+                    />
                 </TabsContent>
 
                 <TabsContent value="settings">

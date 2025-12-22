@@ -1,146 +1,36 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, ArrowRight, Loader2, Settings2, Zap } from 'lucide-react';
-import { toast } from 'sonner';
-import { SmartTaskItem } from './SmartTaskItem';
-import { 
-  TASK_REGISTRY, 
-  TaskDefinition, 
-  TaskContext, 
-  getNextTasks,
-  PHASE_INFO
-} from '@/data/taskRegistry';
-import { 
-  getAutomationSettings, 
-  createDefaultSettings,
-  getCompletedTaskIds,
-  AutomationSettings
-} from '@/services/automationEngine';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ClipboardList, ArrowRight, Loader2, ExternalLink, Calendar, Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useProjectManagerTasks } from '@/hooks/useProjectManagerTasks';
+import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 interface DashboardTaskListProps {
   campaignId: string;
   fundraiserTypeId: string;
   startDate?: Date;
+  endDate?: Date;
   onViewAll: () => void;
 }
 
-export function DashboardTaskList({ 
-  campaignId, 
-  fundraiserTypeId, 
+export function DashboardTaskList({
+  campaignId,
+  fundraiserTypeId,
   startDate,
-  onViewAll 
+  endDate,
+  onViewAll
 }: DashboardTaskListProps) {
-  const [tasks, setTasks] = useState<TaskDefinition[]>([]);
-  const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [automationSettings, setAutomationSettings] = useState<AutomationSettings | null>(null);
-  const [context, setContext] = useState<TaskContext | null>(null);
-
-  useEffect(() => {
-    loadData();
-  }, [campaignId, fundraiserTypeId]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // Load automation settings
-      let settings = await getAutomationSettings(campaignId);
-      if (!settings) {
-        settings = await createDefaultSettings(campaignId);
-      }
-      setAutomationSettings(settings);
-
-      // Load completed tasks
-      const completed = await getCompletedTaskIds(campaignId);
-      setCompletedTaskIds(completed);
-
-      // Build task context
-      const taskContext = await buildTaskContext(campaignId, fundraiserTypeId, startDate);
-      setContext(taskContext);
-
-      // Get next actionable tasks
-      const nextTasks = getNextTasks(taskContext, completed);
-      setTasks(nextTasks.slice(0, 5)); // Show top 5 tasks
-    } catch (error) {
-      console.error('Error loading tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const buildTaskContext = async (
-    campaignId: string, 
-    fundraiserType: string,
-    startDate?: Date
-  ): Promise<TaskContext> => {
-    // Fetch campaign data
-    const { data: campaign } = await supabase
-      .from('campaigns')
-      .select('logo_url, goal_amount, start_date, end_date')
-      .eq('id', campaignId)
-      .maybeSingle();
-
-    // Fetch participant count
-    const { count: participantCount } = await supabase
-      .from('student_invitations')
-      .select('*', { count: 'exact', head: true })
-      .eq('campaign_id', campaignId);
-
-    // Check if invitations were sent
-    const { count: sentInvitations } = await supabase
-      .from('student_invitations')
-      .select('*', { count: 'exact', head: true })
-      .eq('campaign_id', campaignId)
-      .eq('invitation_sent', true);
-
-    // Check for products
-    const { count: productCount } = await supabase
-      .from('campaign_products')
-      .select('*', { count: 'exact', head: true })
-      .eq('campaign_id', campaignId);
-
-    // Check for social posts
-    const { count: postCount } = await supabase
-      .from('campaign_posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('campaign_id', campaignId);
-
-    // Calculate total raised
-    const { data: fundraisers } = await supabase
-      .from('student_fundraisers')
-      .select('total_raised')
-      .eq('campaign_id', campaignId);
-    
-    const totalRaised = fundraisers?.reduce((sum, f) => sum + (f.total_raised || 0), 0) || 0;
-
-    const now = new Date();
-    const campaignStart = campaign?.start_date ? new Date(campaign.start_date) : startDate;
-    const campaignEnd = campaign?.end_date ? new Date(campaign.end_date) : undefined;
-
-    return {
-      campaignId,
-      fundraiserType,
-      hasLogo: !!campaign?.logo_url,
-      hasParticipants: (participantCount || 0) > 0,
-      participantCount: participantCount || 0,
-      invitationsSent: (sentInvitations || 0) > 0,
-      hasProducts: (productCount || 0) > 0,
-      hasSocialPosts: (postCount || 0) > 0,
-      campaignStarted: campaignStart ? now >= campaignStart : false,
-      campaignEnded: campaignEnd ? now >= campaignEnd : false,
-      daysUntilStart: campaignStart ? Math.ceil((campaignStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0,
-      daysUntilEnd: campaignEnd ? Math.ceil((campaignEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0,
-      totalRaised,
-      goalAmount: campaign?.goal_amount || 0,
-    };
-  };
-
-  const handleTaskComplete = () => {
-    loadData(); // Reload tasks after completion
-  };
+  const navigate = useNavigate();
+  const { tasks, loading, toggleTask } = useProjectManagerTasks(campaignId, fundraiserTypeId, startDate, endDate);
 
   if (loading) {
     return (
@@ -152,7 +42,22 @@ export function DashboardTaskList({
     );
   }
 
-  if (tasks.length === 0) {
+  // Filter for upcoming tasks (not completed)
+  const upcomingTasks = tasks
+    .filter(t => !t.is_completed)
+    .sort((a, b) => {
+      // Sort by due date (nulls last)
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return a.due_date.getTime() - b.due_date.getTime();
+    })
+    .slice(0, 5);
+
+  const completedCount = tasks.filter(t => t.is_completed).length;
+  const totalCount = tasks.length;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+  if (upcomingTasks.length === 0 && tasks.length > 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center">
@@ -166,46 +71,105 @@ export function DashboardTaskList({
     );
   }
 
-  const isAutopilot = automationSettings?.automation_mode === 'autopilot';
-
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-primary" />
               Your Next Tasks
             </CardTitle>
-            {isAutopilot && (
-              <Badge variant="outline" className="text-green-600 border-green-600">
-                <Zap className="h-3 w-3 mr-1" />
-                Autopilot Active
+            <CardDescription className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="font-normal text-xs">
+                {Math.round(progress)}% Complete
               </Badge>
-            )}
+              {tasks.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {completedCount} of {totalCount} tasks done
+                </span>
+              )}
+            </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onViewAll} className="gap-1">
-              <Settings2 className="h-4 w-4" />
-              Settings
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onViewAll} className="gap-1">
-              View All <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={onViewAll} className="gap-1">
+            View All <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {tasks.map((task) => (
-          <SmartTaskItem
-            key={task.id}
-            task={task}
-            campaignId={campaignId}
-            isComplete={completedTaskIds.includes(task.id)}
-            isAutopilot={isAutopilot}
-            onComplete={handleTaskComplete}
-          />
-        ))}
+        <TooltipProvider>
+          {upcomingTasks.map((task) => (
+            <div
+              key={task.id}
+              className="p-3 rounded-lg border bg-card/50 hover:bg-card hover:shadow-sm transition-all border-border/50"
+            >
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  checked={task.is_completed}
+                  onCheckedChange={() => toggleTask(task.id, task.is_completed)}
+                  className="mt-1 h-5 w-5 border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h4 className="font-medium text-foreground truncate pr-2">{task.task}</h4>
+                    {task.due_date && (
+                      <Badge variant="outline" className={cn(
+                        "scale-90 origin-right whitespace-nowrap",
+                        task.due_date < new Date() ? "text-destructive border-destructive/30" : "text-muted-foreground"
+                      )}>
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {Number(formatDistanceToNow(task.due_date, { addSuffix: true }).replace(/[^0-9]/g, '')) < 2 && task.due_date < new Date()
+                          ? "Overdue"
+                          : formatDistanceToNow(task.due_date, { addSuffix: true })}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                    {task.description}
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    {task.action_url && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 text-xs gap-1.5"
+                        onClick={() => navigate(task.action_url!)}
+                      >
+                        Action <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    )}
+
+                    {(task.detailed_instructions || task.description) && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-muted-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                          <p>{task.detailed_instructions || task.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    <span className="text-xs text-muted-foreground/50 ml-auto capitalize">
+                      {task.phase} Phase
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </TooltipProvider>
+
+        {tasks.length === 0 && (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>No tasks found. Visit Project Manager to set up your plan.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

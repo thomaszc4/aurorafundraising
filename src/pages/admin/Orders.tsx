@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { useNavigate } from 'react-router-dom';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,12 +29,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Eye, Package, List, Users } from 'lucide-react';
+import { Eye, Package, List, Users, Target, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrdersByStudent } from '@/components/admin/OrdersByStudent';
 import type { Database } from '@/integrations/supabase/types';
 
 type OrderStatus = Database['public']['Enums']['order_status'];
+
+interface Campaign {
+  id: string;
+  name: string;
+}
 
 interface OrderItem {
   id: string;
@@ -65,24 +73,70 @@ interface Order {
 }
 
 export default function AdminOrders() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasCampaigns, setHasCampaigns] = useState<boolean | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (user) {
+      checkCampaigns();
+    }
+  }, [user]);
+
+  const checkCampaigns = async () => {
+    try {
+      const { data, count } = await supabase
+        .from('campaigns')
+        .select('id, name', { count: 'exact', head: false })
+        .eq('organization_admin_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      const hasCampaignsData = count ? count > 0 : false;
+      setHasCampaigns(hasCampaignsData);
+
+      if (hasCampaignsData && data) {
+        setCampaigns(data);
+        // Default to first campaign if none selected
+        if (!selectedCampaignId && data.length > 0) {
+          setSelectedCampaignId(data[0].id);
+        }
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking campaigns:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCampaignId) {
+      fetchOrders();
+    }
+  }, [selectedCampaignId]);
 
   const fetchOrders = async () => {
+    if (!selectedCampaignId) return;
+    setLoading(true);
+
     try {
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
           order_items(*, products(name)),
-          student_fundraisers(profiles(full_name))
+          student_fundraisers!inner(
+            profiles(full_name),
+            campaigns!inner(id, organization_admin_id)
+          )
         `)
+        .eq('student_fundraisers.campaign_id', selectedCampaignId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -101,7 +155,7 @@ export default function AdminOrders() {
         .from('orders')
         .update({ status: newStatus })
         .eq('id', orderId);
-      
+
       if (error) throw error;
       toast.success('Order status updated');
       fetchOrders();
@@ -117,7 +171,7 @@ export default function AdminOrders() {
         .from('orders')
         .update({ delivery_status: newStatus })
         .eq('id', orderId);
-      
+
       if (error) throw error;
       toast.success('Delivery status updated');
       fetchOrders();
@@ -153,29 +207,59 @@ export default function AdminOrders() {
     }
   };
 
-  const filteredOrders = statusFilter === 'all' 
-    ? orders 
+  const filteredOrders = statusFilter === 'all'
+    ? orders
     : orders.filter(o => o.status === statusFilter);
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container-wide py-12">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-64 bg-muted rounded-xl"></div>
-          </div>
+      <AdminLayout>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="h-64 bg-muted rounded-xl"></div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
+  if (hasCampaigns === false) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Aurora</h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Get started by creating your first fundraiser to start receiving orders.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => navigate('/admin?view=create')} className="gap-2">
+            <Plus className="w-5 h-5" />
+            Create Your First Fundraiser
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId);
+
   return (
-    <Layout>
-      <div className="container-wide py-12">
+    <AdminLayout
+      campaignName={selectedCampaign?.name}
+      campaigns={campaigns}
+      selectedCampaignId={selectedCampaignId || undefined}
+      onCampaignChange={setSelectedCampaignId}
+      onCreateCampaign={() => navigate('/admin?view=create')}
+    >
+      <div className="space-y-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Orders</h1>
-          <p className="text-muted-foreground">Track and manage all customer orders</p>
+          <p className="text-muted-foreground">
+            Track and manage orders for <span className="font-semibold text-primary">{selectedCampaign?.name}</span>
+          </p>
         </div>
 
         <Tabs defaultValue="all" className="space-y-6">
@@ -255,9 +339,9 @@ export default function AdminOrders() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setSelectedOrder(order)}
                             >
                               <Eye className="h-4 w-4" />
@@ -380,6 +464,6 @@ export default function AdminOrders() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

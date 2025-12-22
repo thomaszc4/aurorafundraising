@@ -11,6 +11,7 @@ import {
   Loader2, Package, Truck, CheckCircle, LogOut,
   Building, MapPin, Calendar, Printer, Search
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const VENDOR_STORAGE_KEY = 'vendor_session';
 
@@ -36,6 +37,7 @@ export default function VendorDashboard() {
   const [loading, setLoading] = useState(true);
   const [vendor, setVendor] = useState<VendorSession | null>(null);
   const [campaignOrders, setCampaignOrders] = useState<CampaignOrder[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -48,7 +50,10 @@ export default function VendorDashboard() {
     try {
       const vendorData = JSON.parse(session) as VendorSession;
       setVendor(vendorData);
+      // setVendor is async-ish in React batching but effect runs once. 
+      // We can call fetch immediately with vendorData.
       fetchOrders();
+      fetchPurchaseOrders(vendorData.id);
     } catch {
       navigate('/vendor');
     }
@@ -133,6 +138,29 @@ export default function VendorDashboard() {
     }
   };
 
+  const fetchPurchaseOrders = async (vendorId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('purchase_orders')
+        .select(`
+          *,
+          campaigns (name, organization_name),
+          purchase_order_items (
+            quantity,
+            product_name_snapshot,
+            total_cost
+          )
+        `)
+        .eq('vendor_id', vendorId)
+        .order('generated_at', { ascending: false });
+
+      if (error) console.error('Error fetching POs:', error);
+      else setPurchaseOrders(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem(VENDOR_STORAGE_KEY);
     navigate('/vendor');
@@ -211,8 +239,8 @@ export default function VendorDashboard() {
                 <Building className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-foreground">{campaignOrders.length}</p>
-                <p className="text-sm text-muted-foreground">Active Campaigns</p>
+                <p className="text-3xl font-bold text-foreground">{purchaseOrders.length}</p>
+                <p className="text-sm text-muted-foreground">Purchase Orders</p>
               </div>
             </div>
           </div>
@@ -227,7 +255,7 @@ export default function VendorDashboard() {
                 <p className="text-3xl font-bold text-foreground">
                   {campaignOrders.reduce((sum, c) => sum + c.total_items, 0)}
                 </p>
-                <p className="text-sm text-muted-foreground">Total Items to Ship</p>
+                <p className="text-sm text-muted-foreground">Forecasted Items</p>
               </div>
             </div>
           </div>
@@ -236,105 +264,141 @@ export default function VendorDashboard() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-accent/20 transition-all" />
             <div className="flex items-center gap-4 relative z-10">
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
-                <Truck className="h-6 w-6" />
+                <Search className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-foreground">
-                  {campaignOrders.filter(c => c.status === 'pending').length}
-                </p>
-                <p className="text-sm text-muted-foreground">Pending Shipments</p>
+                <p className="text-3xl font-bold text-foreground">{campaignOrders.length}</p>
+                <p className="text-sm text-muted-foreground">Active Campaigns</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Orders Table */}
-        {/* Orders Table */}
-        <div className="glass-card rounded-2xl border border-white/5 overflow-hidden">
-          <div className="p-6 border-b border-white/5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold">Campaign Orders</h2>
-                <p className="text-sm text-muted-foreground">View and manage orders by campaign</p>
+        <Tabs defaultValue="forecast" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="forecast">Live Forecast / Anticipated</TabsTrigger>
+            <TabsTrigger value="pos">Official Purchase Orders</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="forecast" className="space-y-4">
+            <div className="glass-card rounded-2xl border border-white/5 overflow-hidden">
+              <div className="p-6 border-b border-white/5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">Live Demand Forecast</h2>
+                    <p className="text-sm text-muted-foreground">Real-time view of orders coming in from active campaigns. <span className="text-amber-500">Not final.</span></p>
+                  </div>
+                  <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search campaigns..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 bg-background/50 border-white/10"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search campaigns..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-background/50 border-white/10"
-                />
+              <div className="p-0">
+                {filteredOrders.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>No active orders found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-white/5 border-white/5">
+                          <TableHead>Campaign</TableHead>
+                          <TableHead>Organization</TableHead>
+                          <TableHead className="text-right">Orders</TableHead>
+                          <TableHead className="text-right">Items</TableHead>
+                          <TableHead>Products</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredOrders.map((order) => (
+                          <TableRow key={order.campaign_id} className="hover:bg-white/5 border-white/5">
+                            <TableCell className="font-medium">{order.campaign_name}</TableCell>
+                            <TableCell>{order.organization_name}</TableCell>
+                            <TableCell className="text-right">{order.total_orders}</TableCell>
+                            <TableCell className="text-right">{order.total_items}</TableCell>
+                            <TableCell>
+                              <div className="max-w-[200px]">
+                                {order.product_summary.slice(0, 3).map((p, i) => (
+                                  <span key={i} className="text-xs block text-muted-foreground">
+                                    {p.name} <span className="text-foreground font-medium">(×{p.quantity})</span>
+                                  </span>
+                                ))}
+                                {order.product_summary.length > 3 && (
+                                  <span className="text-xs text-muted-foreground block mt-1">
+                                    +{order.product_summary.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-          <div className="p-0">
-            {filteredOrders.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>No orders found</p>
+          </TabsContent>
+
+          <TabsContent value="pos">
+            <div className="glass-card rounded-2xl border border-white/5 overflow-hidden">
+              <div className="p-6 border-b border-white/5">
+                <h2 className="text-xl font-semibold">Official Purchase Orders</h2>
+                <p className="text-sm text-muted-foreground">Finalized orders ready for shipment.</p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-white/5 border-white/5">
-                      <TableHead>Campaign</TableHead>
-                      <TableHead>Organization</TableHead>
-                      <TableHead className="text-right">Orders</TableHead>
-                      <TableHead className="text-right">Items</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Products</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOrders.map((order) => (
-                      <TableRow key={order.campaign_id} className="hover:bg-white/5 border-white/5">
-                        <TableCell className="font-medium">{order.campaign_name}</TableCell>
-                        <TableCell>{order.organization_name}</TableCell>
-                        <TableCell className="text-right">{order.total_orders}</TableCell>
-                        <TableCell className="text-right">{order.total_items}</TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {order.product_summary.slice(0, 3).map((p, i) => (
-                              <span key={i} className="text-xs block text-muted-foreground">
-                                {p.name} <span className="text-foreground font-medium">(×{p.quantity})</span>
-                              </span>
-                            ))}
-                            {order.product_summary.length > 3 && (
-                              <span className="text-xs text-muted-foreground block mt-1">
-                                +{order.product_summary.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/10">
-                              <Printer className="h-4 w-4" />
-                            </Button>
-                            {order.status === 'pending' && (
-                              <Button
-                                size="sm"
-                                onClick={() => markAsShipped(order.campaign_id)}
-                                className="bg-primary-blue hover:bg-primary-blue/90 text-white shadow-glow"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Ship
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
+              <div className="p-0">
+                {purchaseOrders.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>No purchase orders yet.</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-white/5 border-white/5">
+                        <TableHead>PO #</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Campaign</TableHead>
+                        <TableHead>Total Cost</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Items</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {purchaseOrders.map((po) => (
+                        <TableRow key={po.id} className="hover:bg-white/5 border-white/5">
+                          <TableCell className="font-mono text-xs">{po.id.slice(0, 8)}</TableCell>
+                          <TableCell>{new Date(po.generated_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <div>{po.campaigns?.name}</div>
+                            <div className="text-xs text-muted-foreground">{po.campaigns?.organization_name}</div>
+                          </TableCell>
+                          <TableCell>${po.total_amount?.toLocaleString()}</TableCell>
+                          <TableCell><Badge variant="outline">{po.status}</Badge></TableCell>
+                          <TableCell>
+                            <div className="text-xs">
+                              {po.purchase_order_items?.map((item: any) => (
+                                <div key={item.id}>{item.product_name_snapshot}: {item.quantity}</div>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

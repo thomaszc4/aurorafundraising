@@ -13,9 +13,14 @@ export interface GameStats {
     days_survived?: number;
 }
 
+export interface GameAppearance {
+    color: number;
+}
+
 export interface GameData {
     inventory: InventoryItem[];
     stats: GameStats;
+    appearance?: GameAppearance;
 }
 
 export type GamePlayer = {

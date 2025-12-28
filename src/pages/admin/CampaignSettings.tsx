@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +27,8 @@ import {
   Save,
   Upload,
   Image as ImageIcon,
-  Trash2
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -53,6 +57,8 @@ interface Campaign {
 }
 
 export default function CampaignSettings() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -76,6 +82,7 @@ export default function CampaignSettings() {
       const { data, error } = await supabase
         .from('campaigns')
         .select('*')
+        .eq('organization_admin_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -242,6 +249,28 @@ export default function CampaignSettings() {
           </div>
         </div>
       </Layout>
+    );
+  }
+
+  if (campaigns.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Aurora</h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Get started by creating your first fundraiser. Our platform helps you raise 10x more than traditional fundraisers.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => navigate('/admin?view=create')} className="gap-2">
+            <Plus className="w-5 h-5" />
+            Create Your First Fundraiser
+          </Button>
+        </div>
+      </AdminLayout>
     );
   }
 

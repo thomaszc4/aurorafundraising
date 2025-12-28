@@ -5,6 +5,7 @@ import { DialogueOverlay } from '@/components/game/DialogueOverlay';
 import { QuestLog } from '@/components/game/QuestLog';
 import { DialogueHistory } from '@/components/game/DialogueHistory';
 import { QuestItemDisplay } from '@/components/game/QuestItemDisplay';
+import { supabase } from '@/integrations/supabase/client';
 
 const Game3D: React.FC = () => {
     const mountRef = useRef<HTMLDivElement>(null);
@@ -21,7 +22,42 @@ const Game3D: React.FC = () => {
 
         const start = async () => {
             setIsLoading(true);
-            await engine.init(mountRef.current!);
+
+            // 1. Check for Participant Token
+            const partToken = localStorage.getItem('participant_token');
+            let userId = undefined;
+            let username = undefined;
+
+            if (partToken) {
+                // Verify/Fetch Participant Name
+                try {
+                    const { data } = await supabase
+                        .from('participants')
+                        .select('id, first_name')
+                        .eq('id', partToken)
+                        .single();
+
+                    if (data) {
+                        userId = `participant_${data.id}`;
+                        username = (data as any).first_name || 'Participant';
+                    }
+                } catch (e) {
+                    console.warn("Failed to validate participant token", e);
+                }
+            }
+
+            // 2. Fallback to Supabase Auth User (Admin/Student/etc)
+            if (!userId) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    userId = user.id;
+                    // Try to get profile name? For now just use email/metadata or default
+                    username = user.user_metadata?.first_name || 'Adventurer';
+                }
+            }
+
+            // Init with discovered identity
+            await engine.init(mountRef.current!, userId, username);
             setIsLoading(false);
         };
 

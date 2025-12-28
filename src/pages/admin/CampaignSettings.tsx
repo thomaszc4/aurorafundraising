@@ -373,16 +373,14 @@ export default function CampaignSettings() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Status</Label>
                       <Select
-                        value={campaign.status || 'draft'}
-                        onValueChange={(value: 'draft' | 'active' | 'paused' | 'completed') => setCampaign({ ...campaign, status: value })}
+                        value={((campaign.status === 'draft' || !campaign.status) ? 'active' : campaign.status)}
+                        onValueChange={(value: 'active' | 'paused' | 'completed') => setCampaign({ ...campaign, status: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
                           <SelectItem value="active">Active</SelectItem>
                           <SelectItem value="paused">Paused</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>

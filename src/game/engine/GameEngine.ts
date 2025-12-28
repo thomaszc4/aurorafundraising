@@ -125,7 +125,7 @@ export class GameEngine {
         });
     }
 
-    public async init(container: HTMLElement) {
+    public async init(container: HTMLElement, userId?: string, username?: string) {
         this.container = container;
         this.renderer.setSize(container.clientWidth, container.clientHeight);
         container.appendChild(this.renderer.domElement);
@@ -148,9 +148,11 @@ export class GameEngine {
         }
 
         // Initialize Network
-        // Use random ID for now, effectively anonymous multiplayer
-        const playerId = 'player_' + Math.floor(Math.random() * 10000);
-        this.networkManager = new NetworkManager(playerId);
+        // Use provided ID or fallback to random
+        const finalId = userId || 'player_' + Math.floor(Math.random() * 10000);
+        this.networkManager = new NetworkManager(finalId);
+
+        console.log(`Game Initialized for User: ${username || 'Visitor'} (${finalId})`);
 
         await this.player.load();
 

@@ -89,7 +89,7 @@ export const ChatUI: React.FC<ChatUIProps> = ({ campaignId, playerName, playerId
     return (
         <div
             ref={containerRef}
-            className={`absolute bottom-8 left-6 z-50 flex flex-col transition-all duration-300 ease-out ${isOpen ? 'w-96 h-80' : 'w-96 h-10'}`}
+            className={`absolute bottom-20 left-6 z-50 flex flex-col transition-all duration-300 ease-out ${isOpen ? 'w-96 h-80' : 'w-96 h-10'}`}
         >
             {/* Chat Messages */}
             <div className={`flex-1 bg-slate-950/85 backdrop-blur-xl rounded-t-2xl p-4 overflow-y-auto flex flex-col gap-2 border-x border-t border-cyan-500/30 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>

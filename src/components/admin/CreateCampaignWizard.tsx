@@ -397,7 +397,8 @@ export function CreateCampaignWizard({
         athon_unit_name: fundraiserTypeValue !== 'product' ? athonUnitName : null,
         organization_admin_id: user.id,
         logo_url: logoUrl || null,
-        brand_colors: brandColors || null
+        brand_colors: brandColors || null,
+        status: 'active' // User requested all campaigns be active
       };
 
       let campaignId: string;

@@ -36,6 +36,11 @@ import type { Database } from '@/integrations/supabase/types';
 
 type OrderStatus = Database['public']['Enums']['order_status'];
 
+interface Campaign {
+  id: string;
+  name: string;
+}
+
 interface OrderItem {
   id: string;
   quantity: number;
@@ -72,6 +77,9 @@ export default function AdminOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasCampaigns, setHasCampaigns] = useState<boolean | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [hasCampaigns, setHasCampaigns] = useState<boolean>(true);
@@ -95,6 +103,7 @@ export default function AdminOrders() {
         setLoading(false);
       } else {
         fetchOrders();
+
       }
     } catch (error) {
       console.error('Error checking campaigns:', error);
@@ -102,7 +111,16 @@ export default function AdminOrders() {
     }
   };
 
+  useEffect(() => {
+    if (selectedCampaignId) {
+      fetchOrders();
+    }
+  }, [selectedCampaignId]);
+
   const fetchOrders = async () => {
+    if (!selectedCampaignId) return;
+    setLoading(true);
+
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -191,14 +209,34 @@ export default function AdminOrders() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container-wide py-12">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-64 bg-muted rounded-xl"></div>
-          </div>
+      <AdminLayout>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="h-64 bg-muted rounded-xl"></div>
         </div>
-      </Layout>
+      </AdminLayout>
+    );
+  }
+
+  if (hasCampaigns === false) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Aurora</h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Get started by creating your first fundraiser to start receiving orders.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => navigate('/admin?view=create')} className="gap-2">
+            <Plus className="w-5 h-5" />
+            Create Your First Fundraiser
+          </Button>
+        </div>
+      </AdminLayout>
     );
   }
 
@@ -225,11 +263,19 @@ export default function AdminOrders() {
   }
 
   return (
-    <Layout>
-      <div className="container-wide py-12">
+    <AdminLayout
+      campaignName={selectedCampaign?.name}
+      campaigns={campaigns}
+      selectedCampaignId={selectedCampaignId || undefined}
+      onCampaignChange={setSelectedCampaignId}
+      onCreateCampaign={() => navigate('/admin?view=create')}
+    >
+      <div className="space-y-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Orders</h1>
-          <p className="text-muted-foreground">Track and manage all customer orders</p>
+          <p className="text-muted-foreground">
+            Track and manage orders for <span className="font-semibold text-primary">{selectedCampaign?.name}</span>
+          </p>
         </div>
 
         <Tabs defaultValue="all" className="space-y-6">
@@ -434,6 +480,6 @@ export default function AdminOrders() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

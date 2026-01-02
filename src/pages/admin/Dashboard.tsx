@@ -268,10 +268,16 @@ export default function AdminDashboard() {
         );
 
       case 'messages':
+        const initialTitle = searchParams.get('title') || undefined;
+        const initialContent = searchParams.get('content') || undefined;
         return selectedCampaign && (
           <>
             <BackButton onClick={() => setView('overview')} />
-            <CommunicationCenter campaignId={selectedCampaign.id} />
+            <CommunicationCenter
+              campaignId={selectedCampaign.id}
+              initialTitle={initialTitle}
+              initialContent={initialContent}
+            />
           </>
         );
 
@@ -315,21 +321,19 @@ export default function AdminDashboard() {
             <BackButton onClick={() => setView('overview')} />
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-foreground mb-2">Social Media Posts</h2>
-              <p className="text-muted-foreground">Generate AI-powered social media posts for your fundraiser</p>
+              <p className="text-muted-foreground">Generate AI-powered posts and create share templates for participants</p>
             </div>
-            <Card>
-              <CardContent className="pt-6">
-                <SocialPostGenerator
-                  organizationName={selectedCampaign.name}
-                  organizationType={selectedCampaign.organization_name}
-                  fundraiserType={selectedCampaign.fundraiser_type || 'product'}
-                  goalAmount={selectedCampaign.goal_amount ? Number(selectedCampaign.goal_amount) : undefined}
-                  description={selectedCampaign.description || undefined}
-                />
-              </CardContent>
-            </Card>
+            <SocialPostGenerator
+              campaignId={selectedCampaign.id}
+              organizationName={selectedCampaign.name}
+              organizationType={selectedCampaign.organization_name}
+              fundraiserType={selectedCampaign.fundraiser_type || 'product'}
+              goalAmount={selectedCampaign.goal_amount ? Number(selectedCampaign.goal_amount) : undefined}
+              description={selectedCampaign.description || undefined}
+            />
           </>
         );
+
 
       default:
         return renderOverview();
@@ -434,6 +438,7 @@ export default function AdminDashboard() {
           campaignId={selectedCampaign.id}
           fundraiserTypeId={selectedCampaign.fundraiser_type || 'product'}
           startDate={selectedCampaign.start_date ? new Date(selectedCampaign.start_date) : undefined}
+          endDate={selectedCampaign.end_date ? new Date(selectedCampaign.end_date) : undefined}
           onViewAll={() => setView('project-manager')}
         />
       )}

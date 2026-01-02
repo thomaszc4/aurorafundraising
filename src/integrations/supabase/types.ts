@@ -365,8 +365,8 @@ export type Database = {
       campaigns: {
         Row: {
           athon_donation_type:
-            | Database["public"]["Enums"]["athon_donation_type"]
-            | null
+          | Database["public"]["Enums"]["athon_donation_type"]
+          | null
           athon_unit_name: string | null
           brand_colors: Json | null
           created_at: string
@@ -389,8 +389,8 @@ export type Database = {
         }
         Insert: {
           athon_donation_type?:
-            | Database["public"]["Enums"]["athon_donation_type"]
-            | null
+          | Database["public"]["Enums"]["athon_donation_type"]
+          | null
           athon_unit_name?: string | null
           brand_colors?: Json | null
           created_at?: string
@@ -413,8 +413,8 @@ export type Database = {
         }
         Update: {
           athon_donation_type?:
-            | Database["public"]["Enums"]["athon_donation_type"]
-            | null
+          | Database["public"]["Enums"]["athon_donation_type"]
+          | null
           athon_unit_name?: string | null
           brand_colors?: Json | null
           created_at?: string
@@ -1455,6 +1455,8 @@ export type Database = {
           stripe_price_id: string | null
           stripe_product_id: string | null
           updated_at: string
+          vendor_id: string | null
+          cost_price: number | null
         }
         Insert: {
           average_raised_per_student?: number | null
@@ -1488,7 +1490,15 @@ export type Database = {
           stripe_product_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1531,6 +1541,105 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          id: string
+          purchase_order_id: string | null
+          product_id: string | null
+          product_name_snapshot: string | null
+          quantity: number
+          unit_cost: number
+          total_cost: number
+        }
+        Insert: {
+          id?: string
+          purchase_order_id?: string | null
+          product_id?: string | null
+          product_name_snapshot?: string | null
+          quantity: number
+          unit_cost: number
+          total_cost: number
+        }
+        Update: {
+          id?: string
+          purchase_order_id?: string | null
+          product_id?: string | null
+          product_name_snapshot?: string | null
+          quantity?: number
+          unit_cost?: number
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          id: string
+          campaign_id: string
+          vendor_id: string | null
+          status: Database["public"]["Enums"]["purchase_order_status"] | null
+          total_amount: number | null
+          generated_at: string | null
+          sent_at: string | null
+          shipped_at: string | null
+          tracking_number: string | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          vendor_id?: string | null
+          status?: Database["public"]["Enums"]["purchase_order_status"] | null
+          total_amount?: number | null
+          generated_at?: string | null
+          sent_at?: string | null
+          shipped_at?: string | null
+          tracking_number?: string | null
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          vendor_id?: string | null
+          status?: Database["public"]["Enums"]["purchase_order_status"] | null
+          total_amount?: number | null
+          generated_at?: string | null
+          sent_at?: string | null
+          shipped_at?: string | null
+          tracking_number?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resources: {
         Row: {
@@ -2032,35 +2141,59 @@ export type Database = {
         }
         Returns: boolean
       }
+      generate_purchase_order: {
+        Args: {
+          p_campaign_id: string
+          p_vendor_id: string
+        }
+        Returns: string
+      }
+      get_campaign_product_summary: {
+        Args: {
+          p_campaign_id: string
+        }
+        Returns: {
+          product_id: string
+          product_name: string
+          total_quantity: number
+        }[]
+      }
     }
     Enums: {
       app_role:
-        | "admin"
-        | "student"
-        | "organization_admin"
-        | "super_admin"
-        | "campaign_manager"
-        | "participant"
+      | "admin"
+      | "student"
+      | "organization_admin"
+      | "super_admin"
+      | "campaign_manager"
+      | "participant"
       athon_donation_type: "pledge_per_unit" | "flat_donation"
       campaign_status: "draft" | "active" | "paused" | "completed"
       donor_segment:
-        | "first_time"
-        | "recurring"
-        | "lapsed"
-        | "major"
-        | "business"
+      | "first_time"
+      | "recurring"
+      | "lapsed"
+      | "major"
+      | "business"
       fundraiser_type:
-        | "product"
-        | "walkathon"
-        | "readathon"
-        | "jogathon"
-        | "other_athon"
+      | "product"
+      | "walkathon"
+      | "readathon"
+      | "jogathon"
+      | "other_athon"
       order_status:
-        | "pending"
-        | "processing"
-        | "completed"
-        | "cancelled"
-        | "refunded"
+      | "pending"
+      | "processing"
+      | "completed"
+      | "cancelled"
+      | "refunded"
+      purchase_order_status:
+      | "generated"
+      | "sent"
+      | "acknowledged"
+      | "shipped"
+      | "completed"
+      | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2074,116 +2207,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {
@@ -2212,6 +2345,14 @@ export const Constants = {
         "completed",
         "cancelled",
         "refunded",
+      ],
+      purchase_order_status: [
+        "generated",
+        "sent",
+        "acknowledged",
+        "shipped",
+        "completed",
+        "cancelled"
       ],
     },
   },

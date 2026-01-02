@@ -10,6 +10,7 @@ import {
   Loader2, Trophy, Target, Share2, MessageSquare, Gift,
   TrendingUp, Crown, Medal, Award, Copy, ExternalLink
 } from 'lucide-react';
+import { ParticipantSocialCenter } from '@/components/participant/ParticipantSocialCenter';
 
 interface Participant {
   id: string;
@@ -271,31 +272,13 @@ export default function ParticipantDashboard() {
           </CardContent>
         </Card>
 
-        {/* Share Link */}
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              Share Your Link
-            </CardTitle>
-            <CardDescription>
-              Send this to friends and family to support you!
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Button onClick={copyShareLink} className="flex-1">
-                <Copy className="mr-2 h-4 w-4" />
-                Copy Link
-              </Button>
-              <Button variant="outline" asChild>
-                <a href={`/fundraise/${participant.id}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Social Sharing Center */}
+        <ParticipantSocialCenter
+          campaignId={participant.campaign_id}
+          participantId={participant.id}
+          participantName={participant.nickname}
+          shareUrl={`${window.location.origin}/fundraise/${participant.id}`}
+        />
 
         {/* Challenges/Incentives */}
         {incentives.length > 0 && (

@@ -30,26 +30,32 @@ export function ProductSection() {
 
               {/* Product Card */}
               <div className="relative glass-card rounded-3xl p-8 h-full flex flex-col justify-center overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                  <Package className="w-64 h-64" />
+                <div className="absolute inset-0 flex items-center justify-center p-8">
+                  <img
+                    src="/images/quickstove.png"
+                    alt="QuickStove Emergency Kit"
+                    className="w-full h-full object-contain drop-shadow-2xl animate-float"
+                  />
                 </div>
 
-                <span className="relative inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-semibold mb-4 w-fit border border-secondary/20">
-                  Flagship Product
-                </span>
-                <h3 className="relative text-3xl font-bold text-foreground mb-4">The QuickStove</h3>
-                <p className="relative text-muted-foreground mb-8 text-lg">
-                  A multi-functional, portable stove designed for emergency preparedness, camping,
-                  and outdoor cooking. The perfect product that families actually want and need.
-                </p>
-                <div className="relative flex items-center gap-4">
-                  <div className="flex-1 px-4 py-3 rounded-2xl bg-primary-blue/5 border border-primary-blue/10">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Margin</span>
-                    <div className="text-3xl font-bold text-primary-blue">50%</div>
-                  </div>
-                  <div className="flex-1 px-4 py-3 rounded-2xl bg-secondary/5 border border-secondary/10">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Satisfaction</span>
-                    <div className="text-3xl font-bold text-secondary">98%</div>
+                <div className="relative z-10 mt-auto">
+                  <span className="inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-semibold mb-4 w-fit border border-secondary/20 backdrop-blur-md">
+                    Flagship Product
+                  </span>
+                  <h3 className="text-3xl font-bold text-foreground mb-4 drop-shadow-md">The QuickStove</h3>
+                  <p className="text-muted-foreground mb-8 text-lg bg-background/50 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+                    A multi-functional, portable stove designed for emergency preparedness, camping,
+                    and outdoor cooking. The perfect product that families actually want and need.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 px-4 py-3 rounded-2xl bg-primary-blue/10 border border-primary-blue/20 backdrop-blur-md">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Margin</span>
+                      <div className="text-3xl font-bold text-primary-blue">50%</div>
+                    </div>
+                    <div className="flex-1 px-4 py-3 rounded-2xl bg-secondary/10 border border-secondary/20 backdrop-blur-md">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Satisfaction</span>
+                      <div className="text-3xl font-bold text-secondary">98%</div>
+                    </div>
                   </div>
                 </div>
               </div>

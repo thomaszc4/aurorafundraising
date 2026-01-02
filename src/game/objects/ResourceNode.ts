@@ -17,15 +17,16 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
             const tree = scene.add.sprite(0, -32, 'tree'); // Offset up so pivot is at base
             tree.setScale(1.5);
             this.add(tree);
+            this.visual = tree;
         } else if (type === 'water') {
             const water = scene.add.rectangle(0, 0, 64, 64, 0x0000ff, 0.5); // Blue square
             this.add(water);
-            // Assuming this node will be added to a physics group that collides with player
+            this.visual = water;
         } else {
-            // Ice Crystal
             const ice = scene.add.sprite(0, 0, 'ice_crystal');
             ice.setScale(0.08);
             this.add(ice);
+            this.visual = ice;
         }
 
         // Prompt (Hidden by default)
@@ -62,6 +63,18 @@ export default class ResourceNode extends Phaser.GameObjects.Container {
         this.interactorPrompt.setVisible(false);
         this.scene.tweens.killTweensOf(this.interactorPrompt);
         this.interactorPrompt.y = -50;
+    }
+
+    setTint(color: number) {
+        if (this.visual && (this.visual as any).setTint) {
+            (this.visual as any).setTint(color);
+        }
+    }
+
+    clearTint() {
+        if (this.visual && (this.visual as any).clearTint) {
+            (this.visual as any).clearTint();
+        }
     }
 
     harvest(): { type: string, amount: number } | null {

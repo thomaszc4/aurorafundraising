@@ -39,6 +39,8 @@ import VendorLogin from "./pages/vendor/VendorLogin";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
 import IndividualDashboard from "./pages/individual/Dashboard";
 import PublicCampaignPage from "./pages/campaign/PublicCampaignPage";
+// import { AuroraGame } from "./components/game/AuroraGame";
+import Game3D from "./game/Game3D";
 
 const queryClient = new QueryClient();
 
@@ -209,6 +211,13 @@ const App = () => (
 
               {/* Public Campaign Page */}
               <Route path="/campaign/:id" element={<PublicCampaignPage />} />
+
+              {/* DEBUG ROUTE - REMOVE LATER */}
+              <Route path="/debug-game" element={
+                <div className="h-screen w-screen">
+                  <Game3D />
+                </div>
+              } />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

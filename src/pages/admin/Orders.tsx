@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { Layout } from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,32 +82,28 @@ export default function AdminOrders() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [hasCampaigns, setHasCampaigns] = useState<boolean>(true);
 
   useEffect(() => {
-    if (user) {
-      checkCampaigns();
-    }
+    checkCampaigns();
   }, [user]);
 
   const checkCampaigns = async () => {
+    if (!user) return;
     try {
-      const { data, count } = await supabase
+      const { count, error } = await supabase
         .from('campaigns')
-        .select('id, name', { count: 'exact', head: false })
-        .eq('organization_admin_id', user?.id)
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_admin_id', user.id);
 
-      const hasCampaignsData = count ? count > 0 : false;
-      setHasCampaigns(hasCampaignsData);
+      if (error) throw error;
 
-      if (hasCampaignsData && data) {
-        setCampaigns(data);
-        // Default to first campaign if none selected
-        if (!selectedCampaignId && data.length > 0) {
-          setSelectedCampaignId(data[0].id);
-        }
-      } else {
+      if (count === 0) {
+        setHasCampaigns(false);
         setLoading(false);
+      } else {
+        fetchOrders();
+
       }
     } catch (error) {
       console.error('Error checking campaigns:', error);
@@ -133,10 +129,10 @@ export default function AdminOrders() {
           order_items(*, products(name)),
           student_fundraisers!inner(
             profiles(full_name),
-            campaigns!inner(id, organization_admin_id)
+            campaigns!inner(organization_admin_id)
           )
         `)
-        .eq('student_fundraisers.campaign_id', selectedCampaignId)
+        .eq('student_fundraisers.campaigns.organization_admin_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -244,7 +240,27 @@ export default function AdminOrders() {
     );
   }
 
-  const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId);
+  if (!hasCampaigns) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Aurora</h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Get started by creating your first fundraiser. Our platform helps you raise 10x more than traditional fundraisers.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => navigate('/admin?view=create')} className="gap-2">
+            <Plus className="w-5 h-5" />
+            Create Your First Fundraiser
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout

@@ -57,6 +57,39 @@ export default function PublicStudentPage() {
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           setDaysLeft(diffDays);
         }
+      } else {
+        // Fallback: Check 'participants' table (for join-link participants)
+        const { data: participantData } = await supabase
+          .from('participants')
+          .select('*, campaigns(*)') // Fetch related campaign
+          .eq('id', slug) // Slug is passed as ID for participants
+          .single();
+
+        if (participantData) {
+          const adaptedFundraiser = {
+            id: participantData.id,
+            student_id: participantData.id, // Using same ID
+            total_raised: participantData.total_raised || 0,
+            personal_goal: 100, // Default personal goal
+            custom_message: "Help me reach my goal!",
+            profiles: {
+              full_name: (participantData as any).first_name || 'Supporter',
+              avatar_url: null
+            },
+            campaigns: participantData.campaigns
+          };
+
+          setFundraiser(adaptedFundraiser);
+          setCampaign(participantData.campaigns); // Access joined campaign data
+
+          if ((participantData.campaigns as any)?.end_date) {
+            const end = new Date((participantData.campaigns as any).end_date);
+            const now = new Date();
+            const diffTime = Math.abs(end.getTime() - now.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            setDaysLeft(diffDays);
+          }
+        }
       }
 
       // Fetch products

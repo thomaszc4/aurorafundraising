@@ -7,6 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, PartyPopper, Users, Target } from 'lucide-react';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
 
 interface Campaign {
   id: string;
@@ -14,6 +19,7 @@ interface Campaign {
   organization_name: string;
   description: string | null;
   goal_amount: number | null;
+  status: 'draft' | 'active' | 'paused' | 'completed' | 'archived' | null;
 }
 
 interface JoinSettings {
@@ -32,9 +38,16 @@ export default function JoinCampaign() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [joinSettings, setJoinSettings] = useState<JoinSettings | null>(null);
   const [nickname, setNickname] = useState('');
+  const [pin, setPin] = useState('');
+  const [unlockPin, setUnlockPin] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   const [participantCount, setParticipantCount] = useState(0);
   const [existingToken, setExistingToken] = useState<string | null>(null);
+  const [existingParticipantName, setExistingParticipantName] = useState<string | null>(null);
+
+  /* View Mode State: 'join' is default to ensure privacy */
+  const [viewMode, setViewMode] = useState<'join' | 'resume'>('join');
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -80,7 +93,7 @@ export default function JoinCampaign() {
         // Fetch campaign details
         const { data: campaignData, error: campaignError } = await supabase
           .from('campaigns')
-          .select('id, name, organization_name, description, goal_amount')
+          .select('id, name, organization_name, description, goal_amount, status')
           .eq('id', campaignId)
           .single();
 
@@ -96,8 +109,8 @@ export default function JoinCampaign() {
         const { count } = await supabase
           .from('participants')
           .select('*', { count: 'exact', head: true })
-          .eq('campaign_id', campaignData.id)
-          .eq('is_active', true);
+          .eq('campaign_id', campaignData.id);
+        // .eq('is_active', true); // Removed to prevent 400 error (column missing)
 
         setParticipantCount(count || 0);
 
@@ -105,16 +118,18 @@ export default function JoinCampaign() {
         const storageKey = `participant_token_${campaignData.id}`;
         const savedToken = localStorage.getItem(storageKey);
         if (savedToken) {
-          // Verify token is still valid
+          // Verify token is still valid (using ID as token now)
           const { data: existingParticipant } = await supabase
             .from('participants')
-            .select('id')
-            .eq('access_token', savedToken)
-            .eq('is_active', true)
+            .select('id, first_name')
+            .eq('id', savedToken) // Changed to check ID
+            // .eq('is_active', true) // Removed
             .single();
 
           if (existingParticipant) {
             setExistingToken(savedToken);
+            setExistingParticipantName((existingParticipant as any).first_name);
+            // We intentionally do NOT switch viewMode here to preserve privacy
           } else {
             // Token is stale, remove it
             localStorage.removeItem(storageKey);
@@ -131,6 +146,31 @@ export default function JoinCampaign() {
     fetchCampaign();
   }, [code]);
 
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinError(false);
+
+    if (!existingToken) return;
+
+    // Verify PIN
+    const { data, error } = await supabase
+      .from('participants')
+      .select('id')
+      .eq('id', existingToken)
+      .eq('last_name', unlockPin) // Check PIN (stored in last_name)
+      .single();
+
+    if (error || !data) {
+      setPinError(true);
+      toast.error('Incorrect PIN');
+      return;
+    }
+
+    // Success
+    localStorage.setItem('participant_token', existingToken); // Refresh main token
+    navigate(`/p/${existingToken}`);
+  };
+
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -140,9 +180,18 @@ export default function JoinCampaign() {
       .slice(0, 20)
       .replace(/[<>'";]/g, '');
     const finalNickname = sanitizedNickname || `Supporter ${Math.floor(Math.random() * 10000)}`;
-    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
+
+    if (pin.length < 4) {
+      toast.error('Please enter a 4-digit PIN');
+      return;
+    }
 
     if (!campaign) return;
+
+    if (campaign.status !== 'active' && campaign.status !== 'draft') { // Handling potential status names
+      toast.error(`Cannot join: Campaign is ${campaign.status || 'not active'}`);
+      return;
+    }
 
     setSubmitting(true);
 
@@ -151,8 +200,8 @@ export default function JoinCampaign() {
       const { count: freshCount } = await supabase
         .from('participants')
         .select('*', { count: 'exact', head: true })
-        .eq('campaign_id', campaign.id)
-        .eq('is_active', true);
+        .eq('campaign_id', campaign.id);
+      // .eq('is_active', true); // Removed
 
       // Check max participants with fresh count
       if (joinSettings?.max_participants && (freshCount || 0) >= joinSettings.max_participants) {
@@ -166,24 +215,28 @@ export default function JoinCampaign() {
         .from('participants')
         .insert({
           campaign_id: campaign.id,
-          nickname: finalNickname,
-          pin_hash: randomPin // In production, hash this properly
-        })
-        .select('access_token')
+          first_name: finalNickname, // Mapping nickname to first_name
+          last_name: pin, // Storing PIN in available last_name column
+          code: crypto.randomUUID(), // Generating a unique code for the participant
+          // pin_hash: pin, // Removed (column missing)
+        } as any)
+        .select('id') // Changed from access_token to id
         .single();
 
       if (error) {
-        console.error('Error joining:', error);
-        toast.error('Failed to join campaign');
+        console.error('Error joining campaign:', error);
+        toast.error(`Failed to join: ${error.message || 'Unknown error'}`);
         return;
       }
 
       toast.success('Welcome to the fundraiser!');
 
       // Store token in localStorage for this specific campaign (duplicate prevention)
-      localStorage.setItem(`participant_token_${campaign.id}`, data.access_token);
-      localStorage.setItem('participant_token', data.access_token);
-      navigate(`/p/${data.access_token}`);
+      // Using ID as the access token for now since access_token column is missing
+      const token = data.id;
+      localStorage.setItem(`participant_token_${campaign.id}`, token);
+      localStorage.setItem('participant_token', token);
+      navigate(`/p/${token}`);
     } catch (err) {
       console.error('Error:', err);
       toast.error('Something went wrong');
@@ -215,8 +268,8 @@ export default function JoinCampaign() {
     );
   }
 
-  // Show return screen if user already joined this campaign
-  if (existingToken) {
+  // Resume Session View (Password Protected)
+  if (viewMode === 'resume' && existingToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
         <Card className="w-full max-w-md text-center">
@@ -224,18 +277,43 @@ export default function JoinCampaign() {
             <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
               <PartyPopper className="h-8 w-8 text-green-600" />
             </div>
-            <CardTitle>Welcome Back!</CardTitle>
+            {/* Hiding details until unlocked is safer, but user asked to resume account */}
+            <CardTitle>Resume Session</CardTitle>
             <CardDescription>
-              You've already joined {campaign.name}. Click below to go to your dashboard.
+              Enter the 4-digit PIN you created for this campaign.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={4}
+                  value={unlockPin}
+                  onChange={(value: string) => setUnlockPin(value)}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} className="w-12 h-12 text-lg" />
+                    <InputOTPSlot index={1} className="w-12 h-12 text-lg" />
+                    <InputOTPSlot index={2} className="w-12 h-12 text-lg" />
+                    <InputOTPSlot index={3} className="w-12 h-12 text-lg" />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              <Button
+                className="w-full"
+                size="lg"
+                type="submit"
+                disabled={unlockPin.length < 4}
+              >
+                Unlock Dashboard
+              </Button>
+            </form>
             <Button
-              className="w-full"
-              size="lg"
-              onClick={() => navigate(`/p/${existingToken}`)}
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={() => setViewMode('join')}
             >
-              Go to My Dashboard
+              Back to Join Page
             </Button>
           </CardContent>
         </Card>
@@ -243,6 +321,7 @@ export default function JoinCampaign() {
     );
   }
 
+  // Default: Join View
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
       <Card className="w-full max-w-md">
@@ -256,6 +335,16 @@ export default function JoinCampaign() {
               {campaign.organization_name}
             </CardDescription>
           </div>
+          {/* Resume Link - Only visible if token exists */}
+          {existingToken && (
+            <Button
+              variant="link"
+              className="text-primary text-sm h-auto p-0 hover:underline"
+              onClick={() => setViewMode('resume')}
+            >
+              Continuing on this device? Resume Session
+            </Button>
+          )}
           {campaign.description && (
             <p className="text-sm text-muted-foreground">{campaign.description}</p>
           )}
@@ -275,7 +364,7 @@ export default function JoinCampaign() {
         <CardContent>
           <form onSubmit={handleJoin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nickname">Pick a Nickname (Optional)</Label>
+              <Label htmlFor="nickname">Pick a Nickname</Label>
               <Input
                 id="nickname"
                 placeholder="e.g., SuperSeller, CookieChamp"
@@ -285,13 +374,32 @@ export default function JoinCampaign() {
                 disabled={submitting}
               />
               <p className="text-xs text-muted-foreground">
-                Leave blank to stay anonymous
+                This will be shown on the leaderboard.
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="pin">Create a Secret PIN</Label>
+              <div className="flex justify-center pt-2 pb-2">
+                <InputOTP
+                  maxLength={4}
+                  value={pin}
+                  onChange={(value: string) => setPin(value)}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} className="w-12 h-12 text-lg" />
+                    <InputOTPSlot index={1} className="w-12 h-12 text-lg" />
+                    <InputOTPSlot index={2} className="w-12 h-12 text-lg" />
+                    <InputOTPSlot index={3} className="w-12 h-12 text-lg" />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                You'll need this to log back in on this device!
+              </p>
+            </div>
 
-
-            <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+            <Button type="submit" className="w-full" size="lg" disabled={submitting || pin.length < 4}>
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

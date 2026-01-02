@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+#three-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10;
+  /* Above Phaser (0), Below UI (DOM) */
+}
+
 @layer base {
   :root {
     /* Primary - Dark Navy & Bright Blue */
@@ -11,44 +20,44 @@
     --primary-foreground: 0 0% 100%;
     --primary-blue: 204 99% 42%;
     --primary-blue-foreground: 0 0% 100%;
-    
+
     /* Secondary - Teal/Cyan */
     --secondary: 168 97% 45%;
     --secondary-foreground: 227 39% 17%;
     --secondary-dark: 181 100% 41%;
-    
+
     /* Accent - Purple */
     --accent: 274 100% 62%;
     --accent-foreground: 0 0% 100%;
-    
+
     /* Base colors */
     --background: 0 0% 100%;
     --foreground: 227 39% 17%;
-    
+
     /* Card & Surface */
     --card: 0 0% 100%;
     --card-foreground: 227 39% 17%;
     --card-elevated: 220 20% 97%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 227 39% 17%;
-    
+
     /* Muted */
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
-    
+
     /* Border & Input */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 204 99% 42%;
-    
+
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Radius */
     --radius: 0.75rem;
-    
+
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(227 39% 17%) 0%, hsl(227 39% 25%) 50%, hsl(204 99% 30%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
@@ -56,7 +65,7 @@
     --gradient-accent: linear-gradient(135deg, hsl(274 100% 62%) 0%, hsl(204 99% 42%) 100%);
     --gradient-teal: linear-gradient(135deg, hsl(168 97% 45%) 0%, hsl(181 100% 41%) 100%);
     --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(227 39% 17% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(227 39% 17% / 0.1), 0 2px 4px -2px hsl(227 39% 17% / 0.1);
@@ -64,7 +73,7 @@
     --shadow-xl: 0 20px 25px -5px hsl(227 39% 17% / 0.1), 0 8px 10px -6px hsl(227 39% 17% / 0.1);
     --shadow-glow: 0 0 40px hsl(204 99% 42% / 0.3);
     --shadow-glow-teal: 0 0 40px hsl(168 97% 45% / 0.3);
-    
+
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -79,23 +88,23 @@
   .dark {
     --background: 227 39% 8%;
     --foreground: 0 0% 98%;
-    
+
     --card: 227 39% 12%;
     --card-foreground: 0 0% 98%;
     --card-elevated: 227 39% 15%;
-    
+
     --popover: 227 39% 12%;
     --popover-foreground: 0 0% 98%;
-    
+
     --muted: 227 30% 18%;
     --muted-foreground: 220 9% 65%;
-    
+
     --border: 227 30% 22%;
     --input: 227 30% 22%;
-    
+
     --primary: 0 0% 98%;
     --primary-foreground: 227 39% 17%;
-    
+
     --gradient-hero: linear-gradient(135deg, hsl(227 39% 8%) 0%, hsl(227 39% 12%) 50%, hsl(204 99% 20%) 100%);
   }
 }
@@ -120,12 +129,12 @@
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-accent);
   }
-  
+
   .text-gradient-teal {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-teal);
   }
-  
+
   .bg-hero {
     background: var(--gradient-hero);
   }
@@ -141,33 +150,33 @@
     border: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   }
-  
+
   .dark .glass-card {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
+
   .glow-blue {
     box-shadow: var(--shadow-glow);
   }
-  
+
   .glow-teal {
     box-shadow: var(--shadow-glow-teal);
   }
-  
+
   .card-elevated {
     @apply bg-card rounded-2xl;
     box-shadow: var(--shadow-lg);
   }
-  
+
   .section-padding {
     @apply py-20 md:py-32;
   }
-  
+
   .container-tight {
     @apply max-w-5xl mx-auto px-6;
   }
-  
+
   .container-wide {
     @apply max-w-7xl mx-auto px-6;
   }
@@ -177,40 +186,43 @@
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   .animate-fade-in {
     animation: fadeIn 0.6s ease-out forwards;
   }
-  
+
   .animate-slide-up {
     animation: slideUp 0.6s ease-out forwards;
   }
-  
+
   .animate-scale-in {
     animation: scaleIn 0.5s ease-out forwards;
   }
-  
+
   .animation-delay-100 {
     animation-delay: 100ms;
   }
-  
+
   .animation-delay-200 {
     animation-delay: 200ms;
   }
-  
+
   .animation-delay-300 {
     animation-delay: 300ms;
   }
-  
+
   .animation-delay-400 {
     animation-delay: 400ms;
   }
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
@@ -220,6 +232,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -230,6 +243,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -241,8 +255,97 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Game-specific animations */
+@keyframes fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(0, 200, 255, 0.8);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fall {
+  animation: fall 10s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.4s ease-out;
+}
+
+/* Game HUD styles */
+.game-hud-panel {
+  @apply bg-black/70 backdrop-blur-sm rounded-lg border border-white/20;
+}
+
+.game-tooltip {
+  @apply absolute z-50 px-2 py-1 text-xs text-white bg-black/90 rounded whitespace-nowrap;
+  pointer-events: none;
+}
+
+/* Smooth transitions for game state changes */
+.game-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

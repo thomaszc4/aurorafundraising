@@ -7,17 +7,17 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
-  Loader2, Trophy, Target, MessageSquare, Gift,
-  TrendingUp, Crown, Medal, Award
+  Loader2, Trophy, Target, Share2, MessageSquare, Gift,
+  TrendingUp, Crown, Medal, Award, Copy, ExternalLink
 } from 'lucide-react';
 import { ParticipantSocialCenter } from '@/components/participant/ParticipantSocialCenter';
 
 interface Participant {
   id: string;
   campaign_id: string;
-  nickname: string;
-  total_raised: number;
-  items_sold: number;
+  first_name: string;
+  total_raised: number | null;
+  items_sold: number | null;
 }
 
 interface Campaign {
@@ -39,9 +39,9 @@ interface Incentive {
 }
 
 interface LeaderboardEntry {
-  nickname: string;
-  total_raised: number;
-  items_sold: number;
+  first_name: string;
+  total_raised: number | null;
+  items_sold: number | null;
 }
 
 interface Message {
@@ -74,8 +74,8 @@ export default function ParticipantDashboard() {
         const { data: participantData, error: participantError } = await supabase
           .from('participants')
           .select('*')
-          .eq('access_token', token)
-          .eq('is_active', true)
+          .eq('id', token)
+          // .eq('is_active', true) // Removed due to schema mismatch
           .single();
 
         if (participantError || !participantData) {
@@ -84,7 +84,7 @@ export default function ParticipantDashboard() {
           return;
         }
 
-        setParticipant(participantData);
+        setParticipant(participantData as unknown as Participant);
 
         // Fetch campaign
         const { data: campaignData } = await supabase
@@ -99,25 +99,25 @@ export default function ParticipantDashboard() {
         const { data: incentivesData } = await supabase
           .from('incentives')
           .select('*')
-          .eq('campaign_id', participantData.campaign_id)
-          .eq('is_active', true);
+          .eq('campaign_id', participantData.campaign_id);
+        // .eq('is_active', true); // Removed due to schema mismatch
 
         setIncentives(incentivesData || []);
 
         // Fetch leaderboard
         const { data: leaderboardData } = await supabase
           .from('participants')
-          .select('nickname, total_raised, items_sold')
+          .select('first_name, total_raised, items_sold')
           .eq('campaign_id', participantData.campaign_id)
-          .eq('is_active', true)
+          // .eq('is_active', true) // Removed due to schema mismatch
           .order('total_raised', { ascending: false })
           .limit(10);
 
-        setLeaderboard(leaderboardData || []);
+        setLeaderboard((leaderboardData || []) as unknown as LeaderboardEntry[]);
 
         // Calculate rank
-        const position = (leaderboardData || []).findIndex(
-          p => p.nickname === participantData.nickname
+        const position = ((leaderboardData || []) as any[]).findIndex(
+          p => p.first_name === (participantData as any).first_name
         ) + 1;
         setRank(position || (leaderboardData?.length || 0) + 1);
 
@@ -167,7 +167,8 @@ export default function ParticipantDashboard() {
   }
 
   const personalGoal = 100; // Default personal goal
-  const progress = Math.min((participant.total_raised / personalGoal) * 100, 100);
+  const currentRaised = participant.total_raised || 0;
+  const progress = Math.min((currentRaised / personalGoal) * 100, 100);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -180,7 +181,22 @@ export default function ParticipantDashboard() {
               <p className="text-sm text-muted-foreground">{campaign.organization_name}</p>
             </div>
             <div className="text-right">
-              <p className="font-medium">{participant.nickname}</p>
+              <div className="flex items-center justify-end gap-2 text-primary-foreground">
+                <p className="font-medium">{participant.first_name}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    localStorage.removeItem('participant_token');
+                    localStorage.removeItem(`participant_token_${participant.campaign_id}`);
+                    navigate('/');
+                  }}
+                  title="Log Out"
+                >
+                  <ExternalLink className="h-4 w-4 rotate-180" />
+                </Button>
+              </div>
               <Badge variant="secondary" className="text-xs">
                 #{rank} on leaderboard
               </Badge>
@@ -190,12 +206,36 @@ export default function ParticipantDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6 max-w-2xl">
+        {/* Play Game Button */}
+        <Card className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-none overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Trophy size={120} />
+          </div>
+          <CardContent className="p-6 relative z-10 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-1">Play Aurora</h2>
+              <p className="text-violet-100 mb-4 max-w-[200px] text-sm">Explore the world, complete quests, and earn rewards!</p>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="font-bold text-violet-700 hover:text-violet-800"
+                onClick={() => navigate('/debug-game')}
+              >
+                Enter World
+              </Button>
+            </div>
+            <div className="bg-white/10 p-3 rounded-full hidden sm:block">
+              <Trophy className="h-10 w-10 text-yellow-300" />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-3xl font-bold">${participant.total_raised.toFixed(0)}</p>
+                <p className="text-3xl font-bold">${(participant.total_raised || 0).toFixed(0)}</p>
                 <p className="text-sm opacity-90">Raised</p>
               </div>
             </CardContent>
@@ -203,7 +243,7 @@ export default function ParticipantDashboard() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-3xl font-bold">{participant.items_sold}</p>
+                <p className="text-3xl font-bold">{participant.items_sold || 0}</p>
                 <p className="text-sm text-muted-foreground">Items Sold</p>
               </div>
             </CardContent>
@@ -221,12 +261,12 @@ export default function ParticipantDashboard() {
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>${participant.total_raised.toFixed(0)} raised</span>
+                <span>${(participant.total_raised || 0).toFixed(0)} raised</span>
                 <span>${personalGoal} goal</span>
               </div>
               <Progress value={progress} className="h-3" />
               <p className="text-xs text-muted-foreground text-center">
-                {progress >= 100 ? "🎉 Goal reached!" : `${(personalGoal - participant.total_raised).toFixed(0)} to go!`}
+                {progress >= 100 ? "🎉 Goal reached!" : `${(personalGoal - (participant.total_raised || 0)).toFixed(0)} to go!`}
               </p>
             </div>
           </CardContent>
@@ -251,16 +291,19 @@ export default function ParticipantDashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               {incentives.map((incentive) => {
+                const participantRaised = participant.total_raised || 0;
+                const participantItems = participant.items_sold || 0;
+
                 const isCompleted = incentive.threshold_amount
-                  ? participant.total_raised >= incentive.threshold_amount
+                  ? participantRaised >= incentive.threshold_amount
                   : incentive.threshold_items
-                    ? participant.items_sold >= incentive.threshold_items
+                    ? participantItems >= incentive.threshold_items
                     : false;
 
                 const progressValue = incentive.threshold_amount
-                  ? Math.min((participant.total_raised / incentive.threshold_amount) * 100, 100)
+                  ? Math.min((participantRaised / incentive.threshold_amount) * 100, 100)
                   : incentive.threshold_items
-                    ? Math.min((participant.items_sold / incentive.threshold_items) * 100, 100)
+                    ? Math.min((participantItems / incentive.threshold_items) * 100, 100)
                     : 0;
 
                 return (
@@ -308,21 +351,21 @@ export default function ParticipantDashboard() {
               {leaderboard.map((entry, index) => (
                 <div
                   key={index}
-                  className={`flex items-center justify-between p-2 rounded-lg ${entry.nickname === participant.nickname
-                      ? 'bg-primary/10 border border-primary/20'
-                      : 'bg-muted/50'
+                  className={`flex items-center justify-between p-2 rounded-lg ${entry.first_name === participant.first_name
+                    ? 'bg-primary/10 border border-primary/20'
+                    : 'bg-muted/50'
                     }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 flex justify-center">
                       {getRankIcon(index + 1)}
                     </div>
-                    <span className={`text-sm ${entry.nickname === participant.nickname ? 'font-semibold' : ''}`}>
-                      {entry.nickname}
-                      {entry.nickname === participant.nickname && ' (You)'}
+                    <span className={`text-sm ${entry.first_name === participant.first_name ? 'font-semibold' : ''}`}>
+                      {entry.first_name}
+                      {entry.first_name === participant.first_name && ' (You)'}
                     </span>
                   </div>
-                  <span className="font-medium text-sm">${entry.total_raised.toFixed(0)}</span>
+                  <span className="font-medium text-sm">${(entry.total_raised || 0).toFixed(0)}</span>
                 </div>
               ))}
             </div>

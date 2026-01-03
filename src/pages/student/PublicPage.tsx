@@ -6,13 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ShoppingCart, Clock, Quote, Sparkles } from 'lucide-react';
+import { ShoppingCart, Clock, Quote, Sparkles, Building2, Share2 } from 'lucide-react';
 import { ProductCard } from '@/components/fundraising/ProductCard';
 import { Cart } from '@/components/fundraising/Cart';
 import { SocialShareButtons } from '@/components/fundraising/SocialShareButtons';
-import { RecentSupporters } from '@/components/fundraising/RecentSupporters';
 import { QuickDonate } from '@/components/fundraising/QuickDonate';
-import { StudentLeaderboardRank } from '@/components/fundraising/StudentLeaderboardRank';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
@@ -22,6 +20,7 @@ export default function PublicStudentPage() {
   const [fundraiser, setFundraiser] = useState<any>(null);
   const [campaign, setCampaign] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
+  const [donationProduct, setDonationProduct] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false);
@@ -61,26 +60,26 @@ export default function PublicStudentPage() {
         // Fallback: Check 'participants' table (for join-link participants)
         const { data: participantData } = await supabase
           .from('participants')
-          .select('*, campaigns(*)') // Fetch related campaign
-          .eq('id', slug) // Slug is passed as ID for participants
+          .select('*, campaigns(*)')
+          .eq('id', slug)
           .single();
 
         if (participantData) {
           const adaptedFundraiser = {
             id: participantData.id,
-            student_id: participantData.id, // Using same ID
+            student_id: participantData.id,
             total_raised: participantData.total_raised || 0,
             personal_goal: 100, // Default personal goal
-            custom_message: "Help me reach my goal!",
+            custom_message: "Help us reach our goal!",
             profiles: {
-              full_name: (participantData as any).first_name || 'Supporter',
+              full_name: 'Supporter',
               avatar_url: null
             },
             campaigns: participantData.campaigns
           };
 
           setFundraiser(adaptedFundraiser);
-          setCampaign(participantData.campaigns); // Access joined campaign data
+          setCampaign(participantData.campaigns);
 
           if ((participantData.campaigns as any)?.end_date) {
             const end = new Date((participantData.campaigns as any).end_date);
@@ -98,7 +97,8 @@ export default function PublicStudentPage() {
         .select('*')
         .eq('is_active', true);
 
-      setProducts(productsData || []);
+      setProducts((productsData || []).filter(p => p.name !== 'General Donation'));
+      setDonationProduct((productsData || []).find(p => p.name === 'General Donation'));
     } catch (error) {
       console.error('Error fetching fundraiser data:', error);
       toast.error('Could not load fundraiser data. Please try again.');
@@ -119,7 +119,8 @@ export default function PublicStudentPage() {
     } else {
       setCart([...cart, { product, quantity }]);
     }
-    setShowCart(true); // Open cart on add
+    // Removed auto-open cart
+    // setShowCart(true);
   };
 
   const updateCartQuantity = (productId: string, quantity: number) => {
@@ -135,34 +136,37 @@ export default function PublicStudentPage() {
   };
 
   const handleQuickDonate = (amount: number) => {
-    // Feature placeholder: In a real implementation this would add a line item or redirect
-    toast.info(`Quick Donate $${amount} selected!`, {
-      description: "This feature will be connected to checkout in the next phase."
+    if (!donationProduct) {
+      // Fallback if DB product not found (shouldn't happen after migration)
+      toast.error('Donation system is initializing. Please try again.');
+      return;
+    }
+
+    addToCart(donationProduct, amount);
+
+    toast.success(`Added $${amount} donation to cart!`, {
+      action: {
+        label: "View Cart",
+        onClick: () => setShowCart(true)
+      }
     });
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  // Use campaign goal or personal goal? User said removing "Why I'm Fundraising", so maybe show Campaign Goal or just visual progress.
+  // I'll keep the visual progress based on *something*, maybe still personal goal but label it differently.
+  // Or if "don't have live activity" implies less social pressure, maybe just "Fundraiser Progress".
   const progress = fundraiser?.personal_goal
     ? (Number(fundraiser.total_raised) / Number(fundraiser.personal_goal)) * 100
     : 0;
-
-  const studentName = fundraiser?.profiles?.full_name || 'Student';
-  const studentInitial = studentName.charAt(0);
 
   if (loading) {
     return (
       <Layout>
         <div className="container-wide py-12 pt-28">
-          <div className="animate-pulse space-y-4">
-            <div className="h-48 bg-muted rounded-3xl w-full mb-8"></div>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="md:col-span-2 space-y-4">
-                <div className="h-32 bg-muted rounded-xl"></div>
-                <div className="h-32 bg-muted rounded-xl"></div>
-              </div>
-              <div className="h-64 bg-muted rounded-xl"></div>
-            </div>
+          <div className="flex justify-center pb-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         </div>
       </Layout>
@@ -180,40 +184,37 @@ export default function PublicStudentPage() {
     );
   }
 
+  const orgName = campaign?.organization_name || "Our Organization";
+  const campaignName = campaign?.name || "Fundraiser";
+
   return (
     <Layout>
-      <div className="min-h-screen bg-secondary/5 pb-20">
+      <div className="min-h-screen bg-slate-50 pb-20">
 
-        {/* Immersive Hero Header */}
-        <div className="bg-gradient-to-r from-primary-blue to-primary-purple text-white pt-32 pb-24 px-4 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-12 opacity-10">
-            <Sparkles size={400} />
+        {/* Hero Header - Anonymous / Org Focused */}
+        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white pt-32 pb-20 px-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-12 opacity-5">
+            <Building2 size={400} />
           </div>
-          <div className="container-wide relative z-10">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-white/30 shadow-2xl">
-                <AvatarImage src={fundraiser.profiles?.avatar_url} />
-                <AvatarFallback className="text-4xl font-bold text-primary-blue bg-white">{studentInitial}</AvatarFallback>
-              </Avatar>
-              <div className="text-center md:text-left space-y-2">
-                <Badge variant="secondary" className="mb-2 bg-white/20 hover:bg-white/30 text-white border-none">
-                  <Clock className="w-3 h-3 mr-1" /> {daysLeft} days left
-                </Badge>
-                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-                  {studentName}'s Fundraiser
-                </h1>
-                <p className="text-xl text-blue-100 font-medium max-w-2xl">
-                  Raising money for <span className="text-white underline decoration-wavy underline-offset-4">{campaign?.name}</span>
-                </p>
-              </div>
-            </div>
+          <div className="container-wide relative z-10 text-center">
+
+            <Badge variant="secondary" className="mb-6 bg-white/10 hover:bg-white/20 text-blue-100 border-none px-4 py-1 text-sm backdrop-blur-sm">
+              <Clock className="w-4 h-4 mr-2" /> {daysLeft} days left to support
+            </Badge>
+
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">
+              {orgName}
+            </h1>
+            <p className="text-2xl text-white font-medium max-w-3xl mx-auto">
+              {campaignName}
+            </p>
           </div>
         </div>
 
-        <div className="container-wide -mt-12 relative z-20">
+        <div className="container-wide -mt-10 relative z-20">
           <div className="grid lg:grid-cols-3 gap-8">
 
-            {/* Left Column: Story & Products */}
+            {/* Left Column: Products & Goal */}
             <div className="lg:col-span-2 space-y-8">
 
               {/* Goal Card */}
@@ -221,33 +222,28 @@ export default function PublicStudentPage() {
                 <CardContent className="p-8 space-y-6">
                   <div className="flex flex-col sm:flex-row justify-between items-end gap-4 mb-2">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Raised</p>
+                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Fundraiser Progress</p>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-black text-primary-blue">${Number(fundraiser.total_raised).toFixed(0)}</span>
-                        <span className="text-xl text-muted-foreground font-medium">/ ${Number(fundraiser.personal_goal).toFixed(0)} goal</span>
+                        <span className="text-5xl font-black text-blue-900">${Number(fundraiser.total_raised).toFixed(0)}</span>
+                        <span className="text-xl text-muted-foreground font-medium">raised</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-primary-purple mb-1">
-                        {Math.round(progress)}% Complete
+                      <p className="text-sm font-bold text-indigo-600 mb-1">
+                        {Math.round(progress)}% of Goal
                       </p>
                     </div>
                   </div>
 
                   <div className="relative h-6 bg-secondary/20 rounded-full overflow-hidden">
                     <div
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-blue to-primary-purple transition-all duration-1000 ease-out"
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-1000 ease-out"
                       style={{ width: `${Math.min(100, progress)}%` }}
                     />
                   </div>
 
-                  <div className="flex justify-between text-sm text-muted-foreground font-medium">
-                    <span>$0</span>
-                    <span>${Number(fundraiser.personal_goal).toFixed(0)}</span>
-                  </div>
-
                   {progress >= 100 && (
-                    <div className="bg-green-100 text-green-800 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+                    <div className="bg-green-100 text-green-800 p-4 rounded-xl flex items-center gap-3">
                       <Sparkles className="w-5 h-5" />
                       <span className="font-bold">Goal Reached! Thank you for your support!</span>
                     </div>
@@ -255,74 +251,66 @@ export default function PublicStudentPage() {
                 </CardContent>
               </Card>
 
-              {/* Story Section */}
-              {fundraiser.custom_message && (
-                <Card className="border-none shadow-md bg-white">
-                  <CardContent className="p-8">
-                    <div className="flex gap-4">
-                      <Quote className="w-10 h-10 text-primary-blue/20 flex-shrink-0" />
-                      <div className="space-y-4">
-                        <h3 className="text-2xl font-bold text-gray-900">Why I'm Fundraising</h3>
-                        <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-wrap">
-                          {fundraiser.custom_message}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {/* REMOVED: "Why I'm Fundraising" Story Section */}
 
               {/* Products Grid */}
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold">Shop & Support</h2>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <ShoppingCart className="h-6 w-6 text-primary" />
+                    Shop & Support
+                  </h2>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-6">
-                  {products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAddToCart={addToCart}
-                      fundraiserSlug={slug}
-                    />
-                  ))}
-                </div>
+
+                {products.length === 0 ? (
+                  <div className="p-12 text-center bg-white rounded-xl border border-dashed text-muted-foreground">
+                    <p>No products available at the moment.</p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    {products.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onAddToCart={addToCart}
+                        onUpdateQuantity={updateCartQuantity}
+                        quantity={cart.find(item => item.product.id === product.id)?.quantity || 0}
+                        fundraiserSlug={slug}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Right Column: Key Actions & Social Proof */}
+            {/* Right Column: Actions */}
             <div className="lg:col-span-1 space-y-6">
 
               {/* Quick Donate */}
               <div className="sticky top-24 space-y-6">
                 <QuickDonate onDonate={handleQuickDonate} />
 
-                <StudentLeaderboardRank
-                  campaignId={campaign?.id}
-                  studentId={fundraiser.student_id}
-                  currentAmount={Number(fundraiser.total_raised)}
-                />
-
+                {/* Generic "Help Us Win" Card */}
                 <Card className="border-none shadow-md bg-indigo-900 text-white overflow-hidden relative">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                   <CardContent className="p-6 relative z-10">
-                    <h3 className="font-bold text-lg mb-2">Help {studentName} Win!</h3>
-                    <p className="text-indigo-200 text-sm mb-4">Share this page to help them reach the top of the leaderboard.</p>
+                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                      <Share2 className="h-5 w-5" /> Spread the Word
+                    </h3>
+                    <p className="text-indigo-200 text-sm mb-4">
+                      Share this page to help {orgName} reach their goal.
+                    </p>
                     <SocialShareButtons
                       url={currentUrl}
-                      title={`Support ${studentName}!`}
-                      description={`Help ${studentName} reach their goal for ${campaign?.name}!`}
+                      title={`Support ${orgName}!`}
+                      description={`Help ${orgName} reach their goal for ${campaignName}!`}
                     />
                   </CardContent>
                 </Card>
 
-                <div className="bg-white rounded-xl shadow-md p-6">
-                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    Live Activity
-                  </h3>
-                  <RecentSupporters fundraiserId={fundraiser.id} />
-                </div>
+                {/* REMOVED: Live Activity / Recent Supporters */}
+                {/* REMOVED: Student Leaderboard Rank */}
+
               </div>
             </div>
           </div>

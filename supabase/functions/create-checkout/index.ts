@@ -11,7 +11,7 @@ const corsHeaders = {
 // Input validation schemas
 const cartItemSchema = z.object({
   productId: z.string().uuid("Invalid product ID format"),
-  quantity: z.number().int().min(1, "Quantity must be at least 1").max(100, "Maximum 100 items per product"),
+  quantity: z.number().int().min(1, "Quantity must be at least 1").max(100000, "Maximum 100000 items per product"),
 });
 
 const customerInfoSchema = z.object({
@@ -62,9 +62,9 @@ serve(async (req) => {
   }
 
   // Get client IP for rate limiting
-  const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-                   req.headers.get("x-real-ip") || 
-                   "unknown";
+  const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
 
   // Check rate limit
   const rateLimit = checkRateLimit(clientIP);
@@ -73,8 +73,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: "Too many requests. Please try again later." }),
       {
-        headers: { 
-          ...corsHeaders, 
+        headers: {
+          ...corsHeaders,
           "Content-Type": "application/json",
           "Retry-After": String(rateLimit.retryAfter)
         },
@@ -145,7 +145,7 @@ serve(async (req) => {
       const product = productMap.get(item.productId);
       return sum + (Number(product!.price) * item.quantity);
     }, 0);
-    
+
     const profitAmount = cart.reduce((sum: number, item) => {
       const product = productMap.get(item.productId);
       return sum + ((Number(product!.price) - Number(product!.cost || 0)) * item.quantity);
@@ -196,7 +196,7 @@ serve(async (req) => {
     // Create Stripe line items using DATABASE prices
     const lineItems = cart.map((item) => {
       const product = productMap.get(item.productId);
-      
+
       if (product!.stripe_price_id) {
         return {
           price: product!.stripe_price_id,

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Interactable } from './InteractionManager';
 import { gameEvents } from '../EventBus';
 import { StoryManager } from '../managers/StoryManager';

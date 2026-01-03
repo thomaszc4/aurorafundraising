@@ -82,7 +82,9 @@ export default function AdminOrders() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [hasCampaigns, setHasCampaigns] = useState<boolean>(true);
+
+
+  const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId);
 
   useEffect(() => {
     checkCampaigns();
@@ -91,19 +93,23 @@ export default function AdminOrders() {
   const checkCampaigns = async () => {
     if (!user) return;
     try {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('campaigns')
-        .select('*', { count: 'exact', head: true })
+        .select('id, name')
         .eq('organization_admin_id', user.id);
 
       if (error) throw error;
 
-      if (count === 0) {
+      if (!data || data.length === 0) {
         setHasCampaigns(false);
         setLoading(false);
       } else {
-        fetchOrders();
-
+        setHasCampaigns(true);
+        setCampaigns(data);
+        // Select the first campaign by default if none selected
+        if (!selectedCampaignId) {
+          setSelectedCampaignId(data[0].id);
+        }
       }
     } catch (error) {
       console.error('Error checking campaigns:', error);
@@ -122,24 +128,72 @@ export default function AdminOrders() {
     setLoading(true);
 
     try {
+      // First, get all student fundraisers for this campaign
+      const { data: fundraisers, error: fundraisersError } = await supabase
+        .from('student_fundraisers')
+        .select('id, student_id')
+        .eq('campaign_id', selectedCampaignId);
+
+      if (fundraisersError) throw fundraisersError;
+
+      // Get the student IDs
+      const studentIds = fundraisers?.map(f => f.student_id).filter(Boolean) || [];
+
+      // Fetch profiles for these students
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', studentIds);
+
+      if (profilesError) console.error('Error fetching profiles:', profilesError);
+
+      // Create a map of student_id -> full_name
+      const profileMap = new Map(
+        profiles?.map(p => [p.id, p.full_name]) || []
+      );
+
+      // Create a map of fundraiser_id -> student name
+      const fundraiserMap = new Map(
+        fundraisers?.map(f => [
+          f.id,
+          profileMap.get(f.student_id) || 'Unknown Student'
+        ]) || []
+      );
+
+      const fundraiserIds = fundraisers?.map(f => f.id) || [];
+
+      if (fundraiserIds.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then fetch orders for these fundraisers
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
-          order_items(*, products(name)),
-          student_fundraisers!inner(
-            profiles(full_name),
-            campaigns!inner(organization_admin_id)
-          )
+          order_items(*, products(name))
         `)
-        .eq('student_fundraisers.campaigns.organization_admin_id', user?.id)
+        .in('student_fundraiser_id', fundraiserIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders((data as Order[]) || []);
-    } catch (error) {
+
+      // Merge the student names into the orders
+      const ordersWithNames = (data || []).map(order => ({
+        ...order,
+        student_fundraisers: {
+          profiles: {
+            full_name: fundraiserMap.get(order.student_fundraiser_id!) || 'Unknown Student'
+          }
+        }
+      }));
+
+      setOrders(ordersWithNames as Order[]);
+    } catch (error: any) {
       console.error('Error fetching orders:', error);
-      toast.error('Failed to load orders');
+      toast.error(`Failed to load orders: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -373,7 +427,7 @@ export default function AdminOrders() {
           </TabsContent>
 
           <TabsContent value="by-student">
-            <OrdersByStudent />
+            <OrdersByStudent campaignId={selectedCampaignId || undefined} />
           </TabsContent>
         </Tabs>
 

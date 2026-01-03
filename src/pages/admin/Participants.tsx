@@ -79,6 +79,7 @@ interface StudentFundraiser {
 export default function AdminParticipants() {
   const [invitations, setInvitations] = useState<StudentInvitation[]>([]);
   const [fundraisers, setFundraisers] = useState<StudentFundraiser[]>([]);
+  const [anonymousParticipants, setAnonymousParticipants] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -100,7 +101,7 @@ export default function AdminParticipants() {
 
   const fetchData = async () => {
     try {
-      const [invitationsRes, fundraisersRes, campaignsRes] = await Promise.all([
+      const [invitationsRes, fundraisersRes, campaignsRes, participantsRes] = await Promise.all([
         supabase
           .from('student_invitations')
           .select('*, campaigns(name)')
@@ -113,15 +114,21 @@ export default function AdminParticipants() {
           .from('campaigns')
           .select('id, name')
           .in('status', ['active', 'draft']),
+        supabase
+          .from('participants')
+          .select('*, campaigns(name)')
+          .order('created_at', { ascending: false }),
       ]);
 
       if (invitationsRes.error) throw invitationsRes.error;
       if (fundraisersRes.error) throw fundraisersRes.error;
       if (campaignsRes.error) throw campaignsRes.error;
+      if (participantsRes.error) throw participantsRes.error;
 
       setInvitations((invitationsRes.data as StudentInvitation[]) || []);
       setFundraisers((fundraisersRes.data as StudentFundraiser[]) || []);
       setCampaigns(campaignsRes.data || []);
+      setAnonymousParticipants(participantsRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -504,8 +511,8 @@ export default function AdminParticipants() {
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{activeCount}</p>
-                  <p className="text-sm text-muted-foreground">Active</p>
+                  <p className="text-2xl font-bold">{fundraisers.length + anonymousParticipants.length}</p>
+                  <p className="text-sm text-muted-foreground">Active Users</p>
                 </div>
               </div>
             </CardContent>

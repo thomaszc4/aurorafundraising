@@ -7,88 +7,89 @@ interface ProgressEnhancedProps extends React.ComponentPropsWithoutRef<typeof Pr
   showMilestones?: boolean;
   milestones?: number[];
   variant?: 'default' | 'gradient' | 'striped';
+  indicatorClassName?: string;
 }
 
 const ProgressEnhanced = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   ProgressEnhancedProps
->(({ className, value = 0, showMilestones = false, milestones = [25, 50, 75, 100], variant = 'default', ...props }, ref) => {
+>(({ className, value = 0, showMilestones = false, milestones = [25, 50, 75, 100], variant = 'default', indicatorClassName, ...props }, ref) => {
   const clampedValue = Math.min(Math.max(value, 0), 100);
-  
+
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <ProgressPrimitive.Root
         ref={ref}
         className={cn(
-          "relative h-4 w-full overflow-hidden rounded-full",
-          // Enhanced empty state - more visible track
-          "bg-muted/80 border border-border/50",
-          // Subtle pattern for empty state
-          clampedValue < 5 && "bg-[linear-gradient(45deg,transparent_25%,hsl(var(--muted))_25%,hsl(var(--muted))_50%,transparent_50%,transparent_75%,hsl(var(--muted))_75%)] bg-[length:8px_8px]",
+          "relative h-6 w-full overflow-hidden rounded-full",
+          // Glassmorphism track
+          "bg-black/20 border border-white/5 backdrop-blur-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]",
           className
         )}
         {...props}
       >
         <ProgressPrimitive.Indicator
           className={cn(
-            "h-full transition-all duration-500 ease-out rounded-full",
-            // Default variant
-            variant === 'default' && "bg-primary-blue",
-            // Gradient variant
-            variant === 'gradient' && "bg-gradient-to-r from-primary-blue via-secondary to-accent",
-            // Striped variant
-            variant === 'striped' && "bg-primary bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%)] bg-[length:1rem_1rem] animate-[progress-stripes_1s_linear_infinite]",
-            // Glow effect when making progress
-            clampedValue > 0 && clampedValue < 100 && "shadow-[0_0_10px_hsl(var(--primary)/0.3)]",
-            // Success state
-            clampedValue >= 100 && "bg-green-500 shadow-[0_0_15px_hsl(142_76%_36%/0.4)]"
+            "h-full transition-all duration-1000 ease-out rounded-full relative",
+            // Base gradient (overridable)
+            "bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600",
+            // Internal shimmer/gloss effect
+            "after:absolute after:inset-0 after:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.3)_0%,transparent_50%,rgba(0,0,0,0.1)_100%)]",
+            // Striped variant overlay
+            variant === 'striped' && "before:absolute before:inset-0 before:bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%)] before:bg-[length:1rem_1rem] before:animate-[progress-stripes_1s_linear_infinite]",
+            // Glow effect
+            clampedValue > 0 && "shadow-[0_0_20px_rgba(56,189,248,0.5)] drop-shadow-[0_0_5px_rgba(56,189,248,0.8)]",
+            indicatorClassName
           )}
           style={{ width: `${clampedValue}%` }}
         />
       </ProgressPrimitive.Root>
-      
+
       {/* Milestone Markers */}
       {showMilestones && (
-        <div className="absolute inset-0 flex items-center pointer-events-none">
+        <div className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none">
           {milestones.map((milestone) => (
             <div
               key={milestone}
-              className="absolute h-full flex items-center"
+              className="absolute h-full flex flex-col items-center group"
               style={{ left: `${milestone}%` }}
             >
-              <div 
+              {/* Marker Line */}
+              <div
                 className={cn(
-                  "w-0.5 h-3 -translate-x-1/2 rounded-full transition-colors",
-                  clampedValue >= milestone 
-                    ? "bg-primary-foreground/50" 
-                    : "bg-muted-foreground/30"
+                  "w-0.5 h-full z-10 transition-colors duration-500",
+                  clampedValue >= milestone
+                    ? "bg-white/30"
+                    : "bg-white/10"
                 )}
               />
             </div>
           ))}
         </div>
       )}
-      
-      {/* Milestone Labels (optional) */}
+
+      {/* Milestone Labels */}
       {showMilestones && (
-        <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-muted-foreground">0%</span>
-          {milestones.slice(0, -1).map((milestone) => (
-            <span 
-              key={milestone} 
-              className={cn(
-                "text-[10px]",
-                clampedValue >= milestone ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              {milestone}%
-            </span>
+        <div className="flex justify-between mt-2 px-1">
+          <span className="text-[11px] font-medium text-muted-foreground/70">Start</span>
+          {milestones.map((milestone) => (
+            milestone !== 100 && (
+              <span
+                key={milestone}
+                className={cn(
+                  "text-[11px] font-medium transition-colors duration-500",
+                  clampedValue >= milestone ? "text-primary-blue drop-shadow-sm" : "text-muted-foreground/50"
+                )}
+              >
+                {milestone}%
+              </span>
+            )
           ))}
           <span className={cn(
-            "text-[10px]",
-            clampedValue >= 100 ? "text-green-500 font-medium" : "text-muted-foreground"
+            "text-[11px] font-medium transition-colors duration-500",
+            clampedValue >= 100 ? "text-purple-400 drop-shadow-sm" : "text-muted-foreground/70"
           )}>
-            100%
+            Goal
           </span>
         </div>
       )}

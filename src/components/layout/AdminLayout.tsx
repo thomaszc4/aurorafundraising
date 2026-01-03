@@ -40,7 +40,8 @@ import {
   FlaskConical,
   ListTodo,
   Milestone,
-  Share2
+  Share2,
+  LifeBuoy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -48,6 +49,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
 interface AdminLayoutProps {
@@ -83,22 +85,32 @@ export function AdminLayout({
     { title: 'Overview', icon: LayoutDashboard, path: '/admin' },
     { title: 'Project Manager', icon: ClipboardList, path: '/admin?view=project-manager' },
     { title: 'Participants', icon: Users, path: '/admin?view=participants' },
-    { title: 'Messages', icon: Mail, path: '/admin?view=messages' },
+    { title: 'Social Posts', icon: Share2, path: '/admin?view=social-posts' },
     { title: 'Incentives', icon: Trophy, path: '/admin?view=incentives' },
     { title: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
   ];
 
-  const toolsNavItems: NavItem[] = [
-    { title: 'Social Posts', icon: Share2, path: '/admin?view=social-posts' },
-    { title: 'Resources', icon: FolderOpen, path: '/admin?view=resources' },
+  const headerNavItems: NavItem[] = [
+    { title: 'Messages', icon: Mail, path: '/admin?view=messages' },
+    { title: 'Support', icon: LifeBuoy, path: '/admin?view=support' },
     { title: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
   const isActive = (path?: string) => {
     if (!path) return false;
+
+    // Check if we are on the exact path including query params
     if (path.includes('?')) {
       return location.pathname + location.search === path;
     }
+
+    // Special handling for root /admin to valid it's not a sub-view
+    if (path === '/admin' && location.pathname === '/admin') {
+      const searchParams = new URLSearchParams(location.search);
+      return !searchParams.has('view');
+    }
+
+    // Default path matching
     return location.pathname === path;
   };
 
@@ -144,17 +156,21 @@ export function AdminLayout({
                       key={campaign.id}
                       onClick={() => onCampaignChange?.(campaign.id)}
                       className={cn(
-                        campaign.id === selectedCampaignId && "bg-accent"
+                        campaign.id === selectedCampaignId && "bg-accent",
+                        "cursor-pointer mb-1"
                       )}
                     >
                       {campaign.name}
                     </DropdownMenuItem>
                   ))}
                   {onCreateCampaign && (
-                    <DropdownMenuItem onClick={onCreateCampaign} className="text-primary">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Fundraiser
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onCreateCampaign} className="text-primary font-medium cursor-pointer mt-1">
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Fundraiser
+                      </DropdownMenuItem>
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -181,55 +197,62 @@ export function AdminLayout({
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Tools</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {toolsNavItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        onClick={() => item.path && navigate(item.path)}
-                        isActive={isActive(item.path)}
-                        className="w-full"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
           </SidebarContent>
-
-          <SidebarFooter className="p-4 border-t border-border">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {user?.email?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.email}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </SidebarFooter>
         </Sidebar>
 
         <main className="flex-1 overflow-auto">
           <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-3">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger />
-              {campaignName && (
-                <div>
-                  <h1 className="font-semibold text-foreground">{campaignName}</h1>
-                </div>
-              )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                {campaignName && (
+                  <div>
+                    <h1 className="font-semibold text-foreground">{campaignName}</h1>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {headerNavItems.map(item => (
+                  <Button
+                    key={item.title}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => item.path && navigate(item.path)}
+                    className={cn("text-muted-foreground hover:text-foreground", isActive(item.path) && "bg-secondary text-foreground")}
+                    title={item.title}
+                  >
+                    <item.icon className="h-5 w-5" />
+                  </Button>
+                ))}
+
+                <div className="w-px h-6 bg-border mx-2" />
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user?.email?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex flex-col space-y-1 p-2">
+                      <p className="text-sm font-medium leading-none">{user?.email}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        Administrator
+                      </p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </header>
           <div className="p-6">

@@ -10,6 +10,7 @@ export interface ProjectTask {
     phase: string;
     task: string;
     description: string | null;
+    category?: string;
     detailed_instructions: string | null;
     days_before_event: number | null;
     is_completed: boolean;
@@ -39,7 +40,7 @@ export function useProjectManagerTasks(
         try {
             setLoading(true);
 
-            const { data: existingTasks, error } = await supabase
+            const { data: existingTasksData, error } = await supabase
                 .from('campaign_tasks')
                 .select('*')
                 .eq('campaign_id', campaignId)
@@ -47,10 +48,75 @@ export function useProjectManagerTasks(
 
             if (error) throw error;
 
-            const hasStandardTasks = existingTasks?.some(t => !t.is_custom);
+            const existingTasks = existingTasksData as any[];
 
-            if (!hasStandardTasks && existingTasks) {
-                await hydrateFromTemplate(existingTasks.length);
+            if (existingTasks && existingTasks.length > 0) {
+                // Check if any template tasks are missing (simple sync)
+                const type = getFundraiserTypeById(fundraiserTypeId) || getFundraiserTypeById('product');
+                if (type) {
+                    const existingTaskNames = new Set(existingTasks.map(t => t.task));
+                    const missingTasks: any[] = [];
+                    const tasksToUpdate: any[] = []; // Collect category updates
+                    let maxOrder = Math.max(...existingTasks.map(t => t.display_order));
+
+                    for (const phase of type.projectManagerSteps) {
+                        for (const t of phase.tasks) {
+                            if (!existingTaskNames.has(t.task)) {
+                                let actionUrl = null;
+                                if (t.actionView) {
+                                    actionUrl = `/admin?view=${t.actionView}`;
+                                }
+                                missingTasks.push({
+                                    campaign_id: campaignId,
+                                    phase: phase.phase,
+                                    task: t.task,
+                                    description: t.description,
+                                    category: t.category || 'General',
+                                    detailed_instructions: t.description,
+                                    days_before_event: t.daysBeforeEvent,
+                                    is_completed: false,
+                                    is_custom: false,
+                                    display_order: ++maxOrder,
+                                    action_url: actionUrl,
+                                });
+                            } else {
+                                // Check if we should backfill category
+                                const existing = existingTasks.find(et => et.task === t.task);
+                                if (existing && (existing.category === 'General' || !existing.category) && t.category && t.category !== 'General') {
+                                    tasksToUpdate.push({
+                                        id: existing.id,
+                                        category: t.category
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Perform updates if any
+                    if (tasksToUpdate.length > 0) {
+                        // We can do this in parallel, or batch if possible. Supabase update doesn't support batch update with different values easily.
+                        // Parallel is fine for small count.
+                        await Promise.all(tasksToUpdate.map(u =>
+                            supabase.from('campaign_tasks').update({ category: u.category } as any).eq('id', u.id)
+                        ));
+                    }
+
+                    if (missingTasks.length > 0) {
+                        await supabase.from('campaign_tasks').insert(missingTasks);
+                        // Reload
+                        const { data: refreshedData } = await supabase
+                            .from('campaign_tasks')
+                            .select('*')
+                            .eq('campaign_id', campaignId)
+                            .order('display_order');
+
+                        processTasks(refreshedData || []);
+                        return;
+                    }
+                }
+                processTasks(existingTasks);
+            } else {
+                await hydrateFromTemplate(0);
                 const { data: refreshedData } = await supabase
                     .from('campaign_tasks')
                     .select('*')
@@ -58,10 +124,7 @@ export function useProjectManagerTasks(
                     .order('display_order');
 
                 processTasks(refreshedData || []);
-                return;
             }
-
-            processTasks(existingTasks || []);
         } catch (err) {
             console.error('Error loading project tasks:', err);
             toast.error('Failed to load project tasks');
@@ -71,6 +134,9 @@ export function useProjectManagerTasks(
     };
 
     const processTasks = (data: any[]) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         let anchorDate = endDate;
         if (!anchorDate && startDate) {
             anchorDate = new Date(startDate);
@@ -89,6 +155,11 @@ export function useProjectManagerTasks(
                 dueDate = d;
             }
 
+            // Floor the date at today
+            if (dueDate && dueDate < today) {
+                dueDate = today;
+            }
+
             return {
                 ...t,
                 due_date: dueDate
@@ -98,7 +169,7 @@ export function useProjectManagerTasks(
     };
 
     const hydrateFromTemplate = async (currentCount: number) => {
-        const type = getFundraiserTypeById(fundraiserTypeId);
+        const type = getFundraiserTypeById(fundraiserTypeId) || getFundraiserTypeById('product');
         if (!type) return;
 
         const newTasks = [];
@@ -116,6 +187,7 @@ export function useProjectManagerTasks(
                     phase: phase.phase,
                     task: t.task,
                     description: t.description,
+                    category: t.category || 'General',
                     detailed_instructions: t.description,
                     days_before_event: t.daysBeforeEvent,
                     is_completed: false,
@@ -162,6 +234,7 @@ export function useProjectManagerTasks(
                         phase: task.phase,
                         task: task.task,
                         description: task.description,
+                        category: task.category,
                         days_before_event: task.days_before_event
                     })
                     .eq('id', task.id);
@@ -173,6 +246,7 @@ export function useProjectManagerTasks(
                     phase: task.phase,
                     task: task.task!,
                     description: task.description,
+                    category: task.category,
                     days_before_event: task.days_before_event,
                     is_custom: true,
                     display_order: maxOrder + 1,
@@ -203,12 +277,54 @@ export function useProjectManagerTasks(
         }
     };
 
+    const reorderTasks = async (updates: { id: string, display_order: number, phase?: string }[]) => {
+        setTasks(prev => {
+            const newTasks = [...prev];
+            updates.forEach(u => {
+                const task = newTasks.find(t => t.id === u.id);
+                if (task) {
+                    task.display_order = u.display_order;
+                    if (u.phase) task.phase = u.phase;
+                }
+            });
+            return newTasks.sort((a, b) => a.display_order - b.display_order);
+        });
+
+        try {
+            const payload = updates.map(u => {
+                const existingTask = tasks.find(t => t.id === u.id);
+                if (!existingTask) return null;
+
+                const { due_date, ...dbTask } = existingTask;
+                return {
+                    ...dbTask,
+                    display_order: u.display_order,
+                    phase: u.phase || existingTask.phase,
+                    updated_at: new Date().toISOString()
+                };
+            }).filter(Boolean);
+
+            if (payload.length === 0) return;
+
+            const { error } = await supabase
+                .from('campaign_tasks')
+                .upsert(payload as any);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Failed to reorder tasks:', error);
+            toast.error('Failed to save order');
+            await loadBrief();
+        }
+    };
+
     return {
         tasks,
         loading,
         refresh: loadBrief,
         toggleTask,
         saveTask,
-        deleteTask
+        deleteTask,
+        reorderTasks
     };
 }

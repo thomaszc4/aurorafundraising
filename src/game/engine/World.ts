@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class World {
     private scene: THREE.Scene;
     public terrain: THREE.Object3D | null = null;
+    private loader: GLTFLoader;
 
     constructor(scene: THREE.Scene) {
         this.scene = scene;

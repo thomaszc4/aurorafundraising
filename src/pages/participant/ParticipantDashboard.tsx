@@ -7,17 +7,29 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
-  Loader2, Trophy, Target, Share2, MessageSquare, Gift,
-  TrendingUp, Crown, Medal, Award, Copy, ExternalLink
+  Loader2, Trophy, Target, MessageSquare,
+  TrendingUp, Crown, Medal, Award, Copy, ExternalLink,
+  Menu, LayoutDashboard, Share2, QrCode, ShoppingBag, LogOut, Heart
 } from 'lucide-react';
-import { ParticipantSocialCenter } from '@/components/participant/ParticipantSocialCenter';
+import { ParticipantMiniTaskList } from '@/components/participant/ParticipantMiniTaskList';
+import { ParticipantOnboardingWizard } from '@/components/participant/ParticipantOnboardingWizard';
+import { RewardsShop } from '@/components/participant/RewardsShop';
+import { ParticipantQRCode } from '@/components/participant/ParticipantQRCode';
+import { SocialMediaTemplates } from '@/components/participant/SocialMediaTemplates';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import DOMPurify from 'dompurify';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Participant {
   id: string;
   campaign_id: string;
-  first_name: string;
+  nickname: string;
   total_raised: number | null;
   items_sold: number | null;
+  task_states?: any;
+  points_balance?: number;
+  tshirt_size?: string;
+  tshirt_claimed?: boolean;
 }
 
 interface Campaign {
@@ -26,20 +38,11 @@ interface Campaign {
   organization_name: string;
   goal_amount: number | null;
   end_date: string | null;
-}
-
-interface Incentive {
-  id: string;
-  name: string;
-  description: string | null;
-  incentive_type: string;
-  threshold_amount: number | null;
-  threshold_items: number | null;
-  reward: string;
+  fundraiser_type: string | null;
 }
 
 interface LeaderboardEntry {
-  first_name: string;
+  nickname: string;
   total_raised: number | null;
   items_sold: number | null;
 }
@@ -49,7 +52,12 @@ interface Message {
   title: string;
   content: string;
   created_at: string;
+  audience_filters?: {
+    type: 'all' | 'active' | 'zero_raised' | 'top_performers' | 'parents';
+  };
 }
+
+type DashboardView = 'dashboard' | 'social' | 'door' | 'shop';
 
 export default function ParticipantDashboard() {
   const { token } = useParams<{ token: string }>();
@@ -57,89 +65,126 @@ export default function ParticipantDashboard() {
   const [loading, setLoading] = useState(true);
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [incentives, setIncentives] = useState<Incentive[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [rank, setRank] = useState<number>(0);
 
+  const [activeView, setActiveView] = useState<DashboardView>('dashboard');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const [showWizard, setShowWizard] = useState(false);
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!token) {
+    if (participant && !participant.task_states?.wizard_completed) {
+      setShowWizard(true);
+    }
+  }, [participant]);
+
+  const fetchData = async () => {
+    if (!token) {
+      navigate('/');
+      return;
+    }
+
+    try {
+      // Fetch participant
+      const { data: participantData, error: participantError } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('id', token)
+        .single();
+
+      if (participantError || !participantData) {
+        toast.error('Session expired. Please join again.');
         navigate('/');
         return;
       }
 
-      try {
-        // Fetch participant
-        const { data: participantData, error: participantError } = await supabase
-          .from('participants')
-          .select('*')
-          .eq('id', token)
-          // .eq('is_active', true) // Removed due to schema mismatch
-          .single();
+      setParticipant(participantData as unknown as Participant);
 
-        if (participantError || !participantData) {
-          toast.error('Session expired. Please join again.');
-          navigate('/');
-          return;
-        }
+      // Fetch campaign
+      const { data: campaignData } = await supabase
+        .from('campaigns')
+        .select('id, name, organization_name, goal_amount, end_date, fundraiser_type')
+        .eq('id', participantData.campaign_id)
+        .single();
 
-        setParticipant(participantData as unknown as Participant);
+      setCampaign(campaignData);
 
-        // Fetch campaign
-        const { data: campaignData } = await supabase
-          .from('campaigns')
-          .select('id, name, organization_name, goal_amount, end_date')
-          .eq('id', participantData.campaign_id)
-          .single();
+      // Fetch leaderboard
+      const { data: leaderboardData } = await supabase
+        .from('participants')
+        .select('nickname, total_raised, items_sold')
+        .eq('campaign_id', participantData.campaign_id)
+        .order('total_raised', { ascending: false })
+        .limit(10);
 
-        setCampaign(campaignData);
+      setLeaderboard((leaderboardData || []) as unknown as LeaderboardEntry[]);
 
-        // Fetch incentives
-        const { data: incentivesData } = await supabase
-          .from('incentives')
-          .select('*')
-          .eq('campaign_id', participantData.campaign_id);
-        // .eq('is_active', true); // Removed due to schema mismatch
+      // Calculate rank
+      const position = ((leaderboardData || []) as any[]).findIndex(
+        p => p.nickname === (participantData as any).nickname
+      ) + 1;
+      setRank(position || (leaderboardData?.length || 0) + 1);
 
-        setIncentives(incentivesData || []);
+      // Fetch messages
+      const { data: messagesData } = await supabase
+        .from('participant_messages')
+        .select('*')
+        .eq('campaign_id', participantData.campaign_id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-        // Fetch leaderboard
-        const { data: leaderboardData } = await supabase
-          .from('participants')
-          .select('first_name, total_raised, items_sold')
-          .eq('campaign_id', participantData.campaign_id)
-          // .eq('is_active', true) // Removed due to schema mismatch
-          .order('total_raised', { ascending: false })
-          .limit(10);
+      const filteredMessages = (messagesData || []).filter((msg: any) => {
+        const filters = msg.audience_filters;
+        if (!filters || !filters.type || filters.type === 'all') return true;
+        if (filters.type === 'zero_raised') return (participantData.total_raised || 0) === 0;
+        if (filters.type === 'top_performers') return (participantData.total_raised || 0) > 100;
+        return true;
+      });
 
-        setLeaderboard((leaderboardData || []) as unknown as LeaderboardEntry[]);
+      setMessages(filteredMessages as Message[]);
 
-        // Calculate rank
-        const position = ((leaderboardData || []) as any[]).findIndex(
-          p => p.first_name === (participantData as any).first_name
-        ) + 1;
-        setRank(position || (leaderboardData?.length || 0) + 1);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Fetch messages
-        const { data: messagesData } = await supabase
-          .from('participant_messages')
-          .select('*')
-          .eq('campaign_id', participantData.campaign_id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        setMessages(messagesData || []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        toast.error('Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchData();
   }, [token, navigate]);
+
+  const refreshData = async () => {
+    if (!token) return;
+    const { data } = await supabase
+      .from('participants')
+      .select('*')
+      .eq('id', token)
+      .single();
+    if (data) setParticipant(data as unknown as Participant);
+  };
+
+  const completeWizard = async () => {
+    setShowWizard(false);
+    if (!participant) return;
+
+    try {
+      const currentStates = participant.task_states || {};
+      const newStates = { ...currentStates, wizard_completed: true };
+
+      await supabase
+        .from('participants')
+        .update({ task_states: newStates } as any)
+        .eq('id', participant.id);
+
+      setParticipant({ ...participant, task_states: newStates });
+    } catch (err) {
+      console.error('Error completing wizard:', err);
+    }
+  };
 
   const copyShareLink = () => {
     const shareUrl = `${window.location.origin}/fundraise/${participant?.id}`;
@@ -147,254 +192,297 @@ export default function ParticipantDashboard() {
     toast.success('Link copied! Share it with friends and family.');
   };
 
-  const getRankIcon = (position: number) => {
-    if (position === 1) return <Crown className="h-5 w-5 text-yellow-500" />;
-    if (position === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (position === 3) return <Award className="h-5 w-5 text-amber-600" />;
-    return <span className="text-sm font-medium text-muted-foreground">#{position}</span>;
+  const handleNavClick = (view: DashboardView) => {
+    setActiveView(view);
+    setIsMenuOpen(false);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!participant || !campaign) {
-    return null;
-  }
+  if (!participant || !campaign) return null;
 
-  const personalGoal = 100; // Default personal goal
-  const currentRaised = participant.total_raised || 0;
-  const progress = Math.min((currentRaised / personalGoal) * 100, 100);
+  const goalProgress = Math.min(100, ((participant.total_raised || 0) / (100)) * 100); // Assuming 100 is per-student goal for now or logic is elsewhere? 
+  // Wait, component had `<ParticipantMiniTaskList goalAmount={100} />`. Usually individual goal is $100-$300.
+  // I will use 100 as default target for bar visualization if campaign goal is large.
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      {/* Header */}
-      <header className="bg-card border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-bold text-lg">{campaign.name}</h1>
-              <p className="text-sm text-muted-foreground">{campaign.organization_name}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50/50 pb-20">
+
+      {/* Top Navigation Bar */}
+      <div className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b shadow-sm">
+        <div className="container mx-auto px-4 max-w-lg h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <Heart className="h-4 w-4 text-white fill-white" />
             </div>
-            <div className="text-right">
-              <div className="flex items-center justify-end gap-2 text-primary-foreground">
-                <p className="font-medium">{participant.first_name}</p>
+            <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+              Aurora
+            </span>
+          </div>
+
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="hidden md:flex">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent side="right" className="w-[300px]">
+              <SheetHeader className="mb-6 text-left">
+                <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                  <span className="text-primary">Menu</span>
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-2">
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                  onClick={() => {
-                    localStorage.removeItem('participant_token');
-                    localStorage.removeItem(`participant_token_${participant.campaign_id}`);
-                    navigate('/');
-                  }}
-                  title="Log Out"
+                  variant={activeView === 'dashboard' ? 'secondary' : 'ghost'}
+                  className="justify-start gap-3 h-12 text-base font-medium"
+                  onClick={() => handleNavClick('dashboard')}
                 >
-                  <ExternalLink className="h-4 w-4 rotate-180" />
+                  <LayoutDashboard className="h-5 w-5" /> Dashboard
+                </Button>
+                <Button
+                  variant={activeView === 'social' ? 'secondary' : 'ghost'}
+                  className="justify-start gap-3 h-12 text-base font-medium"
+                  onClick={() => handleNavClick('social')}
+                >
+                  <Share2 className="h-5 w-5" /> Social Templates
+                </Button>
+                <Button
+                  variant={activeView === 'door' ? 'secondary' : 'ghost'}
+                  className="justify-start gap-3 h-12 text-base font-medium"
+                  onClick={() => handleNavClick('door')}
+                >
+                  <QrCode className="h-5 w-5" /> Door to Door
+                </Button>
+                <Button
+                  variant={activeView === 'shop' ? 'secondary' : 'ghost'}
+                  className="justify-start gap-3 h-12 text-base font-medium"
+                  onClick={() => handleNavClick('shop')}
+                >
+                  <ShoppingBag className="h-5 w-5" /> Rewards Shop
+                </Button>
+
+                <div className="my-2 border-t" />
+                <Button variant="ghost" className="justify-start gap-3 h-12 text-base text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => navigate('/')}>
+                  <LogOut className="h-5 w-5" /> Exit
                 </Button>
               </div>
-              <Badge variant="secondary" className="text-xs">
-                #{rank} on leaderboard
-              </Badge>
-            </div>
-          </div>
+            </SheetContent>
+          </Sheet>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-6 space-y-6 max-w-2xl">
-        {/* Play Game Button */}
-        <Card className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-none overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Trophy size={120} />
-          </div>
-          <CardContent className="p-6 relative z-10 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-1">Play Aurora</h2>
-              <p className="text-violet-100 mb-4 max-w-[200px] text-sm">Explore the world, complete quests, and earn rewards!</p>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="font-bold text-violet-700 hover:text-violet-800"
-                onClick={() => navigate('/debug-game')}
-              >
-                Enter World
-              </Button>
-            </div>
-            <div className="bg-white/10 p-3 rounded-full hidden sm:block">
-              <Trophy className="h-10 w-10 text-yellow-300" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-6 max-w-lg space-y-6">
+        <AnimatePresence mode="wait">
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold">${(participant.total_raised || 0).toFixed(0)}</p>
-                <p className="text-sm opacity-90">Raised</p>
+          {activeView === 'dashboard' && (
+            <motion.div
+              key="dashboard"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Welcome Header */}
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Hello, {participant.nickname}! 👋</h1>
+                <p className="text-muted-foreground">Keep up the great work for {campaign.name}.</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold">{participant.items_sold || 0}</p>
-                <p className="text-sm text-muted-foreground">Items Sold</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Progress to Goal */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Your Goal Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>${(participant.total_raised || 0).toFixed(0)} raised</span>
-                <span>${personalGoal} goal</span>
-              </div>
-              <Progress value={progress} className="h-3" />
-              <p className="text-xs text-muted-foreground text-center">
-                {progress >= 100 ? "🎉 Goal reached!" : `${(personalGoal - (participant.total_raised || 0)).toFixed(0)} to go!`}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Progress Card */}
+              <Card className="border-none shadow-lg bg-gradient-to-br from-primary via-primary/90 to-indigo-600 text-white overflow-hidden relative">
+                {/* Decor Circles */}
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 h-32 w-32 rounded-full bg-black/10 blur-2xl"></div>
 
-        {/* Social Sharing Center */}
-        <ParticipantSocialCenter
-          campaignId={participant.campaign_id}
-          participantId={participant.id}
-          participantName={participant.nickname}
-          shareUrl={`${window.location.origin}/fundraise/${participant.id}`}
-        />
-
-        {/* Challenges/Incentives */}
-        {incentives.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Gift className="h-4 w-4" />
-                Challenges & Rewards
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {incentives.map((incentive) => {
-                const participantRaised = participant.total_raised || 0;
-                const participantItems = participant.items_sold || 0;
-
-                const isCompleted = incentive.threshold_amount
-                  ? participantRaised >= incentive.threshold_amount
-                  : incentive.threshold_items
-                    ? participantItems >= incentive.threshold_items
-                    : false;
-
-                const progressValue = incentive.threshold_amount
-                  ? Math.min((participantRaised / incentive.threshold_amount) * 100, 100)
-                  : incentive.threshold_items
-                    ? Math.min((participantItems / incentive.threshold_items) * 100, 100)
-                    : 0;
-
-                return (
-                  <div
-                    key={incentive.id}
-                    className={`p-3 rounded-lg border ${isCompleted ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : 'bg-muted/50'}`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm flex items-center gap-2">
-                          {incentive.name}
-                          {isCompleted && <Badge variant="default" className="text-xs">Earned!</Badge>}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {incentive.description || `Reward: ${incentive.reward}`}
-                        </p>
+                <CardHeader className="pb-2 relative z-10">
+                  <CardTitle className="text-lg font-medium opacity-90">Total Raised</CardTitle>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold">${participant.total_raised || 0}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-2 opacity-90">
+                        <span>Progress to Goal</span>
+                        <span>{Math.round(goalProgress)}%</span>
                       </div>
-                      <Badge variant={isCompleted ? "default" : "secondary"} className="shrink-0">
-                        {incentive.incentive_type === 'individual' && incentive.threshold_amount && `$${incentive.threshold_amount}`}
-                        {incentive.incentive_type === 'individual' && incentive.threshold_items && `${incentive.threshold_items} items`}
-                        {incentive.incentive_type === 'competition' && 'Top Seller'}
-                        {incentive.incentive_type === 'group' && 'Team Goal'}
-                      </Badge>
+                      <Progress value={goalProgress} className="h-3 bg-black/20" indicatorClassName="bg-white" />
                     </div>
-                    {incentive.incentive_type === 'individual' && (
-                      <Progress value={progressValue} className="h-1.5 mt-2" />
-                    )}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Leaderboard */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {leaderboard.map((entry, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center justify-between p-2 rounded-lg ${entry.first_name === participant.first_name
-                    ? 'bg-primary/10 border border-primary/20'
-                    : 'bg-muted/50'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 flex justify-center">
-                      {getRankIcon(index + 1)}
+                    <div className="flex items-center gap-4 pt-2">
+                      <div className="bg-white/20 rounded-lg p-3 flex-1 flex items-center gap-3 backdrop-blur-sm">
+                        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                          <ShoppingBag className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs opacity-70 uppercase tracking-wide font-semibold">Items Sold</p>
+                          <p className="text-xl font-bold">{participant.items_sold || 0}</p>
+                        </div>
+                      </div>
+                      <div className="bg-white/20 rounded-lg p-3 flex-1 flex items-center gap-3 backdrop-blur-sm">
+                        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                          <Target className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs opacity-70 uppercase tracking-wide font-semibold">Rank</p>
+                          <p className="text-xl font-bold">#{rank}</p>
+                        </div>
+                      </div>
                     </div>
-                    <span className={`text-sm ${entry.first_name === participant.first_name ? 'font-semibold' : ''}`}>
-                      {entry.first_name}
-                      {entry.first_name === participant.first_name && ' (You)'}
-                    </span>
                   </div>
-                  <span className="font-medium text-sm">${(entry.total_raised || 0).toFixed(0)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
 
-        {/* Messages */}
-        {messages.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Messages from Coach
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {messages.map((message) => (
-                <div key={message.id} className="p-3 rounded-lg bg-muted/50 border">
-                  <p className="font-medium text-sm">{message.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{message.content}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {new Date(message.created_at).toLocaleDateString()}
+              {/* Share Link with Sample Text */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Share2 className="h-4 w-4 text-primary" />
+                    Share with Friends
+                  </CardTitle>
+                  <CardDescription>
+                    Copy this message to send to friends and family!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-muted/50 p-4 rounded-xl border border-dashed relative group">
+                    <p className="text-sm text-foreground/80 italic leading-relaxed">
+                      "Hi! I'm raising money for <strong>{campaign.organization_name}</strong>. We're selling some great items to help reach our goal! Could you help me out? Check out my page here: <span className="text-primary underline">{window.location.origin}/fundraise/{participant.id}</span>"
+                    </p>
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Badge variant="secondary" className="text-xs">Preview</Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Button
+                      onClick={() => {
+                        const shareUrl = `${window.location.origin}/fundraise/${participant?.id}`;
+                        const text = `Hi! I'm raising money for ${campaign?.organization_name}. We're selling some great items to help reach our goal! Could you help me out? Check out my page here: ${shareUrl}`;
+                        navigator.clipboard.writeText(text);
+                        toast.success('Full message copied!');
+                      }}
+                      className="w-full bg-primary hover:bg-primary/90"
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" /> Copy Message & Link
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={copyShareLink}
+                      className="w-full"
+                    >
+                      <Copy className="mr-2 h-4 w-4" /> Copy Link Only
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tasks */}
+              <div>
+                <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                  <LayoutDashboard className="h-5 w-5 text-primary" /> Daily Checklist
+                </h3>
+                <ParticipantMiniTaskList
+                  participant={participant as any}
+                  goalAmount={100}
+                  onUpdate={refreshData}
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {activeView === 'social' && (
+            <motion.div
+              key="social"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <SocialMediaTemplates
+                shareUrl={`${window.location.origin}/fundraise/${participant.id}`}
+                campaignName={campaign.name}
+                organizationName={campaign.organization_name}
+                fundraiserType={campaign.fundraiser_type || 'product'}
+              />
+            </motion.div>
+          )}
+
+          {activeView === 'door' && (
+            <motion.div
+              key="door"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <QrCode className="h-6 w-6" /> Door-to-Door Helper
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">
+                    Show this QR code to neighbors so they can check out securely on their own phone.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center py-6">
+                  <div className="bg-white p-4 rounded-xl shadow-lg">
+                    <ParticipantQRCode
+                      shareUrl={`${window.location.origin}/fundraise/${participant.id}`}
+                      participantName={participant.nickname}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Script Idea</CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-sm">
+                  <p className="italic text-muted-foreground text-lg">
+                    "Hi! I'm raising money for <strong>{campaign.organization_name}</strong>. Would you like to support us? You can scan this code to see our catalog and order online!"
                   </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </main>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {activeView === 'shop' && (
+            <motion.div
+              key="shop"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <RewardsShop
+                itemsSold={participant.items_sold || 0}
+                participantId={participant.id}
+                campaignId={participant.campaign_id}
+              />
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
+
+      <ParticipantOnboardingWizard
+        isOpen={showWizard}
+        onComplete={completeWizard}
+        participantName={participant.nickname}
+      />
     </div>
   );
 }

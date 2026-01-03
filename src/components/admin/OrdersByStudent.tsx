@@ -24,16 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Package, 
-  Download, 
-  ChevronDown, 
+import {
+  Package,
+  Download,
+  ChevronDown,
   ChevronRight,
   Truck,
   MapPin,
   User
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OrderItem {
   id: string;
@@ -58,6 +59,7 @@ interface Order {
   shipping_address: string | null;
   created_at: string;
   order_items: OrderItem[];
+  student_fundraiser_id?: string;
 }
 
 interface StudentWithOrders {
@@ -75,17 +77,26 @@ interface Campaign {
   name: string;
 }
 
-export function OrdersByStudent() {
+interface OrdersByStudentProps {
+  campaignId?: string;
+}
+
+export function OrdersByStudent({ campaignId }: OrdersByStudentProps) {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(campaignId || null);
   const [studentOrders, setStudentOrders] = useState<StudentWithOrders[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    fetchCampaigns();
-  }, []);
+    if (campaignId) {
+      setSelectedCampaignId(campaignId);
+    } else {
+      fetchCampaigns();
+    }
+  }, [campaignId, user]);
 
   useEffect(() => {
     if (selectedCampaignId) {
@@ -94,30 +105,36 @@ export function OrdersByStudent() {
   }, [selectedCampaignId]);
 
   const fetchCampaigns = async () => {
+    if (!user) return;
     try {
       const { data, error } = await supabase
         .from('campaigns')
         .select('id, name')
+        .eq('organization_admin_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setCampaigns(data || []);
-      if (data && data.length > 0) {
+      if (data && data.length > 0 && !selectedCampaignId) {
         setSelectedCampaignId(data[0].id);
       }
     } catch (error) {
       console.error('Error fetching campaigns:', error);
     } finally {
-      setLoading(false);
+      if (!campaignId) setLoading(false);
     }
   };
 
   const fetchOrdersByStudent = async () => {
-    if (!selectedCampaignId) return;
+    if (!selectedCampaignId) {
+      setStudentOrders([]);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Get all student fundraisers for this campaign
+      // First, get student fundraisers with profile data
       const { data: fundraisers, error: fundraisersError } = await supabase
         .from('student_fundraisers')
         .select(`
@@ -129,15 +146,15 @@ export function OrdersByStudent() {
 
       if (fundraisersError) throw fundraisersError;
 
-      // Get all orders for these fundraisers
       const fundraiserIds = fundraisers?.map(f => f.id) || [];
-      
+
       if (fundraiserIds.length === 0) {
         setStudentOrders([]);
         setLoading(false);
         return;
       }
 
+      // Then fetch orders for these fundraisers
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -165,21 +182,20 @@ export function OrdersByStudent() {
         });
       });
 
-      orders?.forEach(order => {
-        const fundraiserId = order.student_fundraiser_id;
-        if (fundraiserId && studentMap.has(fundraiserId)) {
-          const student = studentMap.get(fundraiserId)!;
-          student.orders.push(order as Order);
-          student.total_sales += Number(order.total_amount) || 0;
-          student.total_profit += Number(order.profit_amount) || 0;
+      orders?.forEach((order: any) => {
+        const student = studentMap.get(order.student_fundraiser_id);
+        if (student) {
+          student.orders.push(order);
+          student.total_sales += Number(order.total_amount || 0);
+          student.total_profit += Number(order.profit_amount || 0);
           student.order_count += 1;
         }
       });
 
       setStudentOrders(Array.from(studentMap.values()).sort((a, b) => b.total_sales - a.total_sales));
-    } catch (error) {
-      console.error('Error fetching orders by student:', error);
-      toast.error('Failed to load orders');
+    } catch (error: any) {
+      console.error('Error fetching student orders:', error);
+      toast.error(`Failed to load orders: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -263,20 +279,22 @@ export function OrdersByStudent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Select value={selectedCampaignId || ''} onValueChange={setSelectedCampaignId}>
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="Select campaign" />
-          </SelectTrigger>
-          <SelectContent>
-            {campaigns.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {!campaignId && (
+        <div className="flex items-center justify-between">
+          <Select value={selectedCampaignId || ''} onValueChange={setSelectedCampaignId}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select campaign" />
+            </SelectTrigger>
+            <SelectContent>
+              {campaigns.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

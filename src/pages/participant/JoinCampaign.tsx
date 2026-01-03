@@ -105,14 +105,20 @@ export default function JoinCampaign() {
 
         setCampaign(campaignData);
 
-        // Get current participant count
-        const { count } = await supabase
-          .from('participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('campaign_id', campaignData.id);
-        // .eq('is_active', true); // Removed to prevent 400 error (column missing)
+        // Get current participant count (sum of anonymous participants and authenticated students)
+        const [participantsRes, studentFundraisersRes] = await Promise.all([
+          supabase
+            .from('participants')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_id', campaignData.id),
+          supabase
+            .from('student_fundraisers')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_id', campaignId)
+        ]);
 
-        setParticipantCount(count || 0);
+        const totalCount = (participantsRes.count || 0) + (studentFundraisersRes.count || 0);
+        setParticipantCount(totalCount);
 
         // Check if user already joined this campaign (duplicate prevention)
         const storageKey = `participant_token_${campaignData.id}`;
@@ -121,14 +127,14 @@ export default function JoinCampaign() {
           // Verify token is still valid (using ID as token now)
           const { data: existingParticipant } = await supabase
             .from('participants')
-            .select('id, first_name')
+            .select('id, nickname')
             .eq('id', savedToken) // Changed to check ID
             // .eq('is_active', true) // Removed
             .single();
 
           if (existingParticipant) {
             setExistingToken(savedToken);
-            setExistingParticipantName((existingParticipant as any).first_name);
+            setExistingParticipantName(existingParticipant.nickname);
             // We intentionally do NOT switch viewMode here to preserve privacy
           } else {
             // Token is stale, remove it
@@ -157,7 +163,7 @@ export default function JoinCampaign() {
       .from('participants')
       .select('id')
       .eq('id', existingToken)
-      .eq('last_name', unlockPin) // Check PIN (stored in last_name)
+      .eq('pin_hash', unlockPin) // Check PIN (stored in pin_hash)
       .single();
 
     if (error || !data) {
@@ -196,12 +202,19 @@ export default function JoinCampaign() {
     setSubmitting(true);
 
     try {
-      // Re-fetch participant count to mitigate race condition
-      const { count: freshCount } = await supabase
-        .from('participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('campaign_id', campaign.id);
-      // .eq('is_active', true); // Removed
+      // Re-fetch participant counts for max check
+      const [participantsRes, studentFundraisersRes] = await Promise.all([
+        supabase
+          .from('participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', campaign.id),
+        supabase
+          .from('student_fundraisers')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', campaign.id)
+      ]);
+
+      const freshCount = (participantsRes.count || 0) + (studentFundraisersRes.count || 0);
 
       // Check max participants with fresh count
       if (joinSettings?.max_participants && (freshCount || 0) >= joinSettings.max_participants) {
@@ -215,11 +228,10 @@ export default function JoinCampaign() {
         .from('participants')
         .insert({
           campaign_id: campaign.id,
-          first_name: finalNickname, // Mapping nickname to first_name
-          last_name: pin, // Storing PIN in available last_name column
-          code: crypto.randomUUID(), // Generating a unique code for the participant
-          // pin_hash: pin, // Removed (column missing)
-        } as any)
+          nickname: finalNickname,
+          pin_hash: pin,
+          access_token: crypto.randomUUID(), // Standardizing usage of access_token as a backup ID
+        })
         .select('id') // Changed from access_token to id
         .single();
 

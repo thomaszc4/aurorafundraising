@@ -1,3 +1,5 @@
+import { getLuminance } from './colorUtils';
+
 export interface BrandColors {
     primary?: string;
     secondary?: string;
@@ -42,6 +44,23 @@ const hexToHsl = (hex: string): string | null => {
     return `${h} ${s}% ${l}%`;
 };
 
+/**
+ * Calculate appropriate foreground color (text) based on background luminance
+ * Returns HSL string for white or black text
+ */
+const getForegroundHsl = (backgroundColor: string): string => {
+    const luminance = getLuminance(backgroundColor);
+    // If background is light (high luminance), use dark text
+    // If background is dark (low luminance), use light text
+    if (luminance > 0.5) {
+        // Dark text: near-black
+        return '0 0% 10%';  // hsl(0, 0%, 10%) - very dark gray/black
+    } else {
+        // Light text: near-white
+        return '0 0% 98%';  // hsl(0, 0%, 98%) - very light gray/white
+    }
+};
+
 export const applyTheme = (colors: BrandColors | null) => {
     const root = document.documentElement;
 
@@ -51,14 +70,21 @@ export const applyTheme = (colors: BrandColors | null) => {
         root.style.removeProperty('--primary-foreground');
         root.style.removeProperty('--primary-blue');
         root.style.removeProperty('--secondary');
+        root.style.removeProperty('--secondary-foreground');
         root.style.removeProperty('--accent');
+        root.style.removeProperty('--accent-foreground');
         return;
     }
 
-    // Apply Brand Colors
+    // Apply Brand Colors with automatic contrast foregrounds
     if (colors.primary) {
         const hsl = hexToHsl(colors.primary);
-        if (hsl) root.style.setProperty('--primary', hsl);
+        if (hsl) {
+            root.style.setProperty('--primary', hsl);
+            // Automatically set foreground color for contrast
+            const foreground = getForegroundHsl(colors.primary);
+            root.style.setProperty('--primary-foreground', foreground);
+        }
     }
 
     if (colors['primary-blue']) {
@@ -71,11 +97,21 @@ export const applyTheme = (colors: BrandColors | null) => {
 
     if (colors.secondary) {
         const hsl = hexToHsl(colors.secondary);
-        if (hsl) root.style.setProperty('--secondary', hsl);
+        if (hsl) {
+            root.style.setProperty('--secondary', hsl);
+            // Automatically set foreground color for contrast
+            const foreground = getForegroundHsl(colors.secondary);
+            root.style.setProperty('--secondary-foreground', foreground);
+        }
     }
 
     if (colors.accent) {
         const hsl = hexToHsl(colors.accent);
-        if (hsl) root.style.setProperty('--accent', hsl);
+        if (hsl) {
+            root.style.setProperty('--accent', hsl);
+            // Automatically set foreground color for contrast
+            const foreground = getForegroundHsl(colors.accent);
+            root.style.setProperty('--accent-foreground', foreground);
+        }
     }
 };

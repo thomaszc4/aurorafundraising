@@ -31,8 +31,14 @@ export function ProjectGanttChart({ tasks, startDate, endDate, campaignName = 'C
 
     // Determine timeline range
     // Find earliest and latest dates
-    let minDate = startDate || new Date();
-    let maxDate = endDate || new Date();
+    // Find earliest and latest dates
+    // Default to a 30-day window starting today if no campaign dates are set
+    let minDate = startDate ? new Date(startDate) : new Date();
+    let maxDate = endDate ? new Date(endDate) : new Date();
+
+    if (!startDate && !endDate) {
+        maxDate.setDate(maxDate.getDate() + 30);
+    }
 
     // If tasks have dates outside range, expand
     tasks.forEach(t => {

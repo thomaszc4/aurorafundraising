@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft, Gamepad2 } from 'lucide-react';
+import { Plus, Users, DollarSign, ShoppingCart, Target, ArrowLeft, Gamepad2, Clock } from 'lucide-react';
 import { CreateCampaignWizard } from '@/components/admin/CreateCampaignWizard';
 import { FundraiserProjectManager } from '@/components/admin/FundraiserProjectManager';
 import { FundraiserComparison } from '@/components/admin/FundraiserComparison';
@@ -19,6 +19,7 @@ import { ParticipantManager } from '@/components/admin/ParticipantManager';
 import { CommunicationCenter } from '@/components/admin/CommunicationCenter';
 import { IncentiveManager } from '@/components/admin/IncentiveManager';
 import { AuroraGame } from '@/components/game/AuroraGame';
+import { Support } from '@/components/admin/Support';
 import { Tables } from '@/integrations/supabase/types';
 import { applyTheme, BrandColors } from '@/lib/theme';
 
@@ -35,6 +36,8 @@ export default function AdminDashboard() {
     totalOrders: 0,
     totalRaised: 0,
     goalProgress: 0,
+    avgRaised: 0,
+    daysLeft: 0,
   });
   const [loading, setLoading] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -44,7 +47,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchCampaigns();
-    checkFirstVisit();
+    // checkFirstVisit(); // Hiding video for now
   }, []);
 
   useEffect(() => {
@@ -96,41 +99,62 @@ export default function AdminDashboard() {
 
   const fetchCampaignStats = async (campaignId: string) => {
     try {
-      const { count: studentsCount } = await supabase
-        .from('student_fundraisers')
-        .select('*', { count: 'exact', head: true })
-        .eq('campaign_id', campaignId)
-        .eq('is_active', true);
+      const [studentsRes, participantsRes] = await Promise.all([
+        supabase
+          .from('student_fundraisers')
+          .select('id, total_raised')
+          .eq('campaign_id', campaignId),
+        supabase
+          .from('participants')
+          .select('id, total_raised')
+          .eq('campaign_id', campaignId)
+      ]);
 
-      const { data: fundraisers } = await supabase
-        .from('student_fundraisers')
-        .select('id, total_raised')
-        .eq('campaign_id', campaignId);
+      const fundraisers = studentsRes.data || [];
+      const participants = participantsRes.data || [];
 
-      const fundraiserIds = fundraisers?.map(f => f.id) || [];
+      const studentsCount = fundraisers.length + participants.length;
+      const fundraiserIds = fundraisers.map(f => f.id);
+      const participantIds = participants.map(p => p.id);
 
       let ordersCount = 0;
       let totalRaised = 0;
 
-      if (fundraiserIds.length > 0) {
-        const { count } = await supabase
-          .from('orders')
-          .select('*', { count: 'exact', head: true })
-          .in('student_fundraiser_id', fundraiserIds)
-          .eq('status', 'completed');
+      // Count orders from both types
+      const [studentOrders, participantOrders] = await Promise.all([
+        fundraiserIds.length > 0
+          ? supabase.from('orders').select('*', { count: 'exact', head: true }).in('student_fundraiser_id', fundraiserIds).eq('status', 'completed')
+          : Promise.resolve({ count: 0 }),
+        participantIds.length > 0
+          ? supabase.from('orders').select('*', { count: 'exact', head: true }).in('participant_id', participantIds).eq('status', 'completed')
+          : Promise.resolve({ count: 0 })
+      ]);
 
-        ordersCount = count || 0;
-        totalRaised = fundraisers?.reduce((sum, f) => sum + Number(f.total_raised || 0), 0) || 0;
-      }
+      ordersCount = (studentOrders.count || 0) + (participantOrders.count || 0);
+
+      const studentsRaised = fundraisers.reduce((sum, f) => sum + Number(f.total_raised || 0), 0);
+      const participantsRaised = participants.reduce((sum, p) => sum + Number(p.total_raised || 0), 0);
+      totalRaised = studentsRaised + participantsRaised;
 
       const goalAmount = selectedCampaign?.goal_amount || 0;
       const goalProgress = goalAmount > 0 ? (totalRaised / Number(goalAmount)) * 100 : 0;
+      const avgRaised = studentsCount && studentsCount > 0 ? totalRaised / studentsCount : 0;
+
+      let daysLeft = 0;
+      if (selectedCampaign?.end_date) {
+        const end = new Date(selectedCampaign.end_date);
+        const now = new Date();
+        const diff = end.getTime() - now.getTime();
+        daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+      }
 
       setCampaignStats({
         totalStudents: studentsCount || 0,
         totalOrders: ordersCount,
         totalRaised,
         goalProgress: Math.min(goalProgress, 100),
+        avgRaised,
+        daysLeft,
       });
     } catch (error) {
       console.error('Error fetching campaign stats:', error);
@@ -334,6 +358,13 @@ export default function AdminDashboard() {
           </>
         );
 
+      case 'support':
+        return (
+          <>
+            <BackButton onClick={() => setView('overview')} />
+            <Support />
+          </>
+        );
 
       default:
         return renderOverview();
@@ -346,26 +377,6 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary-blue/30 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-blue/20 transition-all" />
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <h3 className="text-sm font-medium text-muted-foreground">Total Raised</h3>
-            <div className="w-8 h-8 rounded-full bg-primary-blue/10 flex items-center justify-center text-primary-blue">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="relative z-10">
-            <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-blue mt-2">
-              ${campaignStats.totalRaised.toFixed(2)}
-            </div>
-            {selectedCampaign?.goal_amount && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {campaignStats.goalProgress.toFixed(0)}% of ${Number(selectedCampaign.goal_amount).toLocaleString()} goal
-              </p>
-            )}
-          </div>
-        </div>
-
         <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-secondary/30 transition-all duration-300">
           <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-secondary/20 transition-all" />
           <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
@@ -377,6 +388,22 @@ export default function AdminDashboard() {
           <div className="relative z-10">
             <div className="text-3xl font-bold text-foreground mt-2">{campaignStats.totalStudents}</div>
             <p className="text-xs text-muted-foreground mt-1">Participating fundraisers</p>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary/20 transition-all" />
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <h3 className="text-sm font-medium text-muted-foreground">Average Raised</h3>
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <DollarSign className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-3xl font-bold text-foreground mt-2">
+              ${campaignStats.avgRaised.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Raised per participant</p>
           </div>
         </div>
 
@@ -394,7 +421,21 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* NEW GAME CARD */}
+        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary-blue/30 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue/10 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-blue/20 transition-all" />
+          <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <h3 className="text-sm font-medium text-muted-foreground">Days Left</h3>
+            <div className="w-8 h-8 rounded-full bg-primary-blue/10 flex items-center justify-center text-primary-blue">
+              <Clock className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="relative z-10">
+            <div className="text-3xl font-bold text-foreground mt-2">{campaignStats.daysLeft}</div>
+            <p className="text-xs text-muted-foreground mt-1">Until campaign ends</p>
+          </div>
+        </div>
+
+        {/* NEW GAME CARD - HIDDEN FOR MVP
         <div
           onClick={() => setView('game')}
           className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-all duration-300 cursor-pointer"
@@ -411,23 +452,53 @@ export default function AdminDashboard() {
             <p className="text-xs text-muted-foreground mt-1">Preview & Test</p>
           </div>
         </div>
+        */}
 
       </div>
 
       {/* Progress Bar */}
       {selectedCampaign?.goal_amount && (
-        <div className="glass-card p-6 rounded-2xl mb-8">
-          <h3 className="text-lg font-semibold mb-4">Fundraising Progress</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">${campaignStats.totalRaised.toFixed(2)} raised</span>
-              <span className="text-muted-foreground">${Number(selectedCampaign.goal_amount).toLocaleString()} goal</span>
+        <div className="glass-card p-8 rounded-3xl mb-8 border border-white/10 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden group">
+          {/* Ambient Glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-blue/10 rounded-full blur-3xl -mr-32 -mt-32 transition-opacity duration-500 group-hover:opacity-100 opacity-70" />
+
+          <div className="relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+              <div className="space-y-1">
+                <h3 className="text-muted-foreground font-medium text-xs uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <Target className="w-4 h-4 text-primary" />
+                  Campaign Goal
+                </h3>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
+                    ${campaignStats.totalRaised.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  <span className="text-xl text-muted-foreground font-medium mb-1">
+                    of ${Number(selectedCampaign.goal_amount).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-3xl font-bold text-primary">
+                    {campaignStats.goalProgress.toFixed(0)}%
+                  </span>
+                </div>
+              </div>
             </div>
+
             <ProgressEnhanced
               value={campaignStats.goalProgress}
               showMilestones
-              className="h-4"
+              className="h-3 rounded-full bg-secondary/20"
+              indicatorClassName="bg-gradient-to-r from-primary to-primary-blue shadow-lg shadow-primary/20"
             />
+
+            <div className="mt-4 flex justify-between items-center text-xs text-muted-foreground font-medium">
+              <span>0%</span>
+              <span>Goal Reached</span>
+            </div>
           </div>
         </div>
       )}

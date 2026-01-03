@@ -36,7 +36,7 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
     }
 
     setIsProcessing(true);
-    
+
     try {
       // Call checkout edge function
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -93,7 +93,13 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
                       className="w-full h-full object-cover rounded-lg"
                     />
                   ) : (
-                    <span className="text-2xl">📦</span>
+                    <div className="flex items-center justify-center w-full h-full text-muted-foreground/50">
+                      {item.product.name.includes('Donation') ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+                      ) : (
+                        <span className="text-2xl">📦</span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex-1">
@@ -217,13 +223,13 @@ export const Cart = ({ cart, isOpen, onClose, onUpdateQuantity, fundraiserId }: 
                   Stay connected with our organization
                 </Label>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  By checking this box, I expressly consent to receive promotional emails, newsletters, 
-                  fundraising updates, event announcements, and other marketing communications from this 
-                  organization at the email address provided above. I understand that: (i) my consent is 
-                  voluntary and not a condition of my donation or purchase; (ii) I may withdraw my consent 
-                  at any time by clicking the "unsubscribe" link in any email or by contacting the organization 
-                  directly; (iii) message and data rates may apply; (iv) my information will be handled in 
-                  accordance with the organization's privacy policy. I acknowledge that I am at least 18 years 
+                  By checking this box, I expressly consent to receive promotional emails, newsletters,
+                  fundraising updates, event announcements, and other marketing communications from this
+                  organization at the email address provided above. I understand that: (i) my consent is
+                  voluntary and not a condition of my donation or purchase; (ii) I may withdraw my consent
+                  at any time by clicking the "unsubscribe" link in any email or by contacting the organization
+                  directly; (iii) message and data rates may apply; (iv) my information will be handled in
+                  accordance with the organization's privacy policy. I acknowledge that I am at least 18 years
                   of age or have parental/guardian consent.
                 </p>
               </div>

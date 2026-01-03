@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_social_share_templates_campaign_id ON public.soci
 ALTER TABLE public.social_share_templates ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Campaign admins can manage their own templates
+DROP POLICY IF EXISTS social_share_templates_admin_policy ON public.social_share_templates;
 CREATE POLICY social_share_templates_admin_policy ON public.social_share_templates
     FOR ALL
     USING (
@@ -31,19 +32,8 @@ CREATE POLICY social_share_templates_admin_policy ON public.social_share_templat
         )
     );
 
--- Policy: Participants can read active templates for their campaign
-CREATE POLICY social_share_templates_participant_read_policy ON public.social_share_templates
-    FOR SELECT
-    USING (
-        is_active = true
-        AND EXISTS (
-            SELECT 1 FROM public.participants p
-            WHERE p.campaign_id = social_share_templates.campaign_id
-            AND p.user_id = auth.uid()
-        )
-    );
-
 -- Policy: Student fundraisers can read active templates for their campaign
+DROP POLICY IF EXISTS social_share_templates_student_read_policy ON public.social_share_templates;
 CREATE POLICY social_share_templates_student_read_policy ON public.social_share_templates
     FOR SELECT
     USING (
@@ -51,7 +41,7 @@ CREATE POLICY social_share_templates_student_read_policy ON public.social_share_
         AND EXISTS (
             SELECT 1 FROM public.student_fundraisers sf
             WHERE sf.campaign_id = social_share_templates.campaign_id
-            AND sf.user_id = auth.uid()
+            AND sf.student_id = auth.uid()
         )
     );
 

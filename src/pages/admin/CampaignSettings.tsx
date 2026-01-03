@@ -27,7 +27,7 @@ import {
   Save,
   Upload,
   Image as ImageIcon,
-  
+
   Trash2,
   Plus
 
@@ -35,6 +35,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { getContrastTextColor } from '@/lib/colorUtils';
 
 interface BrandColors {
   primary?: string;
@@ -538,20 +539,29 @@ export default function CampaignSettings() {
                       <p className="text-sm text-muted-foreground mb-3">Preview</p>
                       <div className="flex gap-4">
                         <div
-                          className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-xs font-medium"
-                          style={{ backgroundColor: campaign.brand_colors?.primary || '#3B82F6' }}
+                          className="w-20 h-20 rounded-lg flex items-center justify-center text-xs font-medium"
+                          style={{
+                            backgroundColor: campaign.brand_colors?.primary || '#3B82F6',
+                            color: getContrastTextColor(campaign.brand_colors?.primary || '#3B82F6')
+                          }}
                         >
                           Primary
                         </div>
                         <div
-                          className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-xs font-medium"
-                          style={{ backgroundColor: campaign.brand_colors?.secondary || '#10B981' }}
+                          className="w-20 h-20 rounded-lg flex items-center justify-center text-xs font-medium"
+                          style={{
+                            backgroundColor: campaign.brand_colors?.secondary || '#10B981',
+                            color: getContrastTextColor(campaign.brand_colors?.secondary || '#10B981')
+                          }}
                         >
                           Secondary
                         </div>
                         <div
-                          className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-xs font-medium"
-                          style={{ backgroundColor: campaign.brand_colors?.accent || '#F59E0B' }}
+                          className="w-20 h-20 rounded-lg flex items-center justify-center text-xs font-medium"
+                          style={{
+                            backgroundColor: campaign.brand_colors?.accent || '#F59E0B',
+                            color: getContrastTextColor(campaign.brand_colors?.accent || '#F59E0B')
+                          }}
                         >
                           Accent
                         </div>

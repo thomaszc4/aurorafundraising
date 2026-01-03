@@ -4,9 +4,10 @@ import { ArrowRight, Sparkles, ShoppingBag, Users, LineChart, Mail } from "lucid
 export function HeroSection() {
   return <section className="relative min-h-screen flex items-center overflow-hidden">
     {/* Background Image */}
-    <div className="absolute inset-0 z-0">
-      <img src="/images/aurora_hero.png" alt="Aurora Scene" className="w-full h-full object-cover opacity-40 dark:opacity-30" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+    <div className="absolute inset-0 z-0 bg-black">
+      <img src="/images/aurora_hero.png" alt="Aurora Scene" className="w-full h-full object-cover opacity-70 dark:opacity-60" />
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
     </div>
 
     {/* Background Elements */}

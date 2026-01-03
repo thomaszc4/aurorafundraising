@@ -34,7 +34,10 @@ CREATE TABLE IF NOT EXISTS public.purchase_orders (
 -- RLS for Purchase Orders
 ALTER TABLE public.purchase_orders ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "PO Read Public" ON public.purchase_orders;
 CREATE POLICY "PO Read Public" ON public.purchase_orders FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "PO Admin Write" ON public.purchase_orders;
 CREATE POLICY "PO Admin Write" ON public.purchase_orders FOR ALL USING (
     EXISTS (
         SELECT 1 FROM public.user_roles 
@@ -56,6 +59,8 @@ CREATE TABLE IF NOT EXISTS public.purchase_order_items (
 
 -- RLS for PO Items
 ALTER TABLE public.purchase_order_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "PO Items Read Public" ON public.purchase_order_items;
 CREATE POLICY "PO Items Read Public" ON public.purchase_order_items FOR SELECT USING (true);
 
 
